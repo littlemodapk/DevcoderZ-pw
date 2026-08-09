@@ -9,7 +9,7 @@ export async function onRequest(context) {
     const batchId = url.searchParams.get('batchId');
     const subjectId = url.searchParams.get('subjectId');
     const page = url.searchParams.get('page') || 1;
-    const contentType = url.searchParams.get('contentType') || 'videos';
+    const contentType = url.searchParams.get('contentType') || 'notes';
     const tag = url.searchParams.get('tag') || '';
 
     const headers = {
@@ -36,19 +36,14 @@ export async function onRequest(context) {
     }
 
     try {
-        const targetUrl = `https://thestudyspark.site/api-server/v2/batches/${encodeURIComponent(batchId)}/subject/${encodeURIComponent(subjectId)}/content?page=${encodeURIComponent(page)}&contentType=${encodeURIComponent(contentType)}&tag=${encodeURIComponent(tag)}`;
+        const targetUrl = `https://learnbyakp.onrender.com/api/penpencil/v2/batches/${encodeURIComponent(batchId)}/subject/${encodeURIComponent(subjectId)}/contents?page=${encodeURIComponent(page)}&contentType=${encodeURIComponent(contentType)}&tag=${encodeURIComponent(tag)}`;
 
         const response = await fetch(targetUrl, {
             headers: {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
-                "Referer": "https://pw.live/",
                 "Accept": "application/json"
             }
         });
-
-        if (response.status === 429) {
-            return new Response(JSON.stringify({ error: "Rate limit exceeded" }), { status: 429, headers });
-        }
 
         if (!response.ok) {
             return new Response(JSON.stringify({ error: `External API responded with status ${response.status}` }), { status: response.status, headers });
