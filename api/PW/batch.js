@@ -1,24 +1,37 @@
-export default async function handler(req, res) {
-    // Aapke purane format ke parameters
-    const { batchId, subjectId } = req.query;
+export async function onRequest(context) {
+    const { request, env } = context;
+    const url = new URL(request.url);
+    
+    // Query parameters nikalna
+    const batchId = url.searchParams.get('batchId');
+    const subjectId = url.searchParams.get('subjectId');
 
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    // CORS Headers
+    const corsHeaders = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Content-Type': 'application/json; charset=utf-8'
+    };
 
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
+    // Preflight request handle karna
+    if (request.method === 'OPTIONS') {
+        return new Response(null, {
+            status: 200,
+            headers: corsHeaders
+        });
     }
 
     if (!batchId || !subjectId) {
-        return res.status(400).json({ 
+        return new Response(JSON.stringify({ 
             error: "Required parameters (batchId, subjectId) missing." 
+        }), {
+            status: 400,
+            headers: corsHeaders
         });
     }
 
     try {
-        // Target API ke liye parameters ko wahan ke format mein convert kiya hai
         const targetUrl = `https://eduvibe-pw-api.wasmer.app/chapters.php?batch_id=${batchId}&subject_id=${subjectId}`;
 
         const response = await fetch(targetUrl, {
@@ -30,10 +43,19 @@ export default async function handler(req, res) {
         if (!response.ok) throw new Error("Wasmer cluster chapters response failed");
 
         const data = await response.json();
-        return res.status(200).json(data);
+
+        return new Response(JSON.stringify(data), {
+            status: 200,
+            headers: corsHeaders
+        });
 
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ error: "Failed to fetch data securely from core network." });
+        return new Response(JSON.stringify({ 
+            error: "Failed to fetch data securely from core network." 
+        }), {
+            status: 500,
+            headers: corsHeaders
+        });
     }
 }
