@@ -1,6 +1,10 @@
 export async function onRequest(context) {
     const { request } = context;
     const url = new URL(request.url);
+    
+    const referer = request.headers.get('referer') || '';
+    const origin = request.headers.get('origin') || '';
+    const clientKey = url.searchParams.get('key');
     const batchId = url.searchParams.get('batchId');
     const subjectId = url.searchParams.get('subjectId');
 
@@ -13,6 +17,14 @@ export async function onRequest(context) {
 
     if (request.method === 'OPTIONS') {
         return new Response(null, { status: 200, headers });
+    }
+
+    if (clientKey !== 'TheDevcoderZ') {
+        return new Response(JSON.stringify({ error: "Unauthorized access. Invalid key." }), { status: 403, headers });
+    }
+
+    if (!referer.includes('devcoderz-pw-7lw.pages.dev') && !origin.includes('devcoderz-pw-7lw.pages.dev')) {
+        return new Response(JSON.stringify({ error: "Forbidden request source." }), { status: 403, headers });
     }
 
     if (!batchId || !subjectId) {
@@ -28,7 +40,10 @@ export async function onRequest(context) {
         if (!response.ok) throw new Error();
         const data = await response.json();
 
-        return new Response(JSON.stringify(data), { status: 200, headers });
+        const jsonString = JSON.stringify(data);
+        const encodedData = btoa(encodeURIComponent(jsonString));
+
+        return new Response(JSON.stringify({ encryptedData: encodedData }), { status: 200, headers });
     } catch (e) {
         return new Response(JSON.stringify({ error: "Failed to fetch data." }), { status: 500, headers });
     }
