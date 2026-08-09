@@ -16,7 +16,7 @@ export async function onRequest(context) {
     }
 
     if (!batchId || !subjectId) {
-        return new Response(JSON.stringify({ error: "Required parameters (batchId, subjectId) missing." }), { status: 400, headers });
+        return new Response(JSON.stringify({ error: "Required parameters missing." }), { status: 400, headers });
     }
 
     try {
