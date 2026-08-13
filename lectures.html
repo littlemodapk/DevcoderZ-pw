@@ -38,7 +38,7 @@
         }
 
         async function fetchContent(page) {
-            const api1 = `https://devcoderz-backend.vercel.app/api/lectures?batchId=${bId}&subjectId=${sId}&contentType=${currentTab}&tag=${tId}&page=${page}`;
+            const api1 = `https://devcoderz-backend.vercel.app/api/notes?batchId=${bId}&subjectId=${sId}&contentType=${currentTab}&tag=${tId}&page=${page}`;
             const api2 = `https://devcoderz-backend.vercel.app/api/notes?batchId=${bId}&subjectId=${sId}&contentType=${currentTab}&tag=${tId}&page=${page}`;
             const url = (page === 1) ? api1 : api2;
             const res = await fetch(url);
