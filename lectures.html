@@ -67,6 +67,8 @@
                         const topicName = item.topic || (item.videoDetails && item.videoDetails.name) || 'Untitled';
                         const videoImg = (item.videoDetails && item.videoDetails.image) || '';
                         const lectureType = item.lectureType || 'Lecture';
+                        
+                        // Yahan tags array se _id nikal kar typeId set kar diya gaya hai
                         const typeId = (item.tags && item.tags[0] && item.tags[0]._id) || '';
 
                         div.innerHTML = `<div class="flex-1"><h3 class="font-bold text-sm text-gray-800">${topicName}</h3></div>
