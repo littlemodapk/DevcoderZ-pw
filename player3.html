@@ -6,39 +6,28 @@
     <title>Video Player</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-black h-screen w-screen overflow-hidden flex flex-col">
-    
-    <!-- Top Navigation Bar -->
+<body class="bg-black fixed inset-0 w-screen h-screen overflow-hidden flex flex-col m-0 p-0">
     <nav class="h-14 bg-gray-900 border-b border-gray-800 flex items-center px-4 z-20 shrink-0">
-        <button onclick="history.back()" class="text-white bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-lg font-bold text-xs">← Back</button>
+        <button onclick="history.back()" class="text-white bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-lg font-bold text-xs cursor-pointer">← Back</button>
         <h1 id="pageTitle" class="ml-4 font-bold text-white text-sm truncate">Loading Player...</h1>
     </nav>
-
-    <!-- Iframe Container (Full Screen) -->
-    <div class="flex-1 w-full h-full relative bg-black">
+    <div class="relative w-full flex-1 bg-black overflow-hidden">
         <iframe 
             id="marcoPlayer"
             src="" 
-            class="absolute inset-0 w-full h-full border-none" 
+            class="absolute top-0 left-0 w-full h-full border-none m-0 p-0" 
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
             allowfullscreen>
         </iframe>
     </div>
-
     <script>
-        // URL se path parameters nikalne ka tareeka: ?batchId/subjectId/videoId
         const pathQuery = window.location.search.replace('?', '');
         const parts = pathQuery.split('/');
-
         if (parts.length >= 3) {
             const batchId = parts[0];
             const subjectId = parts[1];
             const videoId = parts[2];
-
-            // Target URL format jo aapne bataya hai
             const marcoUrl = `https://marco-player.pages.dev/player/api/${batchId}/${subjectId}/${videoId}/marco-player`;
-            
-            // Iframe mein source set kar dena
             document.getElementById('marcoPlayer').src = marcoUrl;
             document.getElementById('pageTitle').innerText = `Player - ${videoId}`;
         } else {
