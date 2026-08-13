@@ -104,11 +104,9 @@
             const query2 = `?batchId=${batchId}&subjectId=${subjectId}&topicId=${topicId}&lectureId=${lectureId}&typeId=${typeId}&videoUrl=${videoUrl}&videoName=${videoName}&videoImg=${videoImg}&playType=Lecture&video_type=new`;
             const pathQuery = `?${batchId}/${subjectId}/${lectureId}`;
 
-            document.getElementById('p1Btn').onclick = () => window.location.href = 'player.html' + pathQuery;
+            document.getElementById('p1Btn').onclick = () => window.location.href = 'player3.html' + pathQuery;
             document.getElementById('p2Btn').onclick = () => window.location.href = 'player2.html' + query2;
-            document.getElementById('p3Btn').onclick = () => window.location.href = 'player3.html' + pathQuery;
-        }
-
+            
         loadContent();
     </script>
 </body>
