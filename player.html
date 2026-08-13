@@ -1,288 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DevCoderz Ultra Smooth Player</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:sans-serif;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
-html,body{width:100%;height:100%;background:#000;overflow:hidden;touch-action:none}
-.player{position:fixed;inset:0;background:#000;pointer-events:auto;touch-action:manipulation}
-video{width:100%;height:100%;object-fit:contain}
-.top-brand{position:absolute;top:6px;left:50%;transform:translateX(-50%);z-index:40;text-align:center;pointer-events:none}
-.top-brand .jsr{color:#ff9800;font-weight:700;font-size:14px}
-.top-brand .dev{margin-top:4px;font-size:12px;font-weight:600;color:#00e5ff;text-shadow:0 0 6px #00e5ff, 0 0 12px #00e5ff}
-.center-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:30;cursor:pointer}
-.center-play.hide{display:none}
-.center-play span{width:90px;height:90px;background:rgba(255,255,255,.25);backdrop-filter:blur(5px);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;color:#fff}
-.controls{position:absolute;bottom:0;width:100%;padding:10px;background:linear-gradient(transparent,rgba(0,0,0,.9));transition:.3s;z-index:35;touch-action:none}
-.controls.hide{transform:translateY(100%);opacity:0}
-.progress{height:7px;background:#555;border-radius:10px;position:relative;margin-bottom:6px;touch-action:none;cursor:pointer}
-.progress-fill{height:100%;width:0;background:#2196f3;border-radius:10px;pointer-events:none}
-.thumb{position:absolute;top:50%;width:18px;height:18px;background:#fff;border-radius:50%;transform:translate(-50%,-50%);left:0;pointer-events:none}
-.time{color:#fff;font-size:11px;text-align:right;margin-bottom:4px}
-.row{display:flex;align-items:center;gap:6px;justify-content:space-between;color:#fff}
-.btn{width:40px;height:40px;border:1.5px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer}
-#play{font-size:0}
-#play::before{content:"▶";font-size:16px}
-#play.pause::before{content:"❚❚";font-size:14px}
-.settings{position:absolute;bottom:70px;right:10px;background:#111;border-radius:12px;padding:12px;width:160px;display:none;z-index:50}
-.settings label{color:#aaa;font-size:10px;display:block;margin-bottom:4px}
-.settings select{width:100%;background:#000;color:#fff;border:1px solid #555;border-radius:4px;height:24px;margin-bottom:10px}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:100}
-.box{width:320px;padding:26px;border-radius:22px;text-align:center;background:linear-gradient(135deg,#1e3c72,#2a5298);color:#fff}
-.tg-btn{display:block;margin-top:14px;padding:14px;border-radius:28px;font-weight:700;width:100%;cursor:pointer;text-align:center;text-decoration:none;color:#fff}
-.join{background:#fff;color:#1e3c72}
-.continue{background:rgba(0,0,0,.25);border:1px solid #fff}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            overflow: hidden;
+        }
+        .player-container {
+            width: 100%;
+            height: 100%;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+    </style>
 </head>
 <body>
-<div class="overlay" id="tgPopup">
- <div class="box">
-  <h2>Join our Telegram</h2>
-  <a class="tg-btn join" href="https://t.me/+JXdxtVzQf-NhM2Jl" target="_blank">Join Telegram</a>
-  <div class="tg-btn continue" id="continueBtn">Continue to Video</div>
- </div>
-</div>
-<div class="player" id="player">
- <video id="video" playsinline></video>
- <div class="top-brand">
-  <div class="jsr">🚩 Jai Shree Ram 🚩</div>
-  <div class="dev">Developed by - Devansh Sharma</div>
- </div>
- <div class="center-play" id="centerPlay"><span>▶</span></div>
- <div class="controls hide" id="controls">
-  <div class="progress" id="progress"><div class="progress-fill" id="bar"></div><div class="thumb" id="thumb"></div></div>
-  <div class="time" id="time">00:00:00 / 00:00:00</div>
-  <div class="row">
-   <div class="btn" id="back">⟲10</div>
-   <div class="btn" id="play"></div>
-   <div class="btn" id="fwd">10⟳</div>
-   <div class="btn" id="settingsBtn">⚙️</div>
-   <div class="btn" id="fs">⛶</div>
-  </div>
- </div>
- <div class="settings" id="settings">
-  <label>Speed</label>
-  <select id="speed">
-   <option value="1" selected>1x</option>
-   <option value="1.25">1.25x</option>
-   <option value="1.5">1.5x</option>
-   <option value="1.75">1.75x</option>
-   <option value="2">2x</option>
-  </select>
-  <label>Quality</label>
-  <select id="quality"><option value="-1">AUTO</option></select>
- </div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/shaka-player@4.3.5/dist/shaka-player.compiled.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-<script>
-const player=document.getElementById("player"),v=document.getElementById("video"),playBtn=document.getElementById("play"),back=document.getElementById("back"),fwd=document.getElementById("fwd"),fs=document.getElementById("fs"),controls=document.getElementById("controls"),centerPlay=document.getElementById("centerPlay"),progress=document.getElementById("progress"),bar=document.getElementById("bar"),thumb=document.getElementById("thumb"),tgPopup=document.getElementById("tgPopup"),continueBtn=document.getElementById("continueBtn"),timeDisplay=document.getElementById("time"),settings=document.getElementById("settings"),settingsBtn=document.getElementById("settingsBtn"),speed=document.getElementById("speed"),quality=document.getElementById("quality");
-let drag=false,hideTimer,hls,shakaPlayer,wasPlaying=false;
+    <div class="player-container">
+        <iframe id="marcoPlayer" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+    </div>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const batchId = params.get('batchId') || '';
+        const subjectId = params.get('subjectId') || '';
+        const topicId = params.get('topicId') || '';
+        const lectureId = params.get('lectureId') || '';
+        const typeId = params.get('typeId') || '';
+        const videoUrl = encodeURIComponent(params.get('videoUrl') || '');
+        const videoName = encodeURIComponent(params.get('videoName') || '');
+        const videoImg = encodeURIComponent(params.get('videoImg') || '');
 
-const urlParams=new URLSearchParams(location.search);
-const batchId = urlParams.get("batchId") || "";
-const subjectId = urlParams.get("subjectId") || "";
-const videoId = urlParams.get("videoId") || "";
-const rawUrl = urlParams.get("Url");
-
-async function initPlayer() {
-    let videoUrl = "";
-    let drmData = null;
-
-    if (rawUrl) {
-        videoUrl = decodeURIComponent(rawUrl);
-    } else if (batchId && subjectId && videoId) {
-        try {
-            const res = await fetch(`https://devcoderz-backend.vercel.app/api/player?batchId=${batchId}&subjectId=${subjectId}&videoId=${videoId}`);
-            const json = await res.json();
-            if (json && json.success && json.data) {
-                if (json.data.drm && json.data.drm.keyId && json.data.drm.keyValue) {
-                    videoUrl = json.data.videoUrl;
-                    drmData = json.data.drm;
-                } else if (json.data.proxiedVideoUrl) {
-                    videoUrl = json.data.proxiedVideoUrl;
-                }
-            }
-        } catch (e) {
-            console.error("Error fetching content details", e);
-        }
-    }
-
-    if (videoUrl) {
-        if (drmData && shaka && shaka.Player.isBrowserSupported()) {
-            shaka.polyfill.installAll();
-            shakaPlayer = new shaka.Player(v);
-            shakaPlayer.configure({
-                drm: {
-                    clearKeys: {
-                        [drmData.keyId]: drmData.keyValue
-                    }
-                }
-            });
-            try {
-                await shakaPlayer.load(videoUrl);
-            } catch (e) {
-                fallbackToHlsOrProxied(videoUrl);
-            }
+        if (batchId && subjectId && lectureId) {
+            const dynamicUrl = `https://vid-stream-marco.vercel.app/play.php?batch_id=${batchId}&program_id=&subject_id=${subjectId}&topic_id=${topicId}&video_id=${lectureId}&typeId=${typeId}&video_url=${videoUrl}&video_name=${videoName}&video_img=${videoImg}&video_type=new&play_type=Lecture`;
+            document.getElementById('marcoPlayer').src = dynamicUrl;
         } else {
-            loadStream(videoUrl);
+            document.body.innerHTML = '<div style="color:white; text-align:center; padding-top:20vh; font-family:sans-serif;"><h2>Error: Missing Player IDs!</h2></div>';
         }
-    }
-}
-
-function loadStream(videoUrl) {
-    if (Hls.isSupported()) {
-        hls = new Hls({
-            maxBufferLength: 30,
-            maxMaxBufferLength: 60,
-            startFragPrefetch: true,
-            liveSyncDurationCount: 3,
-            highBufferWatchdogPeriod: 2
-        });
-        hls.loadSource(videoUrl);
-        hls.attachMedia(v);
-        hls.on(Hls.Events.MANIFEST_PARSED,()=>{
-            quality.innerHTML='<option value="-1">AUTO</option>';
-            hls.levels.forEach((l,i)=>{let o=document.createElement("option");o.value=i;o.text=l.height+"p";quality.appendChild(o);});
-        });
-        hls.on(Hls.Events.LEVEL_SWITCHED,(e,data)=>{
-            quality.value=data.level;
-        });
-        hls.on(Hls.Events.ERROR, function(event, data) {
-            if (data.fatal) {
-                switch (data.type) {
-                    case Hls.ErrorTypes.NETWORK_ERROR:
-                        hls.startLoad();
-                        break;
-                    case Hls.ErrorTypes.MEDIA_ERROR:
-                        hls.recoverMediaError();
-                        break;
-                    default:
-                        hls.destroy();
-                        break;
-                }
-            }
-        });
-    } else if (v.canPlayType('application/vnd.apple.mpegurl')) {
-        v.src = videoUrl;
-    }
-}
-
-async function fallbackToHlsOrProxied(originalVideoUrl) {
-    if (shakaPlayer) {
-        await shakaPlayer.destroy();
-        shakaPlayer = null;
-    }
-    try {
-        const res = await fetch(`https://devcoderz-backend.vercel.app/api/player?batchId=${batchId}&subjectId=${subjectId}&videoId=${videoId}`);
-        const json = await res.json();
-        if (json && json.success && json.data && json.data.proxiedVideoUrl) {
-            loadStream(json.data.proxiedVideoUrl);
-        } else {
-            loadStream(originalVideoUrl);
-        }
-    } catch (err) {
-        loadStream(originalVideoUrl);
-    }
-}
-
-initPlayer();
-
-function fmt(t){if(!t||isNaN(t)||t===Infinity)return"00:00:00";let h=Math.floor(t/3600),m=Math.floor((t%3600)/60),s=Math.floor(t%60);return[h,m,s].map(n=>String(n).padStart(2,"0")).join(":");}
-function updateProgressUI(percent, currentTime, duration){
-    bar.style.width=percent+"%";
-    thumb.style.left=percent+"%";
-    timeDisplay.innerText=`${fmt(currentTime)} / ${fmt(duration)}`;
-}
-function safePlay(){v.play().catch(()=>{v.muted=true;v.play();});}
-function show(f=false){controls.classList.remove("hide");clearTimeout(hideTimer);if(!f)hideTimer=setTimeout(()=>controls.classList.add("hide"),3000);}
-
-continueBtn.onclick=e=>{e.preventDefault();e.stopPropagation();tgPopup.style.display="none";centerPlay.classList.remove("hide");controls.classList.remove("hide");show();};
-centerPlay.onclick=e=>{e.preventDefault();e.stopPropagation();safePlay();};
-playBtn.onclick=e=>{e.preventDefault();e.stopPropagation();v.paused?safePlay():v.pause();};
-back.onclick=e=>{e.preventDefault();e.stopPropagation();v.currentTime=Math.max(0,v.currentTime-10);show(true);};
-fwd.onclick=e=>{e.preventDefault();e.stopPropagation();v.currentTime=Math.min(v.duration,v.currentTime+10);show(true);};
-settingsBtn.onclick=e=>{e.preventDefault();e.stopPropagation();settings.style.display=(settings.style.display==="block"?"none":"block");show(true);};
-speed.onchange=e=>{v.playbackRate=parseFloat(speed.value);};
-quality.onchange=e=>{if(hls)hls.currentLevel=parseInt(quality.value);};
-
-fs.onclick = async e => {
-    e.preventDefault();
-    e.stopPropagation();
-    try {
-        if (!document.fullscreenElement) {
-            await player.requestFullscreen();
-            if (screen.orientation && screen.orientation.lock) {
-                await screen.orientation.lock('landscape').catch(() => {});
-            }
-        } else {
-            if (screen.orientation && screen.orientation.unlock) {
-                screen.orientation.unlock();
-            }
-            await document.exitFullscreen();
-        }
-    } catch (err) {}
-};
-
-function getPosition(e){
-    const rect=progress.getBoundingClientRect();
-    const clientX=e.touches?e.touches[0].clientX:e.clientX;
-    let pos=(clientX-rect.left)/rect.width;
-    return Math.max(0,Math.min(1,pos));
-}
-
-progress.onpointerdown=e=>{
-    e.preventDefault();
-    e.stopPropagation();
-    drag=true;
-    wasPlaying=!v.paused;
-    v.pause();
-    progress.setPointerCapture(e.pointerId);
-    let pos=getPosition(e);
-    if(v.duration){
-        v.currentTime=pos*v.duration;
-        updateProgressUI(pos*100,v.currentTime,v.duration);
-    }
-};
-
-progress.onpointermove=e=>{
-    if(!drag)return;
-    e.preventDefault();
-    e.stopPropagation();
-    let pos=getPosition(e);
-    if(v.duration){
-        v.currentTime=pos*v.duration;
-        updateProgressUI(pos*100,v.currentTime,v.duration);
-    }
-};
-
-progress.onpointerup=e=>{
-    if(!drag)return;
-    e.preventDefault();
-    e.stopPropagation();
-    drag=false;
-    try{progress.releasePointerCapture(e.pointerId);}catch(err){}
-    if(wasPlaying){safePlay();}
-};
-
-v.ontimeupdate=()=>{
-    if(!drag&&v.duration){
-        updateProgressUI((v.currentTime/v.duration)*100,v.currentTime,v.duration);
-    }
-};
-
-v.onloadedmetadata=()=>{
-    if(v.duration){
-        updateProgressUI(0,v.currentTime,v.duration);
-    }
-};
-
-v.onplay=()=>{playBtn.classList.add("pause");centerPlay.classList.add("hide");show();};
-v.onpause=()=>{playBtn.classList.remove("pause");centerPlay.classList.remove("hide");show(true);};
-
-player.onclick=e=>{e.preventDefault();if(tgPopup.style.display!=="none")return;if(e.target===v||e.target===player){if(controls.classList.contains("hide"))show();else{controls.classList.add("hide");settings.style.display="none";}}};
-</script>
+    </script>
 </body>
 </html>
