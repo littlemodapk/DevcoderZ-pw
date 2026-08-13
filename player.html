@@ -81,20 +81,21 @@ const player=document.getElementById("player"),v=document.getElementById("video"
 let drag=false,hideTimer,hls,wasPlaying=false;
 
 const urlParams=new URLSearchParams(location.search);
-const contentId = urlParams.get("contentId") || "22655";
-const courseId = urlParams.get("courseId") || "178";
+const batchId = urlParams.get("batchId") || "";
+const subjectId = urlParams.get("subjectId") || "";
+const videoId = urlParams.get("videoId") || "";
 const rawUrl = urlParams.get("Url");
 
 async function initPlayer() {
     let videoUrl = "";
     if (rawUrl) {
         videoUrl = decodeURIComponent(rawUrl);
-    } else {
+    } else if (batchId && subjectId && videoId) {
         try {
-            const res = await fetch(``);
+            const res = await fetch(`https://devcoderz-backend.vercel.app/api/player?batchId=${batchId}&subjectId=${subjectId}&videoId=${videoId}`);
             const json = await res.json();
-            if (json && json.data && json.data.decryptedData) {
-                videoUrl = json.data.decryptedData.file_url;
+            if (json && json.success && json.data && json.data.proxiedVideoUrl) {
+                videoUrl = json.data.proxiedVideoUrl;
             }
         } catch (e) {
             console.error("Error fetching content details", e);
