@@ -38,11 +38,14 @@
         }
 
         async function fetchContent(page) {
-            const api1 = `https://devcoderz-backend.vercel.app/api/notes?batchId=${bId}&subjectId=${sId}&contentType=${currentTab}&tag=${tId}&page=${page}`;
-            const api2 = `https://devcoderz-backend.vercel.app/api/notes?batchId=${bId}&subjectId=${sId}&contentType=${currentTab}&tag=${tId}&page=${page}`;
-            const url = (page === 1) ? api1 : api2;
+            const url = `https://devcoderz-backend.vercel.app/api/lectures?batchSlug=${bId}&subjectSlug=${sId}&contentType=${currentTab}&tag=${tId}&page=${page}`;
             const res = await fetch(url);
-            return await res.json();
+            const json = await res.json();
+            if (json.encryptedData) {
+                const decodedString = decodeURIComponent(escape(atob(json.encryptedData)));
+                return JSON.parse(decodedString);
+            }
+            return json;
         }
 
         async function loadContent(isLoadMore = false) {
