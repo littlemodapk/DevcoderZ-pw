@@ -25,7 +25,6 @@
             <h2 class="text-lg font-bold mb-4">Select Player</h2>
             <button id="p1Btn" class="w-full bg-blue-600 text-white py-2 rounded-lg font-bold">Player 1</button>
             <button id="p2Btn" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-bold">Player 2</button>
-            <button id="p3Btn" class="w-full bg-purple-600 text-white py-2 rounded-lg font-bold">Player 3</button>
             <button onclick="document.getElementById('playerModal').classList.add('hidden')" class="w-full mt-4 text-gray-500 text-sm">Cancel</button>
         </div>
     </div>
@@ -102,10 +101,9 @@
             document.getElementById('playerModal').classList.remove('hidden');
 
             const query2 = `?batchId=${batchId}&subjectId=${subjectId}&topicId=${topicId}&lectureId=${lectureId}&typeId=${typeId}&videoUrl=${videoUrl}&videoName=${videoName}&videoImg=${videoImg}&playType=Lecture&video_type=new`;
-            const pathQuery = `?${batchId}/${subjectId}/${lectureId}`;
 
             document.getElementById('p1Btn').onclick = () => window.location.href = 'player2.html' + query2;
-            document.getElementById('p2Btn').onclick = () => window.location.href = 'player3.html' + pathQuery;
+            document.getElementById('p2Btn').onclick = () => window.location.href = 'player3.html' + query2;
         }
 
         loadContent();
