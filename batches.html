@@ -106,7 +106,7 @@
                 document.getElementById('timerText').innerText = `Class starts in ${hrs}h ${mins}m`;
                 document.getElementById('timerModal').classList.remove('hidden');
             } else {
-                window.location.href = `https://thedevcoderz-pw.pages.dev/player3?video_id=${videoId}&video_type=live`;
+                window.location.href = `/live.html?batchId=${batchId}&subjectId=${subjectId}&topicId=${topicId}&lectureId=${lectureId}&typeId=${typeId}&videoUrl=${videoUrl}&videoName=${videoName}&videoImg=${videoImg}&playType=Lecture&video_type=Live`;
             }
         }
 
