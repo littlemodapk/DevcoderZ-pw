@@ -21,10 +21,11 @@
         <button id="loadMoreBtn" onclick="loadMore()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-full font-bold text-sm">Load More</button>
     </div>
     <div id="playerModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
-        <div class="bg-white p-6 rounded-xl w-80 shadow-xl">
+        <div class="bg-white p-6 rounded-xl w-80 shadow-xl space-y-2">
             <h2 class="text-lg font-bold mb-4">Select Player</h2>
-            <button id="p1Btn" class="w-full bg-blue-600 text-white py-2 rounded-lg mb-2 font-bold">Player 1</button>
+            <button id="p1Btn" class="w-full bg-blue-600 text-white py-2 rounded-lg font-bold">Player 1</button>
             <button id="p2Btn" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-bold">Player 2</button>
+            <button id="p3Btn" class="w-full bg-purple-600 text-white py-2 rounded-lg font-bold">Player 3</button>
             <button onclick="document.getElementById('playerModal').classList.add('hidden')" class="w-full mt-4 text-gray-500 text-sm">Cancel</button>
         </div>
     </div>
@@ -67,8 +68,6 @@
                         const topicName = item.topic || (item.videoDetails && item.videoDetails.name) || 'Untitled';
                         const videoImg = (item.videoDetails && item.videoDetails.image) || '';
                         const lectureType = item.lectureType || 'Lecture';
-                        
-                        // Yahan static ID set kar di gayi hai jo aapne di thi
                         const typeId = '6a6b0bf8cc5077aa7dd1c69e';
 
                         div.innerHTML = `<div class="flex-1"><h3 class="font-bold text-sm text-gray-800">${topicName}</h3></div>
@@ -102,21 +101,12 @@
         function openPlayerModal(batchId, subjectId, topicId, lectureId, typeId, videoUrl, videoName, videoImg, lectureType) {
             document.getElementById('playerModal').classList.remove('hidden');
 
-            let m3u8Url = '';
-            const decodedVideoUrl = decodeURIComponent(videoUrl);
-            if (decodedVideoUrl) {
-                const match = decodedVideoUrl.match(/\/([a-f0-9\-]{36})\/master\.mpd/);
-                if (match && match[1]) {
-                    m3u8Url = `https://stream.pimaxer.in/${match[1]}/master.m3u8`;
-                } else {
-                    m3u8Url = decodedVideoUrl;
-                }
-            }
-            const query1 = m3u8Url ? `?Url=${encodeURIComponent(m3u8Url)}` : '';
             const query2 = `?batchId=${batchId}&subjectId=${subjectId}&topicId=${topicId}&lectureId=${lectureId}&typeId=${typeId}&videoUrl=${videoUrl}&videoName=${videoName}&videoImg=${videoImg}&playType=Lecture&video_type=new`;
+            const pathQuery = `?${batchId}/${subjectId}/${lectureId}`;
 
-            document.getElementById('p1Btn').onclick = () => window.location.href = '/player' + query1;
+            document.getElementById('p1Btn').onclick = () => window.location.href = 'player.html' + pathQuery;
             document.getElementById('p2Btn').onclick = () => window.location.href = 'player2.html' + query2;
+            document.getElementById('p3Btn').onclick = () => window.location.href = 'player3.html' + pathQuery;
         }
 
         loadContent();
