@@ -93,12 +93,17 @@
             let videoName = encodeURIComponent(item.topic || '');
             let currentBatchId = item.batchId || batchId;
             let currentSubjectId = item.subjectId?._id || item.subjectId || '';
+            let topicId = item.topicId || '';
+            let lectureId = videoId;
+            let typeId = item.typeId || '';
+            let videoUrl = item.videoDetails?.url || '';
+            let videoImg = encodeURIComponent(item.videoDetails?.image || '');
 
             const now = new Date();
             const start = new Date(item.startTime);
             const end = new Date(item.endTime);
             if (now > end) {
-                window.location.href = `/live.html?batchId=${batchId}&subjectId=${subjectId}&topicId=${topicId}&lectureId=${lectureId}&typeId=${typeId}&videoUrl=${videoUrl}&videoName=${videoName}&videoImg=${videoImg}&playType=Lecture&video_type=Live`;
+                window.location.href = `/live.html?batchId=${currentBatchId}&subjectId=${currentSubjectId}&topicId=${topicId}&lectureId=${lectureId}&typeId=${typeId}&videoUrl=${encodeURIComponent(videoUrl)}&videoName=${videoName}&videoImg=${videoImg}&playType=Lecture&video_type=Live`;
             } else if (now < start) {
                 const diff = Math.floor((start - now) / 1000);
                 const hrs = Math.floor(diff / 3600);
@@ -106,7 +111,7 @@
                 document.getElementById('timerText').innerText = `Class starts in ${hrs}h ${mins}m`;
                 document.getElementById('timerModal').classList.remove('hidden');
             } else {
-                window.location.href = `/live.html?batchId=${batchId}&subjectId=${subjectId}&topicId=${topicId}&lectureId=${lectureId}&typeId=${typeId}&videoUrl=${videoUrl}&videoName=${videoName}&videoImg=${videoImg}&playType=Lecture&video_type=Live`;
+                window.location.href = `/live.html?batchId=${currentBatchId}&subjectId=${currentSubjectId}&topicId=${topicId}&lectureId=${lectureId}&typeId=${typeId}&videoUrl=${encodeURIComponent(videoUrl)}&videoName=${videoName}&videoImg=${videoImg}&playType=Lecture&video_type=Live`;
             }
         }
 
