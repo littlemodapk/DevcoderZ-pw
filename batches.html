@@ -98,7 +98,7 @@
             const start = new Date(item.startTime);
             const end = new Date(item.endTime);
             if (now > end) {
-                window.location.href = `https://thedevcoderz-pw.pages.dev/player?batch_id=${currentBatchId}&subject_id=${currentSubjectId}&video_id=${videoId}&video_name=${videoName}&video_type=new&play_type=Lecture&enc_video_url=`;
+                window.location.href = `/live.html?batchId=${batchId}&subjectId=${subjectId}&topicId=${topicId}&lectureId=${lectureId}&typeId=${typeId}&videoUrl=${videoUrl}&videoName=${videoName}&videoImg=${videoImg}&playType=Lecture&video_type=Live`;
             } else if (now < start) {
                 const diff = Math.floor((start - now) / 1000);
                 const hrs = Math.floor(diff / 3600);
