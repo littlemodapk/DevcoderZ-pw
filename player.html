@@ -75,10 +75,11 @@ video{width:100%;height:100%;object-fit:contain}
   <select id="quality"><option value="-1">AUTO</option></select>
  </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/shaka-player@4.3.5/dist/shaka-player.compiled.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <script>
 const player=document.getElementById("player"),v=document.getElementById("video"),playBtn=document.getElementById("play"),back=document.getElementById("back"),fwd=document.getElementById("fwd"),fs=document.getElementById("fs"),controls=document.getElementById("controls"),centerPlay=document.getElementById("centerPlay"),progress=document.getElementById("progress"),bar=document.getElementById("bar"),thumb=document.getElementById("thumb"),tgPopup=document.getElementById("tgPopup"),continueBtn=document.getElementById("continueBtn"),timeDisplay=document.getElementById("time"),settings=document.getElementById("settings"),settingsBtn=document.getElementById("settingsBtn"),speed=document.getElementById("speed"),quality=document.getElementById("quality");
-let drag=false,hideTimer,hls,wasPlaying=false;
+let drag=false,hideTimer,hls,shakaPlayer,wasPlaying=false;
 
 const urlParams=new URLSearchParams(location.search);
 const batchId = urlParams.get("batchId") || "";
@@ -88,14 +89,21 @@ const rawUrl = urlParams.get("Url");
 
 async function initPlayer() {
     let videoUrl = "";
+    let drmData = null;
+
     if (rawUrl) {
         videoUrl = decodeURIComponent(rawUrl);
     } else if (batchId && subjectId && videoId) {
         try {
             const res = await fetch(`https://devcoderz-backend.vercel.app/api/player?batchId=${batchId}&subjectId=${subjectId}&videoId=${videoId}`);
             const json = await res.json();
-            if (json && json.success && json.data && json.data.proxiedVideoUrl) {
-                videoUrl = json.data.proxiedVideoUrl;
+            if (json && json.success && json.data) {
+                if (json.data.drm && json.data.drm.keyId && json.data.drm.keyValue) {
+                    videoUrl = json.data.videoUrl;
+                    drmData = json.data.drm;
+                } else if (json.data.proxiedVideoUrl) {
+                    videoUrl = json.data.proxiedVideoUrl;
+                }
             }
         } catch (e) {
             console.error("Error fetching content details", e);
@@ -103,41 +111,80 @@ async function initPlayer() {
     }
 
     if (videoUrl) {
-        if (Hls.isSupported()) {
-            hls = new Hls({
-                maxBufferLength: 30,
-                maxMaxBufferLength: 60,
-                startFragPrefetch: true,
-                liveSyncDurationCount: 3,
-                highBufferWatchdogPeriod: 2
-            });
-            hls.loadSource(videoUrl);
-            hls.attachMedia(v);
-            hls.on(Hls.Events.MANIFEST_PARSED,()=>{
-                quality.innerHTML='<option value="-1">AUTO</option>';
-                hls.levels.forEach((l,i)=>{let o=document.createElement("option");o.value=i;o.text=l.height+"p";quality.appendChild(o);});
-            });
-            hls.on(Hls.Events.LEVEL_SWITCHED,(e,data)=>{
-                quality.value=data.level;
-            });
-            hls.on(Hls.Events.ERROR, function(event, data) {
-                if (data.fatal) {
-                    switch (data.type) {
-                        case Hls.ErrorTypes.NETWORK_ERROR:
-                            hls.startLoad();
-                            break;
-                        case Hls.ErrorTypes.MEDIA_ERROR:
-                            hls.recoverMediaError();
-                            break;
-                        default:
-                            hls.destroy();
-                            break;
+        if (drmData && shaka && shaka.Player.isBrowserSupported()) {
+            shaka.polyfill.installAll();
+            shakaPlayer = new shaka.Player(v);
+            shakaPlayer.configure({
+                drm: {
+                    clearKeys: {
+                        [drmData.keyId]: drmData.keyValue
                     }
                 }
             });
-        } else if (v.canPlayType('application/vnd.apple.mpegurl')) {
-            v.src = videoUrl;
+            try {
+                await shakaPlayer.load(videoUrl);
+            } catch (e) {
+                fallbackToHlsOrProxied(videoUrl);
+            }
+        } else {
+            loadStream(videoUrl);
         }
+    }
+}
+
+function loadStream(videoUrl) {
+    if (Hls.isSupported()) {
+        hls = new Hls({
+            maxBufferLength: 30,
+            maxMaxBufferLength: 60,
+            startFragPrefetch: true,
+            liveSyncDurationCount: 3,
+            highBufferWatchdogPeriod: 2
+        });
+        hls.loadSource(videoUrl);
+        hls.attachMedia(v);
+        hls.on(Hls.Events.MANIFEST_PARSED,()=>{
+            quality.innerHTML='<option value="-1">AUTO</option>';
+            hls.levels.forEach((l,i)=>{let o=document.createElement("option");o.value=i;o.text=l.height+"p";quality.appendChild(o);});
+        });
+        hls.on(Hls.Events.LEVEL_SWITCHED,(e,data)=>{
+            quality.value=data.level;
+        });
+        hls.on(Hls.Events.ERROR, function(event, data) {
+            if (data.fatal) {
+                switch (data.type) {
+                    case Hls.ErrorTypes.NETWORK_ERROR:
+                        hls.startLoad();
+                        break;
+                    case Hls.ErrorTypes.MEDIA_ERROR:
+                        hls.recoverMediaError();
+                        break;
+                    default:
+                        hls.destroy();
+                        break;
+                }
+            }
+        });
+    } else if (v.canPlayType('application/vnd.apple.mpegurl')) {
+        v.src = videoUrl;
+    }
+}
+
+async function fallbackToHlsOrProxied(originalVideoUrl) {
+    if (shakaPlayer) {
+        await shakaPlayer.destroy();
+        shakaPlayer = null;
+    }
+    try {
+        const res = await fetch(`https://devcoderz-backend.vercel.app/api/player?batchId=${batchId}&subjectId=${subjectId}&videoId=${videoId}`);
+        const json = await res.json();
+        if (json && json.success && json.data && json.data.proxiedVideoUrl) {
+            loadStream(json.data.proxiedVideoUrl);
+        } else {
+            loadStream(originalVideoUrl);
+        }
+    } catch (err) {
+        loadStream(originalVideoUrl);
     }
 }
 
