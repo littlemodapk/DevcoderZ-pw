@@ -1,46 +1,47 @@
-const express = require('express');
-const cors = require('cors');
 const axios = require('axios');
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-app.use(cors());
-app.use(express.json());
-
-// Aapka apna domain jo response mein replace hokar aayega
-const MY_DOMAIN = 'devcoderz-backend.vercel.app';
-
-app.get('/batch/:bId/subject/:sId/video/:vId', async (req, res) => {
-    const { bId, sId, vId } = req.params;
-    const targetApiUrl = `https://rangexcoder-api.vercel.app/batch/${bId}/subject/${sId}/video/${vId}`;
+module.exports = async (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Access-Control-Allow-Origin', '*');
 
     try {
-        // 1. Background mein original API se data fetch karna
-        const apiResponse = await axios.get(targetApiUrl);
-        let responseData = apiResponse.data;
+        let bId, sId, vId;
 
-        // 2. Data ko string mein convert karke unke domains ko apne domain se badalna
-        let jsonString = JSON.stringify(responseData);
+        const rawUrl = req.url || '';
+        const cleanUrl = rawUrl.split('?')[0];
+        const pathParts = cleanUrl.split('/').filter(Boolean);
+        const playerIndex = pathParts.indexOf('player');
 
-        jsonString = jsonString
-            .replace(/rolexcoderz\.com/g, MY_DOMAIN)
-            .replace(/rangexcoder\.vercel\.app/g, MY_DOMAIN);
+        if (playerIndex !== -1 && pathParts.length >= playerIndex + 3) {
+            bId = pathParts[playerIndex + 1];
+            sId = pathParts[playerIndex + 2];
+            vId = pathParts[playerIndex + 3];
+        } else if (req.query && req.query.ids) {
+            const parts = req.query.ids.split('/');
+            if (parts.length >= 3) {
+                bId = parts[0];
+                sId = parts[1];
+                vId = parts[2];
+            }
+        } else if (req.query && req.query.batchId && req.query.subjectId && req.query.videoId) {
+            bId = req.query.batchId;
+            sId = req.query.subjectId;
+            vId = req.query.videoId;
+        }
 
-        // 3. Wapas JSON format mein parse karke client ko bhejna
-        const finalData = JSON.parse(jsonString);
-        res.json(finalData);
+        if (!bId || !sId || !vId) {
+            return res.status(400).json({ success: false, message: "Missing required parameters" });
+        }
 
+        const targetUrl = `https://rangexcoder-api.vercel.app/batch/${bId}/subject/${sId}/video/${vId}`;
+        const response = await axios.get(targetUrl);
+
+        let jsonString = JSON.stringify(response.data)
+            .replace(/rolexcoderz\.com/g, 'devcoderz-backend.vercel.app')
+            .replace(/rangexcoder\.vercel\.app/g, 'devcoderz-backend.vercel.app');
+
+        return res.status(200).send(jsonString);
     } catch (error) {
-        console.error('Proxy Error:', error.message);
-        res.status(500).json({ 
-            success: false, 
-            error: 'Failed to fetch data from target API', 
-            details: error.message 
-        });
+        return res.status(500).json({ success: false, error: error.message });
     }
-});
-
-app.listen(PORT, () => {
-    console.log(`DevCoderz Proxy Server running on port ${PORT}`);
-});
+};
