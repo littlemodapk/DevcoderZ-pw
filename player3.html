@@ -7,15 +7,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-black fixed inset-0 w-screen h-screen overflow-hidden flex flex-col m-0 p-0">
-    <nav class="h-14 bg-gray-900 border-b border-gray-800 flex items-center px-4 z-20 shrink-0">
-        <button onclick="history.back()" class="text-white bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-lg font-bold text-xs cursor-pointer">← Back</button>
-        <h1 id="pageTitle" class="ml-4 font-bold text-white text-sm truncate">Loading Player...</h1>
-    </nav>
     <div class="relative w-full flex-1 bg-black overflow-hidden">
         <iframe 
             id="marcoPlayer"
             src="" 
             class="absolute top-0 left-0 w-full h-full border-none m-0 p-0" 
+            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
             allowfullscreen>
         </iframe>
@@ -29,7 +26,6 @@
             const videoId = parts[2];
             const marcoUrl = `https://marco-player.pages.dev/player/api/${batchId}/${subjectId}/${videoId}/marco-player`;
             document.getElementById('marcoPlayer').src = marcoUrl;
-            document.getElementById('pageTitle').innerText = `Player - ${videoId}`;
         } else {
             document.body.innerHTML = '<div class="text-white flex items-center justify-center h-full font-bold">Invalid Video Parameters!</div>';
         }
