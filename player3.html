@@ -6,26 +6,53 @@
     <title>Video Player</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .crop-frame {
-            clip-path: inset(50px 0px 0px 0px);
+        #playerContainer {
+            position: relative;
             width: 100%;
-            height: calc(100% + 50px);
-            position: absolute;
-            top: -50px;
-        }
-        :fullscreen .crop-frame {
-            clip-path: none;
             height: 100%;
+            overflow: hidden;
+        }
+
+        #marcoPlayer {
+            position: absolute;
             top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Yeh hai wo jaadui overlay jo button chhupayega */
+        .back-button-blocker {
+            position: absolute;
+            top: 0;
+            left: 0;
+            /* Button jitni height aur width yahan set karein (approx 50px) */
+            width: 100%; 
+            height: 50px; 
+            background-color: black; /* Ya transparent agar video ke upar rakhna ho */
+            z-index: 10; /* Iframe ke upar rahega */
+            pointer-events: auto; /* Click block karega */
+        }
+
+        /* Fullscreen hone par blocker ko hata dein */
+        :fullscreen .back-button-blocker {
+            display: none;
+        }
+        /* Android fullscreen fix */
+        :-webkit-full-screen .back-button-blocker {
+            display: none;
         }
     </style>
 </head>
 <body class="bg-black fixed inset-0 w-screen h-screen overflow-hidden flex flex-col m-0 p-0">
-    <div id="playerContainer" class="relative w-full flex-1 bg-black overflow-hidden">
+    <div id="playerContainer">
+        <!-- Yeh wo div hai jo back button wale area ko dhak lega -->
+        <div class="back-button-blocker"></div>
+        
         <iframe 
             id="marcoPlayer"
             src="" 
-            class="crop-frame border-none m-0 p-0" 
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
             allowfullscreen>
         </iframe>
