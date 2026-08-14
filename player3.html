@@ -5,13 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Player</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .crop-frame {
+            clip-path: inset(50px 0px 0px 0px);
+            width: 100%;
+            height: calc(100% + 50px);
+            position: absolute;
+            top: -50px;
+        }
+        :fullscreen .crop-frame {
+            clip-path: none;
+            height: 100%;
+            top: 0;
+        }
+    </style>
 </head>
 <body class="bg-black fixed inset-0 w-screen h-screen overflow-hidden flex flex-col m-0 p-0">
-    <div class="relative w-full flex-1 bg-black overflow-hidden">
+    <div id="playerContainer" class="relative w-full flex-1 bg-black overflow-hidden">
         <iframe 
             id="marcoPlayer"
             src="" 
-            class="absolute top-0 left-0 w-full h-full border-none m-0 p-0" 
+            class="crop-frame border-none m-0 p-0" 
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
             allowfullscreen>
         </iframe>
