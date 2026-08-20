@@ -1,20 +1,76 @@
-    <div id="tabsContainer" class="flex gap-2 p-4 overflow-x-auto bg-white">
-        <button onclick="changeTab('LECTURES', this)" class="tab-btn px-4 py-2 rounded-full bg-indigo-600 text-white text-sm font-bold">Lectures</button>
-        <button onclick="changeTab('NOTES', this)" class="tab-btn px-4 py-2 rounded-full bg-white border text-sm font-bold">Notes</button>
-        <button onclick="changeTab('DPP_PDF', this)" class="tab-btn px-4 py-2 rounded-full bg-white border text-sm font-bold">DPP</button>
-    </div>
-    <div id="contentContainer" class="p-4"></div>
-    <div id="loadMoreContainer" class="p-4 text-center hidden">
-        <button id="loadMoreBtn" onclick="loadMore()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-full font-bold text-sm">Load More</button>
-    </div>
-    <div id="playerModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
-        <div class="bg-white p-6 rounded-xl w-80 shadow-xl space-y-2">
-            <h2 class="text-lg font-bold mb-4">Select Player</h2>
-            <button id="p1Btn" class="w-full bg-blue-600 text-white py-2 rounded-lg font-bold">Player 1</button>
-            <button id="p2Btn" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-bold">Player 2</button>
-            <button onclick="document.getElementById('playerModal').classList.add('hidden')" class="w-full mt-4 text-gray-500 text-sm">Cancel</button>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Next Toppers - Content</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-amber-50 via-orange-50/30 to-yellow-50/50 min-h-screen pb-20">
+    <nav class="h-20 bg-white/80 backdrop-blur-md border-b border-amber-100/60 flex items-center justify-between px-6 sticky top-0 z-30 shadow-sm">
+        <div class="flex items-center gap-3">
+            <button onclick="history.back()" class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 hover:bg-amber-100 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <div>
+                <h1 class="font-extrabold text-gray-900 text-lg tracking-tight">Lectures & Content</h1>
+                <p class="text-xs font-semibold text-amber-600">Explore Videos & Notes</p>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-6 pt-6">
+        <div id="tabsContainer" class="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
+            <button onclick="changeTab('LECTURES', this)" class="tab-btn px-5 py-2.5 rounded-xl bg-amber-500 text-white text-sm font-extrabold shadow-md shadow-amber-500/20 transition-all flex-shrink-0">Lectures</button>
+            <button onclick="changeTab('NOTES', this)" class="tab-btn px-5 py-2.5 rounded-xl bg-white border border-amber-200 text-gray-700 text-sm font-extrabold shadow-sm transition-all flex-shrink-0">Notes</button>
+            <button onclick="changeTab('DPP_PDF', this)" class="tab-btn px-5 py-2.5 rounded-xl bg-white border border-amber-200 text-gray-700 text-sm font-extrabold shadow-sm transition-all flex-shrink-0">DPP</button>
         </div>
     </div>
+
+    <main class="max-w-7xl mx-auto px-6 py-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-extrabold text-gray-900">Available Items</h3>
+            <span id="contentCount" class="text-xs font-bold text-gray-500 bg-white px-3 py-1 rounded-lg border border-amber-100 shadow-sm">Loading...</span>
+        </div>
+
+        <div id="contentContainer" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="col-span-full flex flex-col items-center justify-center py-16">
+                <div class="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                <p class="text-sm font-bold text-gray-500">Loading contents...</p>
+            </div>
+        </div>
+
+        <div id="loadMoreContainer" class="mt-8 text-center hidden">
+            <button id="loadMoreBtn" onclick="loadMore()" class="bg-white border border-amber-200 text-amber-700 px-6 py-3 rounded-xl font-extrabold text-sm shadow-sm hover:bg-amber-50 transition">Load More</button>
+        </div>
+    </main>
+
+    <div id="playerModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white p-6 rounded-3xl w-full max-w-sm shadow-2xl border border-amber-100 space-y-4 animate-in fade-in zoom-in duration-200">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-extrabold text-gray-900">Select Player</h3>
+                <button onclick="document.getElementById('playerModal').classList.add('hidden')" class="w-8 h-8 rounded-full bg-amber-50 text-amber-700 flex items-center justify-center font-bold">✕</button>
+            </div>
+            <div class="space-y-2">
+                <button id="p1Btn" class="w-full bg-amber-500 text-white py-3 rounded-xl font-extrabold shadow-lg shadow-amber-500/20 hover:bg-amber-600 transition">Player 1</button>
+                <button id="p2Btn" class="w-full bg-gray-900 text-white py-3 rounded-xl font-extrabold shadow-lg shadow-gray-900/20 hover:bg-black transition">Player 2</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const params = new URLSearchParams(window.location.search);
         const bId = params.get("batchId"), sId = params.get("subjectId"), tId = params.get("topicId");
@@ -38,37 +94,80 @@
         async function loadContent(isLoadMore = false) {
             if (!isLoadMore) currentPage = 1;
             const container = document.getElementById('contentContainer');
-            if (!isLoadMore) container.innerHTML = '<div class="text-center mt-10">Loading...</div>';
+            const countBadge = document.getElementById('contentCount');
+            
+            if (!isLoadMore) {
+                container.innerHTML = '<div class="col-span-full flex flex-col items-center justify-center py-16"><div class="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-4"></div><p class="text-sm font-bold text-gray-500">Loading contents...</p></div>';
+            }
 
             try {
                 const json = await fetchContent(currentPage);
                 const items = json.data || [];
                 if (!isLoadMore) container.innerHTML = '';
 
-                items.forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = "bg-white p-4 mb-3 rounded-xl border flex items-center justify-between";
-                    if (currentTab === 'LECTURES') {
-                        const lId = item.lectureId || item._id;
-                        const rawVideoUrl = item.url || (item.videoDetails && item.videoDetails.videoUrl) || '';
-                        const topicName = item.topic || (item.videoDetails && item.videoDetails.name) || 'Untitled';
-                        const videoImg = (item.videoDetails && item.videoDetails.image) || '';
-                        const lectureType = item.lectureType || 'Lecture';
-                        const typeId = item.videoDetails?.id || item.videoDetails?._id || item._id;
+                if (items.length === 0 && !isLoadMore) {
+                    countBadge.innerText = '0 Items';
+                    container.innerHTML = '<div class="col-span-full text-center py-16 text-gray-500 font-semibold bg-white rounded-2xl border border-amber-100">No content available.</div>';
+                    document.getElementById('loadMoreContainer').classList.add('hidden');
+                    return;
+                }
 
-                        div.innerHTML = `<div class="flex-1"><h3 class="font-bold text-sm text-gray-800">${topicName}</h3></div>
-                                        <button class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold" onclick="openPlayerModal('${bId}', '${sId}', '${tId}', '${lId}', '${typeId}', '${encodeURIComponent(rawVideoUrl)}', '${encodeURIComponent(topicName)}', '${encodeURIComponent(videoImg)}', '${lectureType}')">Watch</button>`;
+                countBadge.innerText = `${items.length} Items`;
+
+                items.forEach(item => {
+                    const itemData = item.data || item;
+                    const card = document.createElement('div');
+                    card.className = "bg-white rounded-2xl border border-amber-100 shadow-sm hover:shadow-xl hover:border-amber-300 transition-all duration-300 p-5 flex flex-col justify-between group";
+
+                    if (currentTab === 'LECTURES') {
+                        const lId = itemData.lectureId || itemData._id;
+                        const rawVideoUrl = itemData.url || (itemData.videoDetails && itemData.videoDetails.videoUrl) || '';
+                        const topicName = itemData.topic || (itemData.videoDetails && itemData.videoDetails.name) || 'Untitled Lecture';
+                        const videoImg = (itemData.videoDetails && itemData.videoDetails.image) || 'https://via.placeholder.com/150';
+                        const lectureType = itemData.lectureType || 'Lecture';
+                        const typeId = itemData.videoDetails?.id || itemData.videoDetails?._id || itemData._id;
+
+                        card.innerHTML = `
+                            <div>
+                                <div class="w-full h-36 rounded-xl bg-amber-50 border border-amber-100 overflow-hidden mb-4 flex items-center justify-center relative">
+                                    <img src="${videoImg}" alt="${topicName}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://via.placeholder.com/150'">
+                                    <span class="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] font-extrabold px-2 py-1 rounded-lg backdrop-blur-sm">${lectureType}</span>
+                                </div>
+                                <h4 class="font-bold text-gray-900 text-base mb-2 group-hover:text-amber-600 transition-colors line-clamp-2">${topicName}</h4>
+                            </div>
+                            <button class="w-full mt-4 bg-amber-500 text-white py-2.5 rounded-xl text-sm font-extrabold shadow-md shadow-amber-500/20 hover:bg-amber-600 transition flex items-center justify-center gap-2" onclick="openPlayerModal('${bId}', '${sId}', '${tId}', '${lId}', '${typeId}', '${encodeURIComponent(rawVideoUrl)}', '${encodeURIComponent(topicName)}', '${encodeURIComponent(videoImg)}', '${lectureType}')">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Watch Lecture
+                            </button>
+                        `;
                     } else {
-                        const hw = (item.homeworkIds || [])[0];
+                        const hw = (itemData.homeworkIds || [])[0];
                         const fileUrl = hw && hw.attachmentIds && hw.attachmentIds.length > 0 ? (hw.attachmentIds[0].baseUrl + hw.attachmentIds[0].key) : '#';
-                        const title = hw ? cleanTitle(hw.topic || 'Untitled Note') : 'Untitled Note';
-                        div.innerHTML = `<div class="flex-1"><h3 class="font-bold text-sm text-gray-800">${title}</h3></div>
-                                        <button class="bg-white text-indigo-600 border border-indigo-600 px-4 py-2 rounded-lg text-sm font-bold" onclick="window.open('${fileUrl}', '_blank')">View</button>`;
+                        const title = hw ? cleanTitle(hw.topic || 'Untitled Note') : cleanTitle(itemData.topic || 'Untitled Note');
+
+                        card.innerHTML = `
+                            <div class="flex items-center gap-4 mb-4">
+                                <div class="w-14 h-14 rounded-xl bg-amber-50 border border-amber-100 flex-shrink-0 flex items-center justify-center text-amber-600">
+                                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <span class="inline-block bg-amber-100 text-amber-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full mb-1">DOCUMENT</span>
+                                    <h4 class="font-bold text-gray-900 text-sm group-hover:text-amber-600 transition-colors line-clamp-2">${title}</h4>
+                                </div>
+                            </div>
+                            <button class="w-full bg-white border border-amber-200 text-amber-700 py-2.5 rounded-xl text-sm font-extrabold hover:bg-amber-50 transition flex items-center justify-center gap-2" onclick="window.open('${fileUrl}', '_blank')">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                View Document
+                            </button>
+                        `;
                     }
-                    container.appendChild(div);
+                    container.appendChild(card);
                 });
                 document.getElementById('loadMoreContainer').classList.toggle('hidden', items.length < 20);
-            } catch (e) { container.innerHTML = '<div class="text-center mt-10 text-red-500">Error loading data</div>'; }
+            } catch (e) {
+                document.getElementById('contentCount').innerText = 'Error';
+                container.innerHTML = '<div class="col-span-full text-center py-16 text-rose-500 font-semibold bg-white rounded-2xl border border-amber-100">Failed to load content.</div>';
+            }
         }
 
         function loadMore() { currentPage++; loadContent(true); }
@@ -76,22 +175,22 @@
         function changeTab(tab, btn) {
             currentTab = tab;
             document.querySelectorAll('.tab-btn').forEach(b => {
-                b.classList.remove('bg-indigo-600', 'text-white');
-                b.classList.add('bg-white', 'border');
+                b.classList.remove('bg-amber-500', 'text-white', 'shadow-md', 'shadow-amber-500/20');
+                b.classList.add('bg-white', 'border', 'border-amber-200', 'text-gray-700', 'shadow-sm');
             });
-            btn.classList.add('bg-indigo-600', 'text-white');
-            btn.classList.remove('bg-white', 'border');
+            btn.classList.add('bg-amber-500', 'text-white', 'shadow-md', 'shadow-amber-500/20');
+            btn.classList.remove('bg-white', 'border', 'border-amber-200', 'text-gray-700', 'shadow-sm');
             loadContent();
         }
 
         function openPlayerModal(batchId, subjectId, topicId, lectureId, typeId, videoUrl, videoName, videoImg, lectureType) {
             document.getElementById('playerModal').classList.remove('hidden');
-
             const query2 = `?batchId=${batchId}&subjectId=${subjectId}&topicId=${topicId}&lectureId=${lectureId}&typeId=${typeId}&videoUrl=${videoUrl}&videoName=${videoName}&videoImg=${videoImg}&playType=Lecture&video_type=new`;
-
             document.getElementById('p1Btn').onclick = () => window.location.href = 'player2.html' + query2;
             document.getElementById('p2Btn').onclick = () => window.location.href = 'player3.html' + query2;
         }
 
         loadContent();
     </script>
+</body>
+</html>
