@@ -5,271 +5,66 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The DevCoderZ - Classroom</title>
-
+    <title>Physics Wallah - Classroom</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
       * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        font-family: Inter, sans-serif;
+        font-family: 'Plus Jakarta Sans', sans-serif;
       }
-
       body {
-        background: #f8fafc;
-        color: #0f172a;
+        background: #020617;
+        color: #f8fafc;
         overflow: hidden;
       }
-
-      .header {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 55px;
-        background: linear-gradient(135deg, #4f46e5, #6366f1);
-        color: white;
-        padding: 16px 20px;
-        font-size: 20px;
-        font-weight: 800;
-        letter-spacing: 1px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        z-index: 10;
+      .hide-scrollbar::-webkit-scrollbar {
+        display: none;
       }
-
-      .header span {
-        font-size: 13px;
-        opacity: 0.9;
-        font-weight: 600;
-        background: rgba(255, 255, 255, 0.2);
-        padding: 4px 10px;
-        border-radius: 8px;
-      }
-
-      .search-section {
-        position: fixed;
-        top: 55px;
-        left: 0;
-        right: 0;
-        padding: 12px;
-        background: #fff;
-        border-bottom: 1px solid #e2e8f0;
-      }
-      .search-box {
-        width: 100%;
-        padding: 12px 16px;
-        border: 2px solid #e2e8f0;
-        border-left: 4px solid #4f46e5;
-        border-radius: 25px;
-      }
-
-      .tab-nav {
-        position: fixed;
-        top: 115px;
-        left: 0;
-        right: 0;
-        display: flex;
-        background: #fff;
-        border-bottom: 1px solid #e2e8f0;
-      }
-      .tab-btn {
-        flex: 1;
-        padding: 12px;
-        font-weight: 700;
-        border: none;
-        background: none;
-        cursor: pointer;
-      }
-      .tab-btn.active {
-        background: #4f46e5;
-        color: #fff;
-      }
-
-      .content {
-        position: absolute;
-        top: 160px;
-        bottom: 40px;
-        left: 0;
-        right: 0;
-        overflow-y: auto;
-        padding: 20px;
-      }
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 20px;
-      }
-
-      .batch {
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        border-left: 5px solid var(--accent, #4f46e5);
-        border-radius: 18px;
-        padding: 18px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        position: relative;
-        transition: 0.25s;
-      }
-      .batch:hover {
-        transform: translateY(-6px);
-        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
-      }
-
-      .batch-name {
-        font-weight: 800;
-        margin-bottom: 10px;
-        font-size: 16px;
-      }
-
-      .batch-thumbnail {
-        position: relative;
-        overflow: hidden;
-        border-radius: 12px;
-        margin-bottom: 12px;
-        z-index: 1;
-      }
-      .batch-thumbnail img {
-        width: 100%;
-        height: 180px;
-        object-fit: contain;
-        transition: 0.3s;
-      }
-      .batch:hover img {
-        transform: scale(1.05);
-      }
-
-      .skeleton {
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        border-left: 5px solid #cbd5f5;
-        border-radius: 18px;
-        padding: 18px;
-      }
-
-      .skel {
-        background: linear-gradient(
-          90deg,
-          #e2e8f0 25%,
-          #f1f5f9 50%,
-          #e2e8f0 75%
-        );
-        background-size: 200% 100%;
-        animation: shimmer 1.2s infinite;
-        border-radius: 8px;
-      }
-
-      @keyframes shimmer {
-        0% { background-position: -200% 0; }
-        100% { background-position: 200% 0; }
-      }
-
-      .skel-title { height: 20px; width: 70%; margin-bottom: 10px; }
-      .skel-img { height: 180px; margin-bottom: 12px; border-radius: 12px; }
-      .skel-text { height: 12px; margin-bottom: 6px; }
-      .skel-btn { height: 35px; margin-top: 10px; border-radius: 10px; }
-
-      .favorite-btn {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        width: 34px;
-        height: 34px;
-        border-radius: 50%;
-        border: 1px solid #e2e8f0;
-        background: #fff;
-        cursor: pointer;
-        z-index: 5;
-      }
-      .favorite-btn.favorited {
-        background: #ef4444;
-        color: #fff;
-        border-color: #ef4444;
-      }
-
-      .batch-info {
-        font-size: 13px;
-        color: #475569;
-        margin-bottom: 5px;
-      }
-      .batch-price {
-        font-weight: 700;
-        margin-top: 6px;
-      }
-
-      .explore-btn {
-        margin-top: 10px;
-        width: 100%;
-        padding: 11px;
-        border: none;
-        border-radius: 12px;
-        margin-top: auto;
-        font-weight: 700;
-        color: #fff;
-        background: linear-gradient(135deg, #4f46e5, #4338ca);
-        cursor: pointer;
-      }
-
-      .empty {
-        text-align: center;
-        padding: 40px;
-        color: #64748b;
-      }
-
-
-      .app-footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 40px;
-        background: #ffffff;
-        border-top: 1px solid #e2e8f0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 13px;
-        font-weight: 600;
-        color: #64748b;
-        letter-spacing: 0.5px;
-        z-index: 10;
-      }
-      .app-footer span {
-        color: #4f46e5;
-        font-weight: 700;
-        margin-left: 4px;
+      .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
       }
     </style>
     <style type="text/css">* {user-select: auto !important; -webkit-user-select: auto !important;}</style>
 </head>
+<body class="min-h-screen flex flex-col">
 
-  <body>
-    <div class="header">
-      The DevCoderZ
-      <span>PW</span>
+    <nav class="fixed top-0 left-0 right-0 h-20 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 flex items-center justify-between px-6 z-30 shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-blue-400 font-extrabold text-lg">
+                PW
+            </div>
+            <div>
+                <h1 class="font-extrabold text-white text-lg tracking-tight">Physics Wallah</h1>
+                <p class="text-xs font-semibold text-blue-400">Classroom Portal</p>
+            </div>
+        </div>
+        <div class="text-xs text-blue-400 bg-blue-950 px-3 py-1.5 rounded-xl border border-blue-900/50 font-extrabold hidden sm:block">Vault Active</div>
+    </nav>
+
+    <div class="fixed top-20 left-0 right-0 px-6 py-4 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 z-20">
+        <div class="max-w-7xl mx-auto">
+            <input id="searchInput" class="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 text-white placeholder-slate-400 px-5 py-3 rounded-2xl outline-none font-medium shadow-inner text-sm transition-all" placeholder="Search batches...">
+        </div>
     </div>
 
-    <div class="search-section">
-      <input id="searchInput" class="search-box" placeholder="Search batches...">
+    <div class="fixed top-[152px] left-0 right-0 px-6 py-3 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 z-20">
+        <div class="max-w-7xl mx-auto flex gap-3">
+            <button class="tab-btn flex-1 py-3 rounded-xl bg-blue-600 text-white text-sm font-extrabold shadow-md shadow-blue-600/30 transition-all" id="totalTab">Total Batches</button>
+            <button class="tab-btn flex-1 py-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 text-sm font-extrabold shadow-sm transition-all" id="favTab">Favourites</button>
+        </div>
     </div>
 
-    <div class="tab-nav">
-      <button class="tab-btn active" id="totalTab">Total</button>
-      <button class="tab-btn" id="favTab">Favourites</button>
+    <div class="content absolute top-[226px] bottom-10 left-0 right-0 overflow-y-auto px-6 py-6">
+        <div class="max-w-7xl mx-auto">
+            <div id="total" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></div>
+            <div id="fav" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" style="display: none"></div>
+        </div>
     </div>
 
-    <div class="content">
-      <div id="total" class="grid"></div>
-      <div id="fav" class="grid" style="display: none"></div>
-    </div>
-
-    <div class="app-footer">
-      Developed by - <span>Devansh Sharma</span>
-    </div>
+    <footer class="fixed bottom-0 left-0 right-0 h-10 bg-slate-900/90 backdrop-blur-md border-t border-slate-800 flex items-center justify-center text-xs font-bold text-slate-400 z-30">
+        Developed by <span class="text-blue-400 font-extrabold ml-1">Devansh Sharma</span>
+    </footer>
 
     <script>
       if ('serviceWorker' in navigator) {
@@ -297,7 +92,7 @@
       const totalTab = document.getElementById("totalTab");
       const favTab = document.getElementById("favTab");
 
-      let loaded = 0, LIMIT = 8, loading = false;
+      let loaded = 0, LIMIT = 12, loading = false;
 
       showSkeleton();
 
@@ -314,7 +109,7 @@
           if (ALL.length) {
             loadMore(true);
           } else {
-            total.innerHTML = `<div class="empty">Failed to load system clusters</div>`;
+            total.innerHTML = `<div class="col-span-full text-center text-slate-400 font-semibold py-16 bg-slate-900 rounded-2xl border border-slate-800">Failed to load system clusters</div>`;
           }
         });
 
@@ -405,21 +200,18 @@
         return results.map((r) => r.batch);
       }
 
-      function getAccent(b) {
-        return "#4f46e5";
-      }
-
       function showSkeleton() {
         let skel = "";
-        for (let i = 0; i < 6; i++) {
+        for (let i = 0; i < 8; i++) {
           skel += `
-        <div class="skeleton">
-            <div class="skel skel-title"></div>
-            <div class="skel skel-img"></div>
-            <div class="skel skel-text"></div>
-            <div class="skel skel-text" style="width:60%"></div>
-            <div class="skel skel-text" style="width:40%"></div>
-            <div class="skel skel-btn"></div>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-sm animate-pulse">
+            <div class="h-5 bg-slate-800 rounded-lg w-3/4"></div>
+            <div class="h-40 bg-slate-950 border border-slate-800 rounded-xl"></div>
+            <div class="space-y-2">
+                <div class="h-3 bg-slate-800 rounded w-1/2"></div>
+                <div class="h-3 bg-slate-800 rounded w-1/3"></div>
+            </div>
+            <div class="h-10 bg-slate-800 rounded-xl mt-4"></div>
         </div>`;
         }
         total.innerHTML = skel;
@@ -446,19 +238,25 @@
         }
 
         return `
-    <div class="batch" data-id="${bId}" style="--accent:${getAccent(b)}">
-        <button class="favorite-btn ${isFav ? "favorited" : ""}">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between relative shadow-sm hover:shadow-xl hover:border-blue-500/50 transition-all duration-300 group" data-id="${bId}">
+        <button class="absolute top-4 right-4 w-9 h-9 rounded-xl border border-slate-700 bg-slate-950 flex items-center justify-center cursor-pointer z-5 shadow-md hover:bg-slate-800 transition favorite-btn ${isFav ? "border-rose-500/50" : ""}">
             ${isFav ? "❤️" : "♡"}
         </button>
-        <div class="batch-name">${bName}</div>
-        <div class="batch-thumbnail">
-            <img loading="lazy" src="${bImage}" onerror="this.src='${FALLBACK_IMG}'">
+        <div>
+            <div class="font-extrabold text-white mb-3 text-base group-hover:text-blue-400 transition-colors line-clamp-2 pr-10">${bName}</div>
+            <div class="w-full h-40 rounded-xl bg-slate-950 border border-slate-800 overflow-hidden mb-4 relative flex items-center justify-center">
+                <img loading="lazy" src="${bImage}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src='${FALLBACK_IMG}'">
+            </div>
+            <div class="space-y-1.5 mb-4 text-xs font-semibold text-slate-300">
+                <div class="flex items-center gap-2"><span>👨‍🎓</span> ${bBy}</div>
+                <div class="flex items-center gap-2"><span>🗣️</span> ${bLang}</div>
+                <div class="flex items-center gap-2"><span>🗓️</span> ${bStart} → ${bEnd}</div>
+            </div>
         </div>
-        <div class="batch-info">👨‍🎓 ${bBy}</div>
-        <div class="batch-info">🗣️ ${bLang}</div>
-        <div class="batch-info">🗓️ ${bStart} → ${bEnd}</div>
-        <div class="batch-price">${finalPrice}</div>
-        <button class="explore-btn" data-id="${bId}">Explore</button>
+        <div>
+            <div class="font-extrabold text-blue-400 text-sm mb-3">${finalPrice}</div>
+            <button class="w-full bg-blue-600 text-white py-2.5 rounded-xl text-sm font-extrabold shadow-md shadow-blue-600/30 hover:bg-blue-700 transition explore-btn" data-id="${bId}">Explore Batch</button>
+        </div>
     </div>`;
       }
 
@@ -468,7 +266,7 @@
         if (reset) { total.innerHTML = ""; loaded = 0; }
         let slice = filtered.slice(loaded, loaded + LIMIT);
         if (!slice.length && loaded === 0) {
-          total.innerHTML = `<div class="empty">No batches found</div>`;
+          total.innerHTML = `<div class="col-span-full text-center text-slate-400 font-semibold py-16 bg-slate-900 rounded-2xl border border-slate-800">No batches found</div>`;
           loading = false;
           return;
         }
@@ -485,8 +283,9 @@
       });
 
       document.addEventListener("click", (e) => {
-        if (e.target.classList.contains("favorite-btn")) {
-          let id = e.target.closest(".batch").dataset.id;
+        if (e.target.closest(".favorite-btn")) {
+          const btnEl = e.target.closest(".favorite-btn");
+          let id = btnEl.closest(".bg-slate-900").dataset.id;
           let batch = ALL.find((b) => (b._id || b.id || b.batchId) === id);
 
           if (favs.includes(id)) {
@@ -513,9 +312,9 @@
           localStorage.setItem("favs", JSON.stringify(favs));
           localStorage.setItem("fav_batches", JSON.stringify(cachedBatches));
 
-          document.querySelectorAll(`.batch[data-id="${id}"] .favorite-btn`).forEach((btn) => {
-              btn.classList.toggle("favorited", favs.includes(id));
-              btn.innerHTML = favs.includes(id) ? "❤️" : "♡";
+          document.querySelectorAll(`.bg-slate-900[data-id="${id}"] .favorite-btn`).forEach((b) => {
+              b.classList.toggle("border-rose-500/50", favs.includes(id));
+              b.innerHTML = favs.includes(id) ? "❤️" : "♡";
           });
 
           if (fav.style.display === "grid") { renderFav(); }
@@ -528,9 +327,10 @@
       });
 
       function setActive(tab) {
-        totalTab.classList.remove("active");
-        favTab.classList.remove("active");
-        tab.classList.add("active");
+        totalTab.className = "tab-btn flex-1 py-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 text-sm font-extrabold shadow-sm transition-all";
+        favTab.className = "tab-btn flex-1 py-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 text-sm font-extrabold shadow-sm transition-all";
+        
+        tab.className = "tab-btn flex-1 py-3 rounded-xl bg-blue-600 text-white text-sm font-extrabold shadow-md shadow-blue-600/30 transition-all";
       }
 
       totalTab.onclick = () => {
@@ -550,7 +350,7 @@
         let items = favs.map((id) => cachedBatches[id]).filter(Boolean);
         fav.innerHTML = items.length
           ? items.map(card).join("")
-          : `<div class="empty">No favourites yet ❤️</div>`;
+          : `<div class="col-span-full text-center text-slate-400 font-semibold py-16 bg-slate-900 rounded-2xl border border-slate-800">No favourites yet ❤️</div>`;
       }
 
       document.getElementById("searchInput").oninput = function () {
