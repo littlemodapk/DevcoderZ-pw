@@ -91,6 +91,32 @@
             return json;
         }
 
+        async function openDocument(scheduleId) {
+            try {
+                const url = `https://devcoderz-backend.vercel.app/api/notes?batchId=${bId}&subjectSlug=${sId}&scheduleId=${scheduleId}`;
+                const res = await fetch(url);
+                const json = await res.json();
+                const data = json.data || json;
+                
+                let fileUrl = '#';
+                if (data.homeworkIds && data.homeworkIds.length > 0 && data.homeworkIds[0].attachmentIds && data.homeworkIds[0].attachmentIds.length > 0) {
+                    const att = data.homeworkIds[0].attachmentIds[0];
+                    fileUrl = att.baseUrl + att.key;
+                } else if (data.dpp && data.dpp.homeworkIds && data.dpp.homeworkIds.length > 0 && data.dpp.homeworkIds[0].attachmentIds && data.dpp.homeworkIds[0].attachmentIds.length > 0) {
+                    const att = data.dpp.homeworkIds[0].attachmentIds[0];
+                    fileUrl = att.baseUrl + att.key;
+                }
+
+                if (fileUrl !== '#') {
+                    window.open(fileUrl, '_blank');
+                } else {
+                    alert('Document URL not found');
+                }
+            } catch (e) {
+                alert('Failed to load document');
+            }
+        }
+
         async function loadContent(isLoadMore = false) {
             if (!isLoadMore) currentPage = 1;
             const container = document.getElementById('contentContainer');
@@ -141,8 +167,8 @@
                             </button>
                         `;
                     } else {
+                        const schedId = item._id || itemData._id;
                         const hw = (itemData.homeworkIds || [])[0];
-                        const fileUrl = hw && hw.attachmentIds && hw.attachmentIds.length > 0 ? (hw.attachmentIds[0].baseUrl + hw.attachmentIds[0].key) : '#';
                         const title = hw ? cleanTitle(hw.topic || 'Untitled Note') : cleanTitle(itemData.topic || 'Untitled Note');
 
                         card.innerHTML = `
@@ -155,7 +181,7 @@
                                     <h4 class="font-bold text-white text-sm group-hover:text-blue-400 transition-colors line-clamp-2">${title}</h4>
                                 </div>
                             </div>
-                            <button class="w-full bg-slate-950 border border-slate-800 text-blue-400 py-2.5 rounded-xl text-sm font-extrabold hover:bg-slate-800 transition flex items-center justify-center gap-2" onclick="window.open('${fileUrl}', '_blank')">
+                            <button class="w-full bg-slate-950 border border-slate-800 text-blue-400 py-2.5 rounded-xl text-sm font-extrabold hover:bg-slate-800 transition flex items-center justify-center gap-2" onclick="openDocument('${schedId}')">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                                 View Document
                             </button>
