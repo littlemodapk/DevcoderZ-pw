@@ -212,7 +212,7 @@
         function openPlayerModal(batchId, subjectId, topicId, lectureId, typeId, videoUrl, videoName, videoImg, lectureType) {
             document.getElementById('playerModal').classList.remove('hidden');
             const query2 = `?batchId=${batchId}&subjectId=${subjectId}&topicId=${topicId}&lectureId=${lectureId}&typeId=${typeId}&videoUrl=${videoUrl}&videoName=${videoName}&videoImg=${videoImg}&playType=Lecture&video_type=new`;
-            const marcoPath = `?${batchId}/${subjectId}/${typeId}`;
+            const marcoPath = `?batchId=${batchId}/subjectid=${subjectId}/videoId=${typeId}`;
             document.getElementById('p1Btn').onclick = () => window.location.href = 'player2.html' + query2;
             document.getElementById('p2Btn').onclick = () => window.location.href = 'player3.html' + marcoPath;
         }
