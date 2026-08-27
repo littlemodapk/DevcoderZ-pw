@@ -5,9 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>DevCoderz Ultra Secure Player</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:sans-serif;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}html,body{width:100%;height:100%;background:#0ff;overflow:hidden;touch-action:none;display:flex;flex-direction:column}
+*{margin:0;padding:0;box-sizing:border-box;font-family:sans-serif;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}html,body{width:100%;height:100%;background:#000;overflow:hidden;touch-action:none;display:flex;flex-direction:column}
 
-/* Main Container: Upar Video Player (Aadhi Screen), Niche Slides/Content Area */
 .app-container{display:flex;flex-direction:column;width:100%;height:100%;background:#000;overflow:hidden}
 
 .player{position:relative;width:100%;height:45vh;min-height:220px;background:#000;pointer-events:auto;flex-shrink:0}
@@ -43,31 +42,32 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
 .dropdown-item{padding:12px 16px;font-size:13px;color:#fff;cursor:pointer;border-bottom:1px solid #2a2a2a}
 .dropdown-item:hover{background:#333}
 
-/* Lecture Slides Section (Jaise reference photo me hai - Niche ya side me) */
+/* Content & Slides Section */
 .content-section{flex:1;background:#111;display:flex;flex-direction:column;overflow:hidden;border-top:1px solid #222}
 .content-tabs{display:flex;background:#181818;border-bottom:1px solid #333}
 .tab-btn{flex:1;padding:12px;text-align:center;color:#aaa;font-size:13px;font-weight:bold;cursor:pointer;border-bottom:2px solid transparent}
 .tab-btn.active{color:#4fc3f7;border-bottom-color:#4fc3f7;background:#222}
 
-.slide-container{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:15px}
-.slide-item{background:#1b1b22;border-radius:10px;overflow:hidden;border:1px solid #333;cursor:pointer;transition:all .2s;padding:10px}
-.slide-item:hover{border-color:#4fc3f7}
+.tab-content{flex:1;overflow-y:auto;padding:12px;display:none;flex-direction:column;gap:12px}
+.tab-content.active{display:flex}
 
-/* Slide Image - Badi, Clear aur Bina Kate (object-fit: contain) */
-.slide-item img{width:100%;height:auto;max-height:280px;object-fit:contain;background:#000;border-radius:6px;display:block}
+.slide-item{background:#161616;border-radius:10px;overflow:hidden;border:1px solid #333;cursor:pointer;transition:all .2s;padding:10px;display:flex;flex-direction:column;align-items:center}
+.slide-item:hover{border-color:#00e5ff}
+.slide-item img{width:100%;max-height:260px;object-fit:contain;background:#000;border-radius:8px;display:block}
+.slide-footer-info{width:100%;display:flex;justify-content:flex-end;align-items:center;margin-top:8px;padding-right:4px}
+.slide-time-badge{background:rgba(0,229,255,0.15);color:#00e5ff;font-size:12px;font-weight:600;padding:4px 10px;border-radius:6px;border:1px solid rgba(0,229,255,0.3)}
 
-/* Slide Footer jisme Slide No aur Timer Saaf Dikhhega */
-.slide-footer{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding:0 4px}
-.slide-title-text{color:#fff;font-size:13px;font-weight:600}
-.slide-time-badge{background:rgba(79,195,247,0.15);color:#4fc3f7;font-size:12px;font-weight:600;padding:4px 10px;border-radius:6px;border:1px solid rgba(79,195,247,0.3)}
+.attachment-item{background:#161616;padding:14px;border-radius:10px;border:1px solid #333;color:#fff;display:flex;justify-content:space-between;align-items:center;text-decoration:none;cursor:pointer}
+.attachment-item:hover{border-color:#4fc3f7;background:#1c1c1c}
 
-.no-slide-text{color:#888;text-align:center;padding:30px;font-size:13px}
+.no-data-text{color:#888;text-align:center;padding:30px;font-size:13px}
 
-/* Sidebar Mode jab Fullscreen ya Desktop par ho */
-#sidebar{position:fixed;top:0;right:-420px;width:420px;height:100%;background:rgba(15,15,15,.98);backdrop-filter:blur(8px);transition:right .3s ease;z-index:200;display:flex;flex-direction:column;border-left:1px solid #333}
+/* Sidebar for popup option */
+#sidebar{position:fixed;top:0;right:-100%;width:100%;height:100%;background:rgba(12,12,12,.98);backdrop-filter:blur(8px);transition:right .3s ease;z-index:200;display:flex;flex-direction:column;border-left:1px solid #333}
 #sidebar.active{right:0}
-.sidebar-header{padding:15px;background:#1a1a1a;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #333;color:#fff;font-weight:bold;font-size:15px}
-.close-sidebar{background:none;border:none;color:#aaa;font-size:20px;cursor:pointer}
+@media(min-width:600px){#sidebar{width:420px;right:-420px;}}
+.sidebar-header{padding:15px;background:#1a1a1a;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #333;color:#fff;font-weight:bold;font-size:16px}
+.close-sidebar{background:none;border:none;color:#aaa;font-size:22px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -81,15 +81,13 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
 </div>
 
 <div class="app-container" id="appContainer">
-    <!-- Video Player Section (Upar ka hissa) -->
     <div class="player" id="player">
      <div id="status">🔄 Initializing...</div>
 
      <div class="menu-container">
         <button class="dot-btn" id="dotMenuBtn">⋮</button>
         <div class="dropdown-menu" id="dropdownMenu">
-            <div class="dropdown-item" id="notesItem">📄 Notes</div>
-            <div class="dropdown-item" id="slidesItem">🖼️ Slides Sidebar</div>
+            <div class="dropdown-item" id="slidesSidebarBtn">🖼️ Slides Sidebar</div>
             <div class="dropdown-item" id="downloadItem">📥 Download</div>
         </div>
      </div>
@@ -132,25 +130,34 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
      </div>
     </div>
 
-    <!-- Niche ka Content Area (Timeline Slides / Attachments) -->
+    <!-- Niche Tabs: Timeline Slides aur Attachments (Notes etc.) -->
     <div class="content-section">
         <div class="content-tabs">
-            <div class="tab-btn active">Timeline Slides</div>
-            <div class="tab-btn" id="attachmentsTab">Attachments</div>
+            <div class="tab-btn active" data-target="slidesTabContent">Timeline Slides</div>
+            <div class="tab-btn" data-target="attachmentsTabContent">Attachments / Notes</div>
         </div>
-        <div class="slide-container" id="slideList">
-            <div class="no-slide-text">Loading slides...</div>
+        
+        <div class="tab-content active" id="slidesTabContent">
+            <div id="slideList">
+                <div class="no-data-text">Loading slides...</div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="attachmentsTabContent">
+            <div id="attachmentsList">
+                <div class="no-data-text">No attachments available.</div>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Sidebar for Fullscreen or popup view -->
+<!-- Sidebar for popup option -->
 <div id="sidebar">
     <div class="sidebar-header">
         <span>Lecture Slides</span>
         <button class="close-sidebar" id="closeSidebarBtn">✕</button>
     </div>
-    <div class="slide-container" id="sidebarSlideList"></div>
+    <div class="tab-content active" style="padding:15px;" id="sidebarSlideList"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
@@ -176,17 +183,27 @@ const qualitySelect = document.getElementById('quality');
 const statusElem = document.getElementById('status');
 const dotMenuBtn = document.getElementById('dotMenuBtn');
 const dropdownMenuElem = document.getElementById('dropdownMenu');
-const notesItem = document.getElementById('notesItem');
-const slidesItem = document.getElementById('slidesItem');
+const slidesSidebarBtn = document.getElementById('slidesSidebarBtn');
 const downloadItem = document.getElementById('downloadItem');
 const sidebarElem = document.getElementById('sidebar');
 const closeSidebarBtn = document.getElementById('closeSidebarBtn');
 const slideListElem = document.getElementById('slideList');
 const sidebarSlideList = document.getElementById('sidebarSlideList');
+const attachmentsListElem = document.getElementById('attachmentsList');
 
 let isDragging = false, hideTimeoutRef, hlsInstance, wasVideoPlaying = false;
-let globalNotesUrl = "";
 let globalSlidesArray = [];
+let globalAttachmentsArray = [];
+
+// Tab Switching Logic
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.onclick = (e) => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.getAttribute('data-target')).classList.add('active');
+    };
+});
 
 if (continueBtn) {
     continueBtn.onclick = (e) => {
@@ -218,8 +235,8 @@ if (dotMenuBtn) {
     };
 }
 
-if (slidesItem) {
-    slidesItem.onclick = (e) => {
+if (slidesSidebarBtn) {
+    slidesSidebarBtn.onclick = (e) => {
         e.stopPropagation();
         dropdownMenuElem.classList.remove('active');
         sidebarElem.classList.add('active');
@@ -230,18 +247,6 @@ if (closeSidebarBtn) {
     closeSidebarBtn.onclick = (e) => {
         e.stopPropagation();
         sidebarElem.classList.remove('active');
-    };
-}
-
-if (notesItem) {
-    notesItem.onclick = (e) => {
-        e.stopPropagation();
-        dropdownMenuElem.classList.remove('active');
-        if (globalNotesUrl) {
-            window.open(globalNotesUrl, '_blank');
-        } else {
-            alert('Notes not available for this session.');
-        }
     };
 }
 
@@ -284,24 +289,34 @@ async function initializePlayerEngine() {
             
             if (responsePayload) {
                 resolvedStreamUrl = responsePayload.m3u8Url || responsePayload.url;
-                if (responsePayload.notes && responsePayload.notes.length > 0) {
-                    globalNotesUrl = responsePayload.notes[0].url;
-                }
+                
+                // Handle Slides data
                 if (responsePayload.slides && responsePayload.slides.length > 0) {
                     globalSlidesArray = responsePayload.slides;
                     buildSlideItems();
                 } else {
-                    slideListElem.innerHTML = `<div class="no-slide-text">No slides found for this lecture.</div>`;
+                    slideListElem.innerHTML = `<div class="no-data-text">No slides found for this lecture.</div>`;
+                }
+
+                // Handle Notes / Attachments data safely
+                if (responsePayload.notes && responsePayload.notes.length > 0) {
+                    globalAttachmentsArray = responsePayload.notes;
+                    buildAttachmentItems();
+                } else if (responsePayload.attachments && responsePayload.attachments.length > 0) {
+                    globalAttachmentsArray = responsePayload.attachments;
+                    buildAttachmentItems();
+                } else {
+                    attachmentsListElem.innerHTML = `<div class="no-data-text">No attachments/notes found.</div>`;
                 }
             }
         } catch (err) {
             updateStatusText('❌ Error connecting to stream service', 'error');
-            slideListElem.innerHTML = `<div class="no-slide-text">Failed to load slides.</div>`;
+            slideListElem.innerHTML = `<div class="no-data-text">Failed to load content.</div>`;
             return;
         }
     } else {
         updateStatusText('❌ Required parameters missing!', 'error');
-        slideListElem.innerHTML = `<div class="no-slide-text">Missing parameters.</div>`;
+        slideListElem.innerHTML = `<div class="no-data-text">Missing parameters.</div>`;
         return;
     }
 
@@ -370,35 +385,32 @@ function setupHlsPlayer(url) {
 function buildSlideItems() {
     if (!slideListElem) return;
     slideListElem.innerHTML = "";
-    if(sidebarSlideList) sidebarSlideList.innerHTML = "";
+    if (sidebarSlideList) sidebarSlideList.innerHTML = "";
 
-    globalSlidesArray.forEach((slide, index) => {
+    globalSlidesArray.forEach((slide) => {
+        const card = document.createElement('div');
+        card.className = 'slide-item';
         const timeStr = formatTimestamp(slide.timestamp);
         
-        const cardHTML = `
+        const cardInnerHtml = `
             <img src="${slide.image}" alt="Slide Image" onerror="this.src='https://via.placeholder.com/400x220?text=Slide+Preview+Not+Available'">
-            <div class="slide-footer">
-                <span class="slide-title-text">Slide No. ${index + 1}</span>
+            <div class="slide-footer-info">
                 <div class="slide-time-badge">🕒 ${timeStr}</div>
             </div>
         `;
-
-        // Main content list item
-        const card = document.createElement('div');
-        card.className = 'slide-item';
-        card.innerHTML = cardHTML;
+        card.innerHTML = cardInnerHtml;
         card.onclick = (e) => {
             e.stopPropagation();
             videoElem.currentTime = slide.timestamp;
             triggerSafePlayback();
+            sidebarElem.classList.remove('active');
         };
         slideListElem.appendChild(card);
 
-        // Sidebar list item
-        if(sidebarSlideList) {
+        if (sidebarSlideList) {
             const sideCard = document.createElement('div');
             sideCard.className = 'slide-item';
-            sideCard.innerHTML = cardHTML;
+            sideCard.innerHTML = cardInnerHtml;
             sideCard.onclick = (e) => {
                 e.stopPropagation();
                 videoElem.currentTime = slide.timestamp;
@@ -407,6 +419,19 @@ function buildSlideItems() {
             };
             sidebarSlideList.appendChild(sideCard);
         }
+    });
+}
+
+function buildAttachmentItems() {
+    if (!attachmentsListElem) return;
+    attachmentsListElem.innerHTML = "";
+    globalAttachmentsArray.forEach((item, index) => {
+        const linkElem = document.createElement('a');
+        linkElem.className = 'attachment-item';
+        linkElem.href = item.url || item.link || '#';
+        linkElem.target = '_blank';
+        linkElem.innerHTML = `<span>📄 ${item.name || item.title || 'Lecture Notes ' + (index + 1)}</span> <span>📥 Open</span>`;
+        attachmentsListElem.appendChild(linkElem);
     });
 }
 
@@ -505,9 +530,9 @@ if (fsButton) {
         e.preventDefault();
         e.stopPropagation();
         try {
-            const containerElem = document.getElementById('appContainer');
+            const appContainer = document.getElementById('appContainer');
             if (!document.fullscreenElement) {
-                await containerElem.requestFullscreen();
+                await appContainer.requestFullscreen();
                 if (screen.orientation && screen.orientation.lock) {
                     await screen.orientation.lock('landscape').catch(() => {});
                 }
