@@ -31,7 +31,9 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
     background: #111;
     border: 1px solid #333;
     border-radius: 12px;
-    width: 220px;
+    width: 240px;
+    max-height: 320px;
+    overflow-y: auto;
     padding: 12px;
     display: none;
     z-index: 60;
@@ -40,7 +42,7 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
 .custom-settings-menu.active { display: block; }
 .settings-section-title { color: #888; font-size: 11px; font-weight: bold; margin-bottom: 6px; text-transform: uppercase; }
 .settings-options-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-.setting-chip { background: #222; color: #fff; border: 1px solid #444; padding: 6px 10px; font-size: 11px; border-radius: 6px; cursor: pointer; flex: 1; text-align: center; min-width: 45px; }
+.setting-chip { background: #222; color: #fff; border: 1px solid #444; padding: 5px 8px; font-size: 11px; border-radius: 6px; cursor: pointer; text-align: center; flex: 1 1 22%; min-width: 45px; }
 .setting-chip.active { background: #2196f3; border-color: #2196f3; font-weight: bold; }
 .setting-chip:hover { background: #333; }
 
@@ -127,14 +129,22 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
       </div>
      </div>
      
-     <!-- Custom Black Settings Popup -->
+     <!-- Custom Black Settings Popup with All Speeds & Quality -->
      <div class="custom-settings-menu" id="customSettingsMenu">
          <div class="settings-section-title">Playback Speed</div>
          <div class="settings-options-grid" id="speedOptionsGrid">
-             <div class="setting-chip" data-speed="1">1x</div>
+             <div class="setting-chip" data-speed="0.25">0.25x</div>
+             <div class="setting-chip" data-speed="0.5">0.5x</div>
+             <div class="setting-chip" data-speed="0.75">0.75x</div>
+             <div class="setting-chip" data-speed="1" style="background:#2196f3;font-weight:bold;">1x</div>
              <div class="setting-chip" data-speed="1.25">1.25x</div>
              <div class="setting-chip" data-speed="1.5">1.5x</div>
+             <div class="setting-chip" data-speed="1.75">1.75x</div>
              <div class="setting-chip" data-speed="2">2x</div>
+             <div class="setting-chip" data-speed="2.25">2.25x</div>
+             <div class="setting-chip" data-speed="2.5">2.5x</div>
+             <div class="setting-chip" data-speed="2.75">2.75x</div>
+             <div class="setting-chip" data-speed="3">3x</div>
          </div>
          <div class="settings-section-title">Video Quality</div>
          <div class="settings-options-grid" id="qualityOptionsGrid">
@@ -351,7 +361,8 @@ function setupHlsPlayer(url) {
 
         hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
             updateStatusText('✅ Stream ready!', 'success');
-            // Populate custom quality options
+            
+            // Populate quality options dynamically
             qualityOptionsGrid.innerHTML = `<div class="setting-chip active" data-quality="-1">Auto</div>`;
             hlsInstance.levels.forEach((lvl, idx) => {
                 let chip = document.createElement("div");
@@ -383,7 +394,7 @@ function setupHlsPlayer(url) {
     }
 }
 
-// Setup Speed Chips Events
+// Setup Speed Chips Events (0.25x to 3x)
 document.querySelectorAll('#speedOptionsGrid .setting-chip').forEach(chip => {
     chip.onclick = (e) => {
         e.stopPropagation();
@@ -395,14 +406,16 @@ document.querySelectorAll('#speedOptionsGrid .setting-chip').forEach(chip => {
     };
 });
 
-// Auto chip click handler for quality Auto
-document.querySelector('#qualityOptionsGrid .setting-chip').onclick = (e) => {
-    e.stopPropagation();
-    if (hlsInstance) hlsInstance.currentLevel = -1;
-    document.querySelectorAll('#qualityOptionsGrid .setting-chip').forEach(c => c.classList.remove('active'));
-    e.target.classList.add('active');
-    customSettingsMenu.classList.remove('active');
-};
+// Auto Quality Chip Click Handler
+document.addEventListener('click', (e) => {
+    if (e.target && e.target.dataset.quality === "-1") {
+        e.stopPropagation();
+        if (hlsInstance) hlsInstance.currentLevel = -1;
+        document.querySelectorAll('#qualityOptionsGrid .setting-chip').forEach(c => c.classList.remove('active'));
+        e.target.classList.add('active');
+        customSettingsMenu.classList.remove('active');
+    }
+});
 
 function buildSlideItems() {
     if (!slideListElem) return;
