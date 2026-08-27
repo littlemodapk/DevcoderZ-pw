@@ -7,10 +7,9 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:sans-serif;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}html,body{width:100%;height:100%;background:#000;overflow:hidden;touch-action:none;display:flex;flex-direction:column}
 
-.app-container{display:flex;flex-direction:column;width:100%;height:100%;background:#000;overflow:hidden}
+.app-container{position:relative;width:100%;height:100%;background:#000;overflow:hidden}
 
-.player{position:relative;width:100%;height:45vh;min-height:220px;background:#000;pointer-events:auto;flex-shrink:0}
-@media(min-width:768px){.player{height:55vh;}}
+.player{position:relative;width:100%;height:100%;background:#000;pointer-events:auto}
 
 video{width:100%;height:100%;object-fit:contain;background:#000}
 .top-brand{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:40;text-align:center;pointer-events:none}.top-brand .jsr{color:#ff9800;font-weight:700;font-size:13px}.top-brand .dev{margin-top:2px;font-size:11px;font-weight:600;color:#00e5ff;text-shadow:0 0 6px #00e5ff}
@@ -24,9 +23,26 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
 .btn{width:36px;height:36px;border:1.5px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer}
 #play{font-size:0}#play::before{content:"▶";font-size:14px}#play.pause::before{content:"❚❚";font-size:12px}
 
-.settings{position:absolute;bottom:65px;right:10px;background:#111;border-radius:12px;padding:12px;width:160px;display:none;z-index:50}
-.settings label{color:#aaa;font-size:10px;display:block;margin-bottom:4px}
-.settings select{width:100%;background:#000;color:#fff;border:1px solid #555;border-radius:4px;height:24px;margin-bottom:10px}
+/* Custom Black Settings Menu Popup */
+.custom-settings-menu {
+    position: absolute;
+    bottom: 65px;
+    right: 15px;
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 12px;
+    width: 220px;
+    padding: 12px;
+    display: none;
+    z-index: 60;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+}
+.custom-settings-menu.active { display: block; }
+.settings-section-title { color: #888; font-size: 11px; font-weight: bold; margin-bottom: 6px; text-transform: uppercase; }
+.settings-options-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.setting-chip { background: #222; color: #fff; border: 1px solid #444; padding: 6px 10px; font-size: 11px; border-radius: 6px; cursor: pointer; flex: 1; text-align: center; min-width: 45px; }
+.setting-chip.active { background: #2196f3; border-color: #2196f3; font-weight: bold; }
+.setting-chip:hover { background: #333; }
 
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:100}
 .box{width:320px;padding:26px;border-radius:22px;text-align:center;background:linear-gradient(135deg,#1e3c72,#2a5298);color:#fff}
@@ -37,23 +53,28 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
 
 .menu-container{position:absolute;top:15px;right:20px;z-index:60}
 .dot-btn{background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:20px;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.dropdown-menu{display:none;position:absolute;right:0;top:45px;background:#1c1c1c;border:1px solid #333;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.8);width:140px;overflow:hidden}
+.dropdown-menu{display:none;position:absolute;right:0;top:45px;background:#1c1c1c;border:1px solid #333;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.8);width:160px;overflow:hidden}
 .dropdown-menu.active{display:block}
 .dropdown-item{padding:12px 16px;font-size:13px;color:#fff;cursor:pointer;border-bottom:1px solid #2a2a2a}
 .dropdown-item:hover{background:#333}
 
-/* Content & Slides Section */
-.content-section{flex:1;background:#111;display:flex;flex-direction:column;overflow:hidden;border-top:1px solid #222}
-.content-tabs{display:flex;background:#181818;border-bottom:1px solid #333}
+/* Slide & Attachment Drawer Sidebar */
+#sidebar{position:fixed;top:0;right:-100%;width:100%;height:100%;background:rgba(12,12,12,.98);backdrop-filter:blur(8px);transition:right .3s ease;z-index:200;display:flex;flex-direction:column;border-left:1px solid #333}
+#sidebar.active{right:0}
+@media(min-width:600px){#sidebar{width:420px;right:-420px;}}
+.sidebar-header{padding:15px;background:#1a1a1a;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #333;color:#fff;font-weight:bold;font-size:16px}
+.close-sidebar{background:none;border:none;color:#aaa;font-size:22px;cursor:pointer}
+
+.sidebar-tabs{display:flex;background:#181818;border-bottom:1px solid #333}
 .tab-btn{flex:1;padding:12px;text-align:center;color:#aaa;font-size:13px;font-weight:bold;cursor:pointer;border-bottom:2px solid transparent}
 .tab-btn.active{color:#4fc3f7;border-bottom-color:#4fc3f7;background:#222}
 
-.tab-content{flex:1;overflow-y:auto;padding:12px;display:none;flex-direction:column;gap:12px}
+.tab-content{flex:1;overflow-y:auto;padding:15px;display:none;flex-direction:column;gap:12px}
 .tab-content.active{display:flex}
 
 .slide-item{background:#161616;border-radius:10px;overflow:hidden;border:1px solid #333;cursor:pointer;transition:all .2s;padding:10px;display:flex;flex-direction:column;align-items:center}
 .slide-item:hover{border-color:#00e5ff}
-.slide-item img{width:100%;max-height:260px;object-fit:contain;background:#000;border-radius:8px;display:block}
+.slide-item img{width:100%;max-height:220px;object-fit:contain;background:#000;border-radius:8px;display:block}
 .slide-footer-info{width:100%;display:flex;justify-content:flex-end;align-items:center;margin-top:8px;padding-right:4px}
 .slide-time-badge{background:rgba(0,229,255,0.15);color:#00e5ff;font-size:12px;font-weight:600;padding:4px 10px;border-radius:6px;border:1px solid rgba(0,229,255,0.3)}
 
@@ -61,13 +82,6 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
 .attachment-item:hover{border-color:#4fc3f7;background:#1c1c1c}
 
 .no-data-text{color:#888;text-align:center;padding:30px;font-size:13px}
-
-/* Sidebar for popup option */
-#sidebar{position:fixed;top:0;right:-100%;width:100%;height:100%;background:rgba(12,12,12,.98);backdrop-filter:blur(8px);transition:right .3s ease;z-index:200;display:flex;flex-direction:column;border-left:1px solid #333}
-#sidebar.active{right:0}
-@media(min-width:600px){#sidebar{width:420px;right:-420px;}}
-.sidebar-header{padding:15px;background:#1a1a1a;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #333;color:#fff;font-weight:bold;font-size:16px}
-.close-sidebar{background:none;border:none;color:#aaa;font-size:22px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -87,8 +101,8 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
      <div class="menu-container">
         <button class="dot-btn" id="dotMenuBtn">⋮</button>
         <div class="dropdown-menu" id="dropdownMenu">
-            <div class="dropdown-item" id="slidesSidebarBtn">🖼️ Slides Sidebar</div>
-            <div class="dropdown-item" id="downloadItem">📥 Download</div>
+            <div class="dropdown-item" id="openSidebarMenuBtn">🖼️ Lecture Slides & Notes</div>
+            <div class="dropdown-item" id="downloadItem">📥 Download Lecture</div>
         </div>
      </div>
 
@@ -113,51 +127,39 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
       </div>
      </div>
      
-     <div class="settings" id="settings">
-      <label>Speed</label>
-      <select id="speed">
-       <option value="1" selected>1x</option>
-       <option value="1.25">1.25x</option>
-       <option value="1.5">1.5x</option>
-       <option value="1.75">1.75x</option>
-       <option value="2">2x</option>
-       <option value="2.25">2.25x</option>
-       <option value="2.5">2.5x</option>
-       <option value="2.75">2.75x</option>
-      </select>
-      <label>Quality</label>
-      <select id="quality"><option value="-1">AUTO</option></select>
+     <!-- Custom Black Settings Popup -->
+     <div class="custom-settings-menu" id="customSettingsMenu">
+         <div class="settings-section-title">Playback Speed</div>
+         <div class="settings-options-grid" id="speedOptionsGrid">
+             <div class="setting-chip" data-speed="1">1x</div>
+             <div class="setting-chip" data-speed="1.25">1.25x</div>
+             <div class="setting-chip" data-speed="1.5">1.5x</div>
+             <div class="setting-chip" data-speed="2">2x</div>
+         </div>
+         <div class="settings-section-title">Video Quality</div>
+         <div class="settings-options-grid" id="qualityOptionsGrid">
+             <div class="setting-chip active" data-quality="-1">Auto</div>
+         </div>
      </div>
-    </div>
-
-    <!-- Niche Tabs: Timeline Slides aur Attachments (Notes etc.) -->
-    <div class="content-section">
-        <div class="content-tabs">
-            <div class="tab-btn active" data-target="slidesTabContent">Timeline Slides</div>
-            <div class="tab-btn" data-target="attachmentsTabContent">Attachments / Notes</div>
-        </div>
-        
-        <div class="tab-content active" id="slidesTabContent">
-            <div id="slideList">
-                <div class="no-data-text">Loading slides...</div>
-            </div>
-        </div>
-        
-        <div class="tab-content" id="attachmentsTabContent">
-            <div id="attachmentsList">
-                <div class="no-data-text">No attachments available.</div>
-            </div>
-        </div>
     </div>
 </div>
 
-<!-- Sidebar for popup option -->
+<!-- Slide & Attachment Drawer Sidebar -->
 <div id="sidebar">
     <div class="sidebar-header">
-        <span>Lecture Slides</span>
+        <span>Study Material</span>
         <button class="close-sidebar" id="closeSidebarBtn">✕</button>
     </div>
-    <div class="tab-content active" style="padding:15px;" id="sidebarSlideList"></div>
+    <div class="sidebar-tabs">
+        <div class="tab-btn active" data-target="slidesTabContent">Timeline Slides</div>
+        <div class="tab-btn" data-target="attachmentsTabContent">Notes / Files</div>
+    </div>
+    <div class="tab-content active" id="slidesTabContent">
+        <div id="slideList"><div class="no-data-text">Loading slides...</div></div>
+    </div>
+    <div class="tab-content" id="attachmentsTabContent">
+        <div id="attachmentsList"><div class="no-data-text">No attachments available.</div></div>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
@@ -176,26 +178,26 @@ const thumbElem = document.getElementById('thumb');
 const tgPopupElem = document.getElementById('tgPopup');
 const continueBtn = document.getElementById('continueBtn');
 const timeDisplayElem = document.getElementById('time');
-const settingsElem = document.getElementById('settings');
-const settingsBtnElem = document.getElementById('settingsBtn');
-const speedSelect = document.getElementById('speed');
-const qualitySelect = document.getElementById('quality');
 const statusElem = document.getElementById('status');
 const dotMenuBtn = document.getElementById('dotMenuBtn');
 const dropdownMenuElem = document.getElementById('dropdownMenu');
-const slidesSidebarBtn = document.getElementById('slidesSidebarBtn');
+const openSidebarMenuBtn = document.getElementById('openSidebarMenuBtn');
 const downloadItem = document.getElementById('downloadItem');
 const sidebarElem = document.getElementById('sidebar');
 const closeSidebarBtn = document.getElementById('closeSidebarBtn');
 const slideListElem = document.getElementById('slideList');
-const sidebarSlideList = document.getElementById('sidebarSlideList');
 const attachmentsListElem = document.getElementById('attachmentsList');
+
+const settingsBtnElem = document.getElementById('settingsBtn');
+const customSettingsMenu = document.getElementById('customSettingsMenu');
+const speedOptionsGrid = document.getElementById('speedOptionsGrid');
+const qualityOptionsGrid = document.getElementById('qualityOptionsGrid');
 
 let isDragging = false, hideTimeoutRef, hlsInstance, wasVideoPlaying = false;
 let globalSlidesArray = [];
 let globalAttachmentsArray = [];
 
-// Tab Switching Logic
+// Sidebar Tabs Switching
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.onclick = (e) => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -228,15 +230,17 @@ function updateStatusText(msg, type = 'info') {
     }
 }
 
+// 3-Dot Menu Handling
 if (dotMenuBtn) {
     dotMenuBtn.onclick = (e) => {
         e.stopPropagation();
         dropdownMenuElem.classList.toggle('active');
+        customSettingsMenu.classList.remove('active');
     };
 }
 
-if (slidesSidebarBtn) {
-    slidesSidebarBtn.onclick = (e) => {
+if (openSidebarMenuBtn) {
+    openSidebarMenuBtn.onclick = (e) => {
         e.stopPropagation();
         dropdownMenuElem.classList.remove('active');
         sidebarElem.classList.add('active');
@@ -259,7 +263,8 @@ if (downloadItem) {
 }
 
 window.addEventListener('click', () => { 
-    if (dropdownMenuElem) dropdownMenuElem.classList.remove('active'); 
+    if (dropdownMenuElem) dropdownMenuElem.classList.remove('active');
+    if (customSettingsMenu) customSettingsMenu.classList.remove('active');
 });
 
 const urlParamsExtractor = new URLSearchParams(location.search);
@@ -290,7 +295,6 @@ async function initializePlayerEngine() {
             if (responsePayload) {
                 resolvedStreamUrl = responsePayload.m3u8Url || responsePayload.url;
                 
-                // Handle Slides data
                 if (responsePayload.slides && responsePayload.slides.length > 0) {
                     globalSlidesArray = responsePayload.slides;
                     buildSlideItems();
@@ -298,7 +302,6 @@ async function initializePlayerEngine() {
                     slideListElem.innerHTML = `<div class="no-data-text">No slides found for this lecture.</div>`;
                 }
 
-                // Handle Notes / Attachments data safely
                 if (responsePayload.notes && responsePayload.notes.length > 0) {
                     globalAttachmentsArray = responsePayload.notes;
                     buildAttachmentItems();
@@ -306,7 +309,7 @@ async function initializePlayerEngine() {
                     globalAttachmentsArray = responsePayload.attachments;
                     buildAttachmentItems();
                 } else {
-                    attachmentsListElem.innerHTML = `<div class="no-data-text">No attachments/notes found.</div>`;
+                    attachmentsListElem.innerHTML = `<div class="no-data-text">No attachments found.</div>`;
                 }
             }
         } catch (err) {
@@ -348,32 +351,30 @@ function setupHlsPlayer(url) {
 
         hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
             updateStatusText('✅ Stream ready!', 'success');
-            qualitySelect.innerHTML = '<option value="-1">AUTO</option>';
+            // Populate custom quality options
+            qualityOptionsGrid.innerHTML = `<div class="setting-chip active" data-quality="-1">Auto</div>`;
             hlsInstance.levels.forEach((lvl, idx) => {
-                let opt = document.createElement("option");
-                opt.value = idx;
-                opt.text = lvl.height + "p";
-                qualitySelect.appendChild(opt);
+                let chip = document.createElement("div");
+                chip.className = "setting-chip";
+                chip.dataset.quality = idx;
+                chip.innerText = lvl.height + "p";
+                chip.onclick = (e) => {
+                    e.stopPropagation();
+                    hlsInstance.currentLevel = idx;
+                    document.querySelectorAll('#qualityOptionsGrid .setting-chip').forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    customSettingsMenu.classList.remove('active');
+                };
+                qualityOptionsGrid.appendChild(chip);
             });
-        });
-
-        hlsInstance.on(Hls.Events.LEVEL_SWITCHED, (ev, data) => {
-            qualitySelect.value = data.level;
         });
 
         hlsInstance.on(Hls.Events.ERROR, (ev, data) => {
             if (data.fatal) {
                 switch (data.type) {
-                    case Hls.ErrorTypes.NETWORK_ERROR:
-                        hlsInstance.startLoad();
-                        break;
-                    case Hls.ErrorTypes.MEDIA_ERROR:
-                        hlsInstance.recoverMediaError();
-                        break;
-                    default:
-                        hlsInstance.destroy();
-                        updateStatusText('❌ Fatal stream error encountered', 'error');
-                        break;
+                    case Hls.ErrorTypes.NETWORK_ERROR: hlsInstance.startLoad(); break;
+                    case Hls.ErrorTypes.MEDIA_ERROR: hlsInstance.recoverMediaError(); break;
+                    default: hlsInstance.destroy(); updateStatusText('❌ Fatal stream error', 'error'); break;
                 }
             }
         });
@@ -382,23 +383,40 @@ function setupHlsPlayer(url) {
     }
 }
 
+// Setup Speed Chips Events
+document.querySelectorAll('#speedOptionsGrid .setting-chip').forEach(chip => {
+    chip.onclick = (e) => {
+        e.stopPropagation();
+        let spd = parseFloat(chip.dataset.speed);
+        videoElem.playbackRate = spd;
+        document.querySelectorAll('#speedOptionsGrid .setting-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        customSettingsMenu.classList.remove('active');
+    };
+});
+
+// Auto chip click handler for quality Auto
+document.querySelector('#qualityOptionsGrid .setting-chip').onclick = (e) => {
+    e.stopPropagation();
+    if (hlsInstance) hlsInstance.currentLevel = -1;
+    document.querySelectorAll('#qualityOptionsGrid .setting-chip').forEach(c => c.classList.remove('active'));
+    e.target.classList.add('active');
+    customSettingsMenu.classList.remove('active');
+};
+
 function buildSlideItems() {
     if (!slideListElem) return;
     slideListElem.innerHTML = "";
-    if (sidebarSlideList) sidebarSlideList.innerHTML = "";
-
     globalSlidesArray.forEach((slide) => {
         const card = document.createElement('div');
         card.className = 'slide-item';
         const timeStr = formatTimestamp(slide.timestamp);
-        
-        const cardInnerHtml = `
-            <img src="${slide.image}" alt="Slide Image" onerror="this.src='https://via.placeholder.com/400x220?text=Slide+Preview+Not+Available'">
+        card.innerHTML = `
+            <img src="${slide.image}" alt="Slide" onerror="this.src='https://via.placeholder.com/400x220?text=Preview+Not+Available'">
             <div class="slide-footer-info">
                 <div class="slide-time-badge">🕒 ${timeStr}</div>
             </div>
         `;
-        card.innerHTML = cardInnerHtml;
         card.onclick = (e) => {
             e.stopPropagation();
             videoElem.currentTime = slide.timestamp;
@@ -406,19 +424,6 @@ function buildSlideItems() {
             sidebarElem.classList.remove('active');
         };
         slideListElem.appendChild(card);
-
-        if (sidebarSlideList) {
-            const sideCard = document.createElement('div');
-            sideCard.className = 'slide-item';
-            sideCard.innerHTML = cardInnerHtml;
-            sideCard.onclick = (e) => {
-                e.stopPropagation();
-                videoElem.currentTime = slide.timestamp;
-                triggerSafePlayback();
-                sidebarElem.classList.remove('active');
-            };
-            sidebarSlideList.appendChild(sideCard);
-        }
     });
 }
 
@@ -508,20 +513,9 @@ if (settingsBtnElem) {
     settingsBtnElem.onclick = e => {
         e.preventDefault();
         e.stopPropagation();
-        settingsElem.style.display = (settingsElem.style.display === "block" ? "none" : "block");
+        customSettingsMenu.classList.toggle('active');
+        dropdownMenuElem.classList.remove('active');
         handleControlVisibility(true);
-    };
-}
-
-if (speedSelect) {
-    speedSelect.onchange = () => {
-        videoElem.playbackRate = parseFloat(speedSelect.value);
-    };
-}
-
-if (qualitySelect) {
-    qualitySelect.onchange = () => {
-        if (hlsInstance) hlsInstance.currentLevel = parseInt(qualitySelect.value);
     };
 }
 
@@ -616,11 +610,12 @@ playerElem.onclick = e => {
     if (tgPopupElem && tgPopupElem.style.display !== "none") return;
     if (e.target === videoElem || e.target === playerElem) {
         sidebarElem.classList.remove('active');
+        customSettingsMenu.classList.remove('active');
+        dropdownMenuElem.classList.remove('active');
         if (controlsElem.classList.contains("hide")) {
             handleControlVisibility();
         } else {
             controlsElem.classList.add("hide");
-            settingsElem.style.display = "none";
         }
     }
 };
