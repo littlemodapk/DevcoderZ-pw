@@ -176,7 +176,6 @@ video{width:100%;height:100%;object-fit:contain}
 
 <div class="player" id="player">
  
- <!-- Added Lecture Title & 3-Dot Menu -->
  <div class="lecture-title" id="lectureTitle">Loading Lecture...</div>
  <div class="menu-container">
     <button class="dot-btn" onclick="toggleMenu(event)">⋮</button>
@@ -224,15 +223,12 @@ video{width:100%;height:100%;object-fit:contain}
   <select id="quality"><option value="-1">AUTO</option></select>
  </div>
 
- <!-- Slides Sidebar -->
  <div id="sidebar" onclick="event.stopPropagation()">
     <div class="sidebar-header">
         <span>Lecture Slides</span>
         <button class="close-sidebar" onclick="toggleSidebar(event)">✕</button>
     </div>
-    <div class="slide-list" id="slideList">
-        <!-- Dynamically populated slides -->
-    </div>
+    <div class="slide-list" id="slideList"></div>
  </div>
 
 </div>
@@ -246,7 +242,6 @@ let drag=false,hideTimer,hls,wasPlaying=false;
 let notesUrl = "";
 let slidesData = [];
 
-// DevCoderz Custom Menu Logic
 function toggleMenu(e) {
     e.stopPropagation();
     dropdownMenu.classList.toggle('active');
@@ -264,7 +259,7 @@ function openNotes(e) {
 }
 window.addEventListener('click', () => { dropdownMenu.classList.remove('active'); });
 
-// Dynamic API Integration
+// Purana working URL fetching logic
 const urlParams=new URLSearchParams(location.search);
 const batchId = urlParams.get("batchId");
 const subjectId = urlParams.get("subjectId");
@@ -304,41 +299,54 @@ async function initPlayer() {
     }
 
     if (videoUrl) {
-        if (Hls.isSupported()) {
-            hls = new Hls({
-                maxBufferLength: 30,
-                maxMaxBufferLength: 60,
-                startFragPrefetch: true,
-                liveSyncDurationCount: 3,
-                highBufferWatchdogPeriod: 2
+        loadHlsStream(videoUrl);
+    }
+}
+
+// Purana dependable HLS loader method
+function loadHlsStream(url) {
+    if (Hls.isSupported()) {
+        hls = new Hls({
+            maxBufferLength: 30,
+            maxMaxBufferLength: 60,
+            startFragPrefetch: true,
+            liveSyncDurationCount: 3,
+            highBufferWatchdogPeriod: 2
+        });
+        hls.loadSource(url);
+        hls.attachMedia(v);
+        
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            quality.innerHTML = '<option value="-1">AUTO</option>';
+            hls.levels.forEach((l, i) => {
+                let o = document.createElement("option");
+                o.value = i;
+                o.text = l.height + "p";
+                quality.appendChild(o);
             });
-            hls.loadSource(videoUrl);
-            hls.attachMedia(v);
-            hls.on(Hls.Events.MANIFEST_PARSED,()=>{
-                quality.innerHTML='<option value="-1">AUTO</option>';
-                hls.levels.forEach((l,i)=>{let o=document.createElement("option");o.value=i;o.text=l.height+"p";quality.appendChild(o);});
-            });
-            hls.on(Hls.Events.LEVEL_SWITCHED,(e,data)=>{
-                quality.value=data.level;
-            });
-            hls.on(Hls.Events.ERROR, function(event, data) {
-                if (data.fatal) {
-                    switch (data.type) {
-                        case Hls.ErrorTypes.NETWORK_ERROR:
-                            hls.startLoad();
-                            break;
-                        case Hls.ErrorTypes.MEDIA_ERROR:
-                            hls.recoverMediaError();
-                            break;
-                        default:
-                            hls.destroy();
-                            break;
-                    }
+        });
+        
+        hls.on(Hls.Events.LEVEL_SWITCHED, (e, data) => {
+            quality.value = data.level;
+        });
+        
+        hls.on(Hls.Events.ERROR, function(event, data) {
+            if (data.fatal) {
+                switch (data.type) {
+                    case Hls.ErrorTypes.NETWORK_ERROR:
+                        hls.startLoad();
+                        break;
+                    case Hls.ErrorTypes.MEDIA_ERROR:
+                        hls.recoverMediaError();
+                        break;
+                    default:
+                        hls.destroy();
+                        break;
                 }
-            });
-        } else if (v.canPlayType('application/vnd.apple.mpegurl')) {
-            v.src = videoUrl;
-        }
+            }
+        });
+    } else if (v.canPlayType('application/vnd.apple.mpegurl')) {
+        v.src = url;
     }
 }
 
@@ -347,7 +355,6 @@ function renderSlides() {
     slidesData.forEach((slide) => {
         const item = document.createElement('div');
         item.className = 'slide-item';
-        // Format time properly (e.g., 3605s -> 01:00:05)
         const timeFormatted = fmt(slide.timestamp);
         
         item.innerHTML = `
@@ -358,7 +365,6 @@ function renderSlides() {
             e.stopPropagation();
             v.currentTime = slide.timestamp;
             v.play();
-            // Automatically close sidebar on mobile if you want
             if(window.innerWidth < 600) sidebar.classList.remove('active');
         };
         slideList.appendChild(item);
@@ -462,7 +468,7 @@ v.onpause=()=>{playBtn.classList.remove("pause");centerPlay.classList.remove("hi
 player.onclick=e=>{
     if(tgPopup.style.display!=="none")return;
     if(e.target===v||e.target===player){
-        sidebar.classList.remove('active'); // auto-hide sidebar if click outside
+        sidebar.classList.remove('active');
         if(controls.classList.contains("hide")) show();
         else { controls.classList.add("hide"); settings.style.display="none"; }
     }
