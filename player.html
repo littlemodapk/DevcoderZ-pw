@@ -35,6 +35,20 @@ video{width:100%;height:100%;object-fit:contain}
 .join{background:#fff;color:#1e3c72}
 .continue{background:rgba(0,0,0,.25);border:1px solid #fff}
 
+/* --- Status / Loading Indicator --- */
+#status {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    color: #4fc3f7;
+    background: rgba(0,0,0,0.8);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    z-index: 50;
+    pointer-events: none;
+}
+
 /* --- DevCoderz New Additions --- */
 .lecture-title {
     position: absolute;
@@ -46,7 +60,7 @@ video{width:100%;height:100%;object-fit:contain}
     border-radius: 20px;
     font-size: 13px;
     color: #fff;
-    max-width: 60%;
+    max-width: 50%;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -177,6 +191,8 @@ video{width:100%;height:100%;object-fit:contain}
 <div class="player" id="player">
  
  <div class="lecture-title" id="lectureTitle">Loading Lecture...</div>
+ <div id="status">🔄 Initializing...</div>
+
  <div class="menu-container">
     <button class="dot-btn" onclick="toggleMenu(event)">⋮</button>
     <div class="dropdown-menu" id="dropdownMenu">
@@ -235,12 +251,20 @@ video{width:100%;height:100%;object-fit:contain}
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <script>
-const player=document.getElementById("player"),v=document.getElementById("video"),playBtn=document.getElementById("play"),back=document.getElementById("back"),fwd=document.getElementById("fwd"),fs=document.getElementById("fs"),controls=document.getElementById("controls"),centerPlay=document.getElementById("centerPlay"),progress=document.getElementById("progress"),bar=document.getElementById("bar"),thumb=document.getElementById("thumb"),tgPopup=document.getElementById("tgPopup"),continueBtn=document.getElementById("continueBtn"),timeDisplay=document.getElementById("time"),settings=document.getElementById("settings"),settingsBtn=document.getElementById("settingsBtn"),speed=document.getElementById("speed"),quality=document.getElementById("quality");
+const player=document.getElementById("player"),v=document.getElementById("video"),playBtn=document.getElementById("play"),back=document.getElementById("back"),fwd=document.getElementById("fwd"),fs=document.getElementById("fs"),controls=document.getElementById("controls"),centerPlay=document.getElementById("centerPlay"),progress=document.getElementById("progress"),bar=document.getElementById("bar"),thumb=document.getElementById("thumb"),tgPopup=document.getElementById("tgPopup"),continueBtn=document.getElementById("continueBtn"),timeDisplay=document.getElementById("time"),settings=document.getElementById("settings"),settingsBtn=document.getElementById("settingsBtn"),speed=document.getElementById("speed"),quality=document.getElementById("quality"),statusDiv=document.getElementById("status");
 const lectureTitle=document.getElementById('lectureTitle'), dropdownMenu=document.getElementById('dropdownMenu'), sidebar=document.getElementById('sidebar'), slideList=document.getElementById('slideList');
 
 let drag=false,hideTimer,hls,wasPlaying=false;
 let notesUrl = "";
 let slidesData = [];
+
+function setStatus(msg, type = 'info') {
+    statusDiv.innerText = msg;
+    statusDiv.style.display = "block";
+    if(type === 'success') {
+        setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
+    }
+}
 
 function toggleMenu(e) {
     e.stopPropagation();
@@ -259,30 +283,31 @@ function openNotes(e) {
 }
 window.addEventListener('click', () => { dropdownMenu.classList.remove('active'); });
 
-// Purana working URL fetching logic
+// URL Parsing & API Integration
 const urlParams=new URLSearchParams(location.search);
 const batchId = urlParams.get("batchId");
 const subjectId = urlParams.get("subjectId");
 const lectureId = urlParams.get("lectureId");
 const rawUrl = urlParams.get("m3u8Url") || urlParams.get("Url");
 
-async function initPlayer() {
-    let videoUrl = "";
+async function initDynamicPlayer() {
+    let streamUrl = "";
     
     if (rawUrl) {
-        videoUrl = decodeURIComponent(rawUrl);
+        streamUrl = decodeURIComponent(rawUrl);
     } else if (batchId && subjectId && lectureId) {
         try {
-            lectureTitle.innerText = "Fetching config...";
+            setStatus('🔄 Fetching config...');
             const apiUrl = `https://devcoderz-backend.vercel.app/api/config?batchId=${batchId}&subjectId=${subjectId}&lectureId=${lectureId}`;
             const res = await fetch(apiUrl);
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
             const json = await res.json();
             
             if (json) {
-                videoUrl = json.m3u8Url || json.url;
+                streamUrl = json.m3u8Url || json.url;
                 if (json.topic_name) {
                     lectureTitle.innerText = json.topic_name;
-                    document.title = json.topic_name;
+                    document.title = json.topic_name + " - DevCoderz";
                 } else {
                     lectureTitle.style.display = 'none';
                 }
@@ -293,30 +318,43 @@ async function initPlayer() {
                 }
             }
         } catch (e) {
-            console.error("Error fetching API config", e);
-            lectureTitle.innerText = "API Error";
+            setStatus('❌ Error fetching API config', 'error');
+            return;
         }
+    } else {
+        setStatus('❌ Missing parameters in URL!', 'error');
+        return;
     }
 
-    if (videoUrl) {
-        loadHlsStream(videoUrl);
+    if (!streamUrl) {
+        setStatus('❌ Stream URL not found!', 'error');
+        return;
     }
+
+    loadHlsStream(streamUrl);
 }
 
-// Purana dependable HLS loader method
+// 100% Robust HLS Loading Mechanism
 function loadHlsStream(url) {
-    if (Hls.isSupported()) {
-        hls = new Hls({
+    setStatus('🔄 Loading stream...');
+
+    if (v.canPlayType('application/vnd.apple.mpegurl')) {
+        v.src = url;
+        v.addEventListener('loadedmetadata', () => {
+            setStatus('✅ Playing via Native HLS', 'success');
+        });
+    } else if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+        hls = new Hls({ 
+            enableWorker: true, 
+            lowLatencyMode: true,
             maxBufferLength: 30,
-            maxMaxBufferLength: 60,
-            startFragPrefetch: true,
-            liveSyncDurationCount: 3,
-            highBufferWatchdogPeriod: 2
+            maxMaxBufferLength: 60
         });
         hls.loadSource(url);
         hls.attachMedia(v);
-        
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+
+        hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+            setStatus('✅ Stream loaded!', 'success');
             quality.innerHTML = '<option value="-1">AUTO</option>';
             hls.levels.forEach((l, i) => {
                 let o = document.createElement("option");
@@ -325,11 +363,11 @@ function loadHlsStream(url) {
                 quality.appendChild(o);
             });
         });
-        
+
         hls.on(Hls.Events.LEVEL_SWITCHED, (e, data) => {
             quality.value = data.level;
         });
-        
+
         hls.on(Hls.Events.ERROR, function(event, data) {
             if (data.fatal) {
                 switch (data.type) {
@@ -341,12 +379,13 @@ function loadHlsStream(url) {
                         break;
                     default:
                         hls.destroy();
+                        setStatus('❌ Stream playback error', 'error');
                         break;
                 }
             }
         });
-    } else if (v.canPlayType('application/vnd.apple.mpegurl')) {
-        v.src = url;
+    } else {
+        setStatus('❌ HLS not supported', 'error');
     }
 }
 
@@ -371,7 +410,9 @@ function renderSlides() {
     });
 }
 
-initPlayer();
+window.addEventListener('load', () => {
+    setTimeout(initDynamicPlayer, 300);
+});
 
 function fmt(t){if(!t||isNaN(t)||t===Infinity)return"00:00:00";let h=Math.floor(t/3600),m=Math.floor((t%3600)/60),s=Math.floor(t%60);return[h,m,s].map(n=>String(n).padStart(2,"0")).join(":");}
 function updateProgressUI(percent, currentTime, duration){
@@ -463,7 +504,7 @@ v.onloadedmetadata=()=>{
 };
 
 v.onplay=()=>{playBtn.classList.add("pause");centerPlay.classList.add("hide");show();};
-v.onpause=()=>{playBtn.classList.remove("pause");centerPlay.classList.remove("hide");show(true);};
+v.onpause=()=>{playBtn.classList.remove("pause");centerPlay.classList.add("hide");show(true);};
 
 player.onclick=e=>{
     if(tgPopup.style.display!=="none")return;
