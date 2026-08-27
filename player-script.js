@@ -1,64 +1,79 @@
-;(function(_0x10f278, _0x56a312) {
-    const _0x4c2b9a = function(_0x221379) {
-        while (--_0x221379) {
-            _0x56a312['push'](_0x56a312['shift']());
+// Inline Global Handler for Popup Button to ensure 100% reliability
+function handlePopupContinue(_0xev) {
+    _0xev.preventDefault();
+    _0xev.stopPropagation();
+    const _0xpopup = document.getElementById("tgPopup");
+    const _0xcPlay = document.getElementById("centerPlay");
+    const _0xctrls = document.getElementById("controls");
+    if (_0xpopup) _0xpopup.style.display = "none";
+    if (_0xcPlay) _0xcPlay.classList.remove("hide");
+    if (_0xctrls) {
+        _0xctrls.classList.remove("hide");
+        setTimeout(() => _0xctrls.classList.add("hide"), 3000);
+    }
+}
+
+;(function(_0x9a8f, _0x21b4) {
+    const _0x3e21 = function(_0x51ab) {
+        while (--_0x51ab) {
+            _0x21b4['push'](_0x21b4['shift']());
         }
     };
-    _0x4c2b9a(++_0x56a312);
-}(['getElementById', 'player', 'video', 'play', 'back', 'fwd', 'fs', 'controls', 'centerPlay', 'progress', 'bar', 'thumb', 'tgPopup', 'continueBtn', 'time', 'settings', 'settingsBtn', 'speed', 'quality', 'status', 'dropdownMenu', 'sidebar', 'slideList', 'innerText', 'style', 'display', 'block', 'none', 'active', 'toggle', 'open', 'search', 'get', 'stringify', 'POST', 'application/json', 'ok', 'm3u8Url', 'url', 'notes', 'slides', 'createElement', 'className', 'slide-item', 'innerHTML', 'appendChild', 'currentTime', 'loadSource', 'attachMedia', 'on', 'Events', 'MANIFEST_PARSED', 'levels', 'height', 'LEVEL_SWITCHED', 'ERROR', 'ErrorTypes', 'NETWORK_ERROR', 'startLoad', 'MEDIA_ERROR', 'recoverMediaError', 'destroy', 'canPlayType', 'src', 'addEventListener', 'loadedmetadata', 'duration', 'playbackRate', 'currentLevel', 'requestFullscreen', 'exitFullscreen', 'getBoundingClientRect', 'touches', 'clientX', 'setPointerCapture', 'releasePointerCapture', 'ontimeupdate', 'onloadedmetadata', 'onplay', 'onpause', 'onclick', 'preventDefault', 'stopPropagation', 'paused', 'max', 'min', 'style.display'], 0x1b4));
+    _0x3e21(++_0x21b4);
+}(['player', 'video', 'play', 'back', 'fwd', 'fs', 'controls', 'centerPlay', 'progress', 'bar', 'thumb', 'time', 'settings', 'settingsBtn', 'speed', 'quality', 'status', 'dropdownMenu', 'sidebar', 'slideList', 'innerText', 'style', 'display', 'block', 'none', 'active', 'toggle', 'open', 'search', 'get', 'stringify', 'POST', 'application/json', 'ok', 'm3u8Url', 'url', 'notes', 'slides', 'createElement', 'className', 'slide-item', 'innerHTML', 'appendChild', 'currentTime', 'loadSource', 'attachMedia', 'on', 'Events', 'MANIFEST_PARSED', 'levels', 'height', 'LEVEL_SWITCHED', 'ERROR', 'ErrorTypes', 'NETWORK_ERROR', 'startLoad', 'MEDIA_ERROR', 'recoverMediaError', 'destroy', 'canPlayType', 'src', 'addEventListener', 'loadedmetadata', 'duration', 'playbackRate', 'currentLevel', 'requestFullscreen', 'exitFullscreen', 'getBoundingClientRect', 'touches', 'clientX', 'setPointerCapture', 'releasePointerCapture', 'ontimeupdate', 'onloadedmetadata', 'onplay', 'onpause', 'onclick', 'preventDefault', 'stopPropagation', 'paused', 'max', 'min', 'getElementById'], 0x19a));
 
-const _0x289a = function(_0x43b216, _0x3bc181) {
-    return _0x43b216;
+const _0xgetEl = function(_0xid) {
+    return document.getElementById(_0xid);
 };
 
-const playerElem = document[_0x289a('getElementById')]('player');
-const videoElem = document[_0x289a('getElementById')]('video');
-const playButton = document[_0x289a('getElementById')]('play');
-const backButton = document[_0x289a('getElementById')]('back');
-const fwdButton = document[_0x289a('getElementById')]('fwd');
-const fsButton = document[_0x289a('getElementById')]('fs');
-const controlsElem = document[_0x289a('getElementById')]('controls');
-const centerPlayElem = document[_0x289a('getElementById')]('centerPlay');
-const progressElem = document[_0x289a('getElementById')]('progress');
-const barElem = document[_0x289a('getElementById')]('bar');
-const thumbElem = document[_0x289a('getElementById')]('thumb');
-const tgPopupElem = document[_0x289a('getElementById')]('tgPopup');
-const continueBtnElem = document[_0x289a('getElementById')]('continueBtn');
-const timeDisplayElem = document[_0x289a('getElementById')]('time');
-const settingsElem = document[_0x289a('getElementById')]('settings');
-const settingsBtnElem = document[_0x289a('getElementById')]('settingsBtn');
-const speedSelect = document[_0x289a('getElementById')]('speed');
-const qualitySelect = document[_0x289a('getElementById')]('quality');
-const statusElem = document[_0x289a('getElementById')]('status');
-const dropdownMenuElem = document[_0x289a('getElementById')]('dropdownMenu');
-const sidebarElem = document[_0x289a('getElementById')]('sidebar');
-const slideListElem = document[_0x289a('getElementById')]('slideList');
+const playerElem = _0xgetEl('player');
+const videoElem = _0xgetEl('video');
+const playButton = _0xgetEl('play');
+const backButton = _0xgetEl('back');
+const fwdButton = _0xgetEl('fwd');
+const fsButton = _0xgetEl('fs');
+const controlsElem = _0xgetEl('controls');
+const centerPlayElem = _0xgetEl('centerPlay');
+const progressElem = _0xgetEl('progress');
+const barElem = _0xgetEl('bar');
+const thumbElem = _0xgetEl('thumb');
+const tgPopupElem = _0xgetEl('tgPopup');
+const timeDisplayElem = _0xgetEl('time');
+const settingsElem = _0xgetEl('settings');
+const settingsBtnElem = _0xgetEl('settingsBtn');
+const speedSelect = _0xgetEl('speed');
+const qualitySelect = _0xgetEl('quality');
+const statusElem = _0xgetEl('status');
+const dropdownMenuElem = _0xgetEl('dropdownMenu');
+const sidebarElem = _0xgetEl('sidebar');
+const slideListElem = _0xgetEl('slideList');
 
 let isDragging = false, hideTimeoutRef, hlsInstance, wasVideoPlaying = false;
 let globalNotesUrl = "";
 let globalSlidesArray = [];
 
-function updateStatusText(_0x18a211, _0x599021 = 'info') {
-    statusElem.innerText = _0x18a211;
+function updateStatusText(_0xmsg, _0xtype = 'info') {
+    if(!statusElem) return;
+    statusElem.innerText = _0xmsg;
     statusElem.style.display = "block";
-    if(_0x599021 === 'success') {
+    if(_0xtype === 'success') {
         setTimeout(() => { statusElem.style.display = 'none'; }, 2500);
     }
 }
 
-function toggleMenu(_0x51c911) {
-    _0x51c911.stopPropagation();
+function toggleMenu(_0xev) {
+    _0xev.stopPropagation();
     dropdownMenuElem.classList.toggle('active');
 }
 
-function toggleSidebar(_0x12bb94) {
-    _0x12bb94.stopPropagation();
+function toggleSidebar(_0xev) {
+    _0xev.stopPropagation();
     dropdownMenuElem.classList.remove('active');
     sidebarElem.classList.toggle('active');
 }
 
-function openNotes(_0x4421aa) {
-    _0x4421aa.stopPropagation();
+function openNotes(_0xev) {
+    _0xev.stopPropagation();
     dropdownMenuElem.classList.remove('active');
     if (globalNotesUrl) {
         window.open(globalNotesUrl, '_blank');
@@ -68,7 +83,7 @@ function openNotes(_0x4421aa) {
 }
 
 window.addEventListener('click', () => { 
-    dropdownMenuElem.classList.remove('active'); 
+    if(dropdownMenuElem) dropdownMenuElem.classList.remove('active'); 
 });
 
 const urlParamsExtractor = new URLSearchParams(location.search);
@@ -89,9 +104,7 @@ async function initializePlayerEngine() {
             
             const networkResponse = await fetch(endpointRoute, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ batchId: bId, subjectId: sId, lectureId: lId })
             });
 
@@ -108,7 +121,7 @@ async function initializePlayerEngine() {
                     buildSlideItems();
                 }
             }
-        } catch (errCatch) {
+        } catch (_0xerr) {
             updateStatusText('❌ Error connecting to stream service', 'error');
             return;
         }
@@ -125,11 +138,11 @@ async function initializePlayerEngine() {
     setupHlsPlayer(resolvedStreamUrl);
 }
 
-function setupHlsPlayer(_0x33b110) {
+function setupHlsPlayer(_0xurl) {
     updateStatusText('🔄 Initializing stream buffer...');
 
     if (videoElem.canPlayType('application/vnd.apple.mpegurl')) {
-        videoElem.src = _0x33b110;
+        videoElem.src = _0xurl;
         videoElem.addEventListener('loadedmetadata', () => {
             updateStatusText('✅ Playing natively via HLS', 'success');
         });
@@ -140,27 +153,27 @@ function setupHlsPlayer(_0x33b110) {
             maxBufferLength: 30,
             maxMaxBufferLength: 60
         });
-        hlsInstance.loadSource(_0x33b110);
+        hlsInstance.loadSource(_0xurl);
         hlsInstance.attachMedia(videoElem);
 
-        hlsInstance.on(Hls.Events.MANIFEST_PARSED, (_0x48bb1, _0x211ac) => {
+        hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
             updateStatusText('✅ Stream ready!', 'success');
             qualitySelect.innerHTML = '<option value="-1">AUTO</option>';
-            hlsInstance.levels.forEach((_0x33a1, _0x992b) => {
+            hlsInstance.levels.forEach((_0xlvl, _0xidx) => {
                 let _0xopt = document.createElement("option");
-                _0xopt.value = _0x992b;
-                _0xopt.text = _0x33a1.height + "p";
+                _0xopt.value = _0xidx;
+                _0xopt.text = _0xlvl.height + "p";
                 qualitySelect.appendChild(_0xopt);
             });
         });
 
-        hlsInstance.on(Hls.Events.LEVEL_SWITCHED, (_0x911, _0xdata) => {
+        hlsInstance.on(Hls.Events.LEVEL_SWITCHED, (_0xev, _0xdata) => {
             qualitySelect.value = _0xdata.level;
         });
 
-        hlsInstance.on(Hls.Events.ERROR, function(_0xe1, _0xe2) {
-            if (_0xe2.fatal) {
-                switch (_0xe2.type) {
+        hlsInstance.on(Hls.Events.ERROR, (_0xev, _0xdata) => {
+            if (_0xdata.fatal) {
+                switch (_0xdata.type) {
                     case Hls.ErrorTypes.NETWORK_ERROR:
                         hlsInstance.startLoad();
                         break;
@@ -180,6 +193,7 @@ function setupHlsPlayer(_0x33b110) {
 }
 
 function buildSlideItems() {
+    if(!slideListElem) return;
     slideListElem.innerHTML = "";
     globalSlidesArray.forEach((_0xslide) => {
         const _0xcard = document.createElement('div');
@@ -213,6 +227,7 @@ function formatTimestamp(_0xsec) {
 }
 
 function refreshProgressBarUI(_0xpct, _0xcurr, _0xdur) {
+    if(!barElem || !thumbElem || !timeDisplayElem) return;
     barElem.style.width = _0xpct + "%";
     thumbElem.style.left = _0xpct + "%";
     timeDisplayElem.innerText = `${formatTimestamp(_0xcurr)} / ${formatTimestamp(_0xdur)}`;
@@ -226,6 +241,7 @@ function triggerSafePlayback() {
 }
 
 function handleControlVisibility(_0xpermanent = false) {
+    if(!controlsElem) return;
     controlsElem.classList.remove("hide");
     clearTimeout(hideTimeoutRef);
     if(!_0xpermanent) {
@@ -233,62 +249,50 @@ function handleControlVisibility(_0xpermanent = false) {
     }
 }
 
-// Fixed Popup Continue Handler
-if (continueBtnElem) {
-    continueBtnElem.onclick = function(_0xe) {
-        _0xe.preventDefault();
-        _0xe.stopPropagation();
-        tgPopupElem.style.display = "none";
-        centerPlayElem.classList.remove("hide");
-        controlsElem.classList.remove("hide");
-        handleControlVisibility();
-    };
-}
-
-centerPlayElem.onclick = _0xe => {
-    _0xe.preventDefault();
-    _0xe.stopPropagation();
+centerPlayElem.onclick = _0xev => {
+    _0xev.preventDefault();
+    _0xev.stopPropagation();
     triggerSafePlayback();
 };
 
-playButton.onclick = _0xe => {
-    _0xe.preventDefault();
-    _0xe.stopPropagation();
+playButton.onclick = _0xev => {
+    _0xev.preventDefault();
+    _0xev.stopPropagation();
     videoElem.paused ? triggerSafePlayback() : videoElem.pause();
 };
 
-backButton.onclick = _0xe => {
-    _0xe.preventDefault();
-    _0xe.stopPropagation();
+backButton.onclick = _0xev => {
+    _0xev.preventDefault();
+    _0xev.stopPropagation();
     videoElem.currentTime = Math.max(0, videoElem.currentTime - 10);
     handleControlVisibility(true);
 };
 
-fwdButton.onclick = _0xe => {
-    _0xe.preventDefault();
-    _0xe.stopPropagation();
+fwdButton.onclick = _0xev => {
+    _0xev.preventDefault();
+    _0xev.stopPropagation();
     videoElem.currentTime = Math.min(videoElem.duration, videoElem.currentTime + 10);
     handleControlVisibility(true);
 };
 
-settingsBtnElem.onclick = _0xe => {
-    _0xe.preventDefault();
-    _0xe.stopPropagation();
+settingsBtnElem.onclick = _0xev => {
+    _0xev.preventDefault();
+    _0xev.stopPropagation();
     settingsElem.style.display = (settingsElem.style.display === "block" ? "none" : "block");
     handleControlVisibility(true);
 };
 
-speedSelect.onchange = _0xe => {
+speedSelect.onchange = () => {
     videoElem.playbackRate = parseFloat(speedSelect.value);
 };
 
-qualitySelect.onchange = _0xe => {
+qualitySelect.onchange = () => {
     if(hlsInstance) hlsInstance.currentLevel = parseInt(qualitySelect.value);
 };
 
-fsButton.onclick = async _0xe => {
-    _0xe.preventDefault();
-    _0xe.stopPropagation();
+fsButton.onclick = async _0xev => {
+    _0xev.preventDefault();
+    _0xev.stopPropagation();
     try {
         if (!document.fullscreenElement) {
             await playerElem.requestFullscreen();
@@ -304,44 +308,44 @@ fsButton.onclick = async _0xe => {
     } catch (_0xerr) {}
 };
 
-function extractPointerPosition(_0xe) {
+function extractPointerPosition(_0xev) {
     const _0xrect = progressElem.getBoundingClientRect();
-    const _0xclientX = _0xe.touches ? _0xe.touches[0].clientX : _0xe.clientX;
+    const _0xclientX = _0xev.touches ? _0xev.touches[0].clientX : _0xev.clientX;
     let _0xcalcPos = (_0xclientX - _0xrect.left) / _0xrect.width;
     return Math.max(0, Math.min(1, _0xcalcPos));
 }
 
-progressElem.onpointerdown = _0xe => {
-    _0xe.preventDefault();
-    _0xe.stopPropagation();
+progressElem.onpointerdown = _0xev => {
+    _0xev.preventDefault();
+    _0xev.stopPropagation();
     isDragging = true;
     wasVideoPlaying = !videoElem.paused;
     videoElem.pause();
-    progressElem.setPointerCapture(_0xe.pointerId);
-    let _0xpos = extractPointerPosition(_0xe);
+    progressElem.setPointerCapture(_0xev.pointerId);
+    let _0xpos = extractPointerPosition(_0xev);
     if(videoElem.duration) {
         videoElem.currentTime = _0xpos * videoElem.duration;
         refreshProgressBarUI(_0xpos * 100, videoElem.currentTime, videoElem.duration);
     }
 };
 
-progressElem.onpointermove = _0xe => {
+progressElem.onpointermove = _0xev => {
     if(!isDragging) return;
-    _0xe.preventDefault();
-    _0xe.stopPropagation();
-    let _0xpos = extractPointerPosition(_0xe);
+    _0xev.preventDefault();
+    _0xev.stopPropagation();
+    let _0xpos = extractPointerPosition(_0xev);
     if(videoElem.duration) {
         videoElem.currentTime = _0xpos * videoElem.duration;
         refreshProgressBarUI(_0xpos * 100, videoElem.currentTime, videoElem.duration);
     }
 };
 
-progressElem.onpointerup = _0xe => {
+progressElem.onpointerup = _0xev => {
     if(!isDragging) return;
-    _0xe.preventDefault();
-    _0xe.stopPropagation();
+    _0xev.preventDefault();
+    _0xev.stopPropagation();
     isDragging = false;
-    try { progressElem.releasePointerCapture(_0xe.pointerId); } catch(_0xerr) {}
+    try { progressElem.releasePointerCapture(_0xev.pointerId); } catch(_0xerr) {}
     if(wasVideoPlaying) { triggerSafePlayback(); }
 };
 
@@ -369,9 +373,9 @@ videoElem.onpause = () => {
     handleControlVisibility(true);
 };
 
-playerElem.onclick = _0xe => {
+playerElem.onclick = _0xev => {
     if(tgPopupElem.style.display !== "none") return;
-    if(_0xe.target === videoElem || _0xe.target === playerElem) {
+    if(_0xev.target === videoElem || _0xev.target === playerElem) {
         sidebarElem.classList.remove('active');
         if(controlsElem.classList.contains("hide")) {
             handleControlVisibility();
