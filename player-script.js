@@ -233,14 +233,17 @@ function handleControlVisibility(_0xpermanent = false) {
     }
 }
 
-continueBtnElem.onclick = _0xe => {
-    _0xe.preventDefault();
-    _0xe.stopPropagation();
-    tgPopupElem.style.display = "none";
-    centerPlayElem.classList.remove("hide");
-    controlsElem.classList.remove("hide");
-    handleControlVisibility();
-};
+// Fixed Popup Continue Handler
+if (continueBtnElem) {
+    continueBtnElem.onclick = function(_0xe) {
+        _0xe.preventDefault();
+        _0xe.stopPropagation();
+        tgPopupElem.style.display = "none";
+        centerPlayElem.classList.remove("hide");
+        controlsElem.classList.remove("hide");
+        handleControlVisibility();
+    };
+}
 
 centerPlayElem.onclick = _0xe => {
     _0xe.preventDefault();
