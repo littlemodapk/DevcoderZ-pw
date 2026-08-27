@@ -1,82 +1,364 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DevCoderz Ultra Secure Player</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:sans-serif;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}html,body{width:100%;height:100%;background:#000;overflow:hidden;touch-action:none}.player{position:fixed;inset:0;background:#000;pointer-events:auto;touch-action:manipulation}video{width:100%;height:100%;object-fit:contain}.top-brand{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:40;text-align:center;pointer-events:none}.top-brand .jsr{color:#ff9800;font-weight:700;font-size:14px}.top-brand .dev{margin-top:4px;font-size:12px;font-weight:600;color:#00e5ff;text-shadow:0 0 6px #00e5ff, 0 0 12px #00e5ff}.center-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:30;cursor:pointer}.center-play.hide{display:none}.center-play span{width:90px;height:90px;background:rgba(255,255,255,.25);backdrop-filter:blur(5px);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;color:#fff}.controls{position:absolute;bottom:0;width:100%;padding:10px;background:linear-gradient(transparent,rgba(0,0,0,.9));transition:.3s;z-index:35;touch-action:none}.controls.hide{transform:translateY(100%);opacity:0}.progress{height:7px;background:#555;border-radius:10px;position:relative;margin-bottom:6px;touch-action:none;cursor:pointer}.progress-fill{height:100%;width:0;background:#2196f3;border-radius:10px;pointer-events:none}.thumb{position:absolute;top:50%;width:18px;height:18px;background:#fff;border-radius:50%;transform:translate(-50%,-50%);left:0;pointer-events:none}.time{color:#fff;font-size:11px;text-align:right;margin-bottom:4px}.row{display:flex;align-items:center;gap:6px;justify-content:space-between;color:#fff}.btn{width:40px;height:40px;border:1.5px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer}#play{font-size:0}#play::before{content:"▶";font-size:16px}#play.pause::before{content:"❚❚";font-size:14px}.settings{position:absolute;bottom:70px;right:10px;background:#111;border-radius:12px;padding:12px;width:160px;display:none;z-index:50}.settings label{color:#aaa;font-size:10px;display:block;margin-bottom:4px}.settings select{width:100%;background:#000;color:#fff;border:1px solid #555;border-radius:4px;height:24px;margin-bottom:10px}.overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:100}.box{width:320px;padding:26px;border-radius:22px;text-align:center;background:linear-gradient(135deg,#1e3c72,#2a5298);color:#fff}.tg-btn{display:block;margin-top:14px;padding:14px;border-radius:28px;font-weight:700;width:100%;cursor:pointer;text-align:center;text-decoration:none;color:#fff}.join{background:#fff;color:#1e3c72}.continue{background:rgba(0,0,0,.25);border:1px solid #fff}#status{position:absolute;bottom:20px;left:20px;color:#4fc3f7;background:rgba(0,0,0,.8);padding:6px 12px;border-radius:6px;font-size:12px;z-index:50;pointer-events:none}.menu-container{position:absolute;top:15px;right:20px;z-index:60}.dot-btn{background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:20px;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center}.dropdown-menu{display:none;position:absolute;right:0;top:45px;background:#1c1c1c;border:1px solid #333;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.8);width:140px;overflow:hidden}.dropdown-menu.active{display:block}.dropdown-item{padding:12px 16px;font-size:13px;color:#fff;cursor:pointer;border-bottom:1px solid #2a2a2a}.dropdown-item:hover{background:#333}#sidebar{position:absolute;top:0;right:-320px;width:320px;height:100%;background:rgba(20,20,20,.95);backdrop-filter:blur(5px);transition:right .3s ease;z-index:70;display:flex;flex-direction:column;border-left:1px solid #333}#sidebar.active{right:0}.sidebar-header{padding:15px;background:#111;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #2c2c2c;color:#fff;font-weight:bold;font-size:14px}.close-sidebar{background:none;border:none;color:#aaa;font-size:18px;cursor:pointer}.close-sidebar:hover{color:#fff}.slide-list{padding:15px;display:flex;flex-direction:column;gap:15px;overflow-y:auto;flex:1}.slide-item{position:relative;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:border-color .2s;overflow:hidden;background:#000}.slide-item:hover{border-color:#00e5ff}.slide-item img{width:100%;display:block;object-fit:contain}.slide-time{position:absolute;bottom:5px;right:5px;background:rgba(0,0,0,.8);color:#fff;font-size:11px;padding:2px 6px;border-radius:4px}
-</style>
+    <meta charset="UTF-8">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The DevCoderZ - Classroom</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+      * {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+      }
+      .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    </style>
+    <style type="text/css">* {user-select: auto !important; -webkit-user-select: auto !important;}</style>
 </head>
-<body>
 
-<div class="overlay" id="tgPopup">
- <div class="box">
-  <h2>Join our Telegram</h2>
-  <a class="tg-btn join" href="https://t.me/+JXdxtVzQf-NhM2Jl" target="_blank">Join Telegram</a>
-  <div class="tg-btn continue" id="continueBtn" onclick="handlePopupContinue(event)">Continue to Video</div>
- </div>
-</div>
+<body class="bg-slate-950 text-slate-100 min-h-screen overflow-hidden">
+    <nav class="h-16 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-20 shadow-sm">
+      <div class="font-extrabold text-white text-lg tracking-tight">
+        The DevCoderZ
+      </div>
+      <span class="text-xs font-extrabold bg-blue-600/20 text-blue-400 border border-blue-500/30 px-3 py-1 rounded-xl">PW</span>
+    </nav>
 
-<div class="player" id="player">
- <div id="status">🔄 Initializing...</div>
-
- <div class="menu-container">
-    <button class="dot-btn" onclick="toggleMenu(event)">⋮</button>
-    <div class="dropdown-menu" id="dropdownMenu">
-        <div class="dropdown-item" onclick="openNotes(event)">📄 Notes</div>
-        <div class="dropdown-item" onclick="toggleSidebar(event)">🖼️ Slides</div>
-        <div class="dropdown-item" onclick="alert('Download feature coming soon!'); toggleMenu(event);">📥 Download</div>
+    <div class="fixed top-16 left-0 right-0 p-4 bg-slate-950/90 backdrop-blur-md border-b border-slate-900 z-10">
+      <div class="max-w-7xl mx-auto">
+        <input id="searchInput" class="w-full bg-slate-900 border border-slate-800 text-white px-4 py-3 rounded-2xl text-sm font-semibold outline-none focus:border-blue-500 transition shadow-sm placeholder:text-slate-500" placeholder="Search batches...">
+      </div>
     </div>
- </div>
 
- <video id="video" playsinline></video>
- 
- <div class="top-brand">
-  <div class="jsr">🚩 Jai Shree Ram 🚩</div>
-  <div class="dev">Developed by - Devansh Sharma</div>
- </div>
- 
- <div class="center-play" id="centerPlay"><span>▶</span></div>
- 
- <div class="controls hide" id="controls">
-  <div class="progress" id="progress"><div class="progress-fill" id="bar"></div><div class="thumb" id="thumb"></div></div>
-  <div class="time" id="time">00:00:00 / 00:00:00</div>
-  <div class="row">
-   <div class="btn" id="back">⟲10</div>
-   <div class="btn" id="play"></div>
-   <div class="btn" id="fwd">10⟳</div>
-   <div class="btn" id="settingsBtn">⚙️</div>
-   <div class="btn" id="fs">⛶</div>
-  </div>
- </div>
- 
- <div class="settings" id="settings">
-  <label>Speed</label>
-  <select id="speed">
-   <option value="1" selected>1x</option>
-   <option value="1.25">1.25x</option>
-   <option value="1.5">1.5x</option>
-   <option value="1.75">1.75x</option>
-   <option value="2">2x</option>
-   <option value="2.25">2.25x</option>
-   <option value="2.5">2.5x</option>
-   <option value="2.75">2.75x</option>
-  </select>
-  <label>Quality</label>
-  <select id="quality"><option value="-1">AUTO</option></select>
- </div>
-
- <div id="sidebar" onclick="event.stopPropagation()">
-    <div class="sidebar-header">
-        <span>Lecture Slides</span>
-        <button class="close-sidebar" onclick="toggleSidebar(event)">✕</button>
+    <div class="fixed top-[138px] left-0 right-0 px-4 bg-slate-950/90 backdrop-blur-md z-10 pb-3 border-b border-slate-900">
+      <div class="max-w-7xl mx-auto flex gap-3">
+        <button class="tab-btn active flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-extrabold shadow-md shadow-blue-600/30 transition-all cursor-pointer" id="totalTab">Total</button>
+        <button class="tab-btn flex-1 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 text-sm font-extrabold shadow-sm transition-all cursor-pointer" id="favTab">Favourites</button>
+      </div>
     </div>
-    <div class="slide-list" id="slideList"></div>
- </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-<script src="player-script.js"></script>
+    <div class="content absolute top-[210px] bottom-10 left-0 right-0 overflow-y-auto px-4 py-6 hide-scrollbar">
+      <div class="max-w-7xl mx-auto">
+        <div id="total" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"></div>
+        <div id="fav" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3" style="display: none"></div>
+      </div>
+    </div>
+
+    <div class="app-footer fixed bottom-0 left-0 right-0 h-10 bg-slate-900 border-t border-slate-800 flex items-center justify-center text-xs font-semibold text-slate-400 tracking-wide z-20">
+      Developed by - <span class="text-blue-400 font-bold ml-1">Devansh Sharma</span>
+    </div>
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js');
+        });
+      }
+
+      const FALLBACK_IMG = "https://devcoderz.vercel.app/pw.png";
+
+      let ALL = [];
+      let filtered = [];
+
+      let favs = JSON.parse(localStorage.getItem("favs") || "[]");
+      let cachedBatches = JSON.parse(localStorage.getItem("fav_batches") || "{}");
+
+      if (localStorage.getItem("batch_cache")) {
+        localStorage.removeItem("batch_cache");
+      }
+
+      const total = document.getElementById("total");
+      const fav = document.getElementById("fav");
+      const content = document.querySelector(".content");
+
+      const totalTab = document.getElementById("totalTab");
+      const favTab = document.getElementById("favTab");
+
+      let loaded = 0, LIMIT = 8, loading = false;
+
+      showSkeleton();
+
+      fetch("https://devcoderz-backend.vercel.app/api/batches")
+        .then((r) => r.json())
+        .then((d) => {
+          ALL = d.batches || d.data?.batches || d.data || [];
+          filtered = ALL;
+          setTimeout(() => { loadMore(true); }, 300);
+        })
+        .catch(() => {
+          ALL = Object.values(cachedBatches);
+          filtered = ALL;
+          if (ALL.length) {
+            loadMore(true);
+          } else {
+            total.innerHTML = `<div class="empty col-span-full text-center py-16 text-rose-500 font-semibold bg-slate-900 rounded-2xl border border-slate-800">Failed to load system clusters</div>`;
+          }
+        });
+
+      function normalizeText(t) {
+        return (t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+      }
+
+      function tokenize(t) {
+        return normalizeText(t).split(/\s+/).map((x) => x.replace(/[^a-z0-9]+/g, "")).filter(Boolean);
+      }
+
+      function calcLevenshtein(a, b) {
+        if (!a.length) return b.length;
+        if (!b.length) return a.length;
+        let prev = Array(b.length + 1).fill(0).map((_, i) => i);
+        let curr = Array(b.length + 1);
+        for (let i = 0; i < a.length; i++) {
+          curr[0] = i + 1;
+          for (let j = 0; j < b.length; j++) {
+            curr[j + 1] = Math.min(curr[j] + 1, prev[j + 1] + 1, prev[j] + (a[i] === b[j] ? 0 : 1));
+          }
+          [prev, curr] = [curr, prev];
+        }
+        return prev[b.length];
+      }
+
+      function performFuzzySearch(searchTerm, sourceArray) {
+        if (!searchTerm) return sourceArray.slice();
+        const normalized = normalizeText(searchTerm);
+        const tokens = tokenize(searchTerm).filter((t) => t.length >= 1);
+        const results = [];
+
+        sourceArray.forEach((batch, idx) => {
+          let bName = batch.name || batch.batchName || batch.title || "";
+          const batchNorm = normalizeText(bName);
+          let score = 0, matchType = "none";
+
+          if (batchNorm === normalized) {
+            score = 1000;
+            matchType = "exact";
+          } else if (batchNorm.includes(normalized)) {
+            score = 500;
+            matchType = "substring";
+          } else {
+            const batchTokens = tokenize(bName).filter((t) => t.length >= 1);
+            if (!batchTokens.length || !tokens.length) return;
+            let totalScore = 0, matched = 0, exactMatches = 0;
+
+            tokens.forEach((st) => {
+              let best = 0, foundExact = false;
+              batchTokens.forEach((bt) => {
+                if (bt === st) { foundExact = true; best = 100; }
+                else if (bt.includes(st) && st.length >= 2) best = Math.max(best, 85);
+                else if (st.includes(bt) && bt.length >= 2) best = Math.max(best, 75);
+                else {
+                  const mx = Math.max(st.length, bt.length);
+                  const sim = ((mx - calcLevenshtein(st, bt)) / mx) * 100;
+                  if (sim > best) best = sim;
+                }
+              });
+              if (best >= 40) { totalScore += best; matched++; if (foundExact) exactMatches++; }
+            });
+
+            if (matched > 0) {
+              const avg = totalScore / tokens.length;
+              const matchRatio = matched / tokens.length;
+              if (avg >= 55) {
+                score = avg * matchRatio * 10;
+                if (exactMatches > 0) score += exactMatches * 50;
+                if (matchRatio === 1) score += 100;
+                matchType = "fuzzy";
+              }
+            }
+          }
+
+          if (matchType !== "none") {
+            results.push({ batch, score: Math.round(score), index: idx, matchType });
+          }
+        });
+
+        results.sort((a, b) => {
+          if (a.matchType !== b.matchType) {
+            const order = { exact: 0, substring: 1, fuzzy: 2 };
+            return order[a.matchType] - order[b.matchType];
+          }
+          return b.score - a.score || a.index - b.index;
+        });
+        return results.map((r) => r.batch);
+      }
+
+      function getAccent(b) {
+        return "#4f46e5";
+      }
+
+      function showSkeleton() {
+        let skel = "";
+        for (let i = 0; i < 6; i++) {
+          skel += `
+        <div class="skeleton bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
+            <div class="skel h-5 w-3/4 mb-3 rounded-lg bg-slate-800 animate-pulse"></div>
+            <div class="skel h-36 w-full mb-3 rounded-xl bg-slate-800 animate-pulse"></div>
+            <div class="skel h-3 w-1/2 mb-2 rounded bg-slate-800 animate-pulse"></div>
+            <div class="skel h-3 w-1/3 mb-4 rounded bg-slate-800 animate-pulse"></div>
+            <div class="skel h-10 w-full rounded-xl bg-slate-800 animate-pulse"></div>
+        </div>`;
+        }
+        total.innerHTML = skel;
+      }
+
+      function card(b) {
+        let bId = b._id || b.id || b.batchId;
+        let isFav = favs.includes(bId);
+        let bName = b.name || b.batchName || b.title || "Premium Course Allocation";
+        let bBy = b.byName || "Classroom Node";
+        let bLang = b.language || "Hinglish";
+        let bStart = b.startDate || "Active Slot";
+        let bEnd = b.endDate || "Ongoing";
+        let bPrice = b.feeTotal || b.price;
+        let finalPrice = bPrice === 0 || b.isFree ? "Free" : `₹ ${bPrice}`;
+
+        let bImage = FALLBACK_IMG;
+        if (b.previewImage && b.previewImage !== "/pwbatch.png") {
+          bImage = b.previewImage;
+        } else if (b.thumbnail && b.thumbnail !== "/pwbatch.png") {
+          bImage = b.thumbnail;
+        } else if (b.imageId?.baseUrl && b.imageId?.key) {
+          bImage = b.imageId.baseUrl + b.imageId.key;
+        }
+
+        return `
+    <div class="batch bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between relative transition-all duration-300 hover:shadow-xl hover:border-blue-500/50 group" data-id="${bId}" style="--accent:${getAccent(b)}">
+        <button class="favorite-btn absolute top-4 right-4 w-9 h-9 rounded-full border border-slate-800 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center cursor-pointer z-50 text-base transition-transform hover:scale-110 ${isFav ? "favorited bg-rose-500 border-rose-500 text-white" : "text-slate-300"}">
+            ${isFav ? "❤️" : "♡"}
+        </button>
+        <div>
+            <div class="batch-name font-bold text-white text-base mb-3 group-hover:text-blue-400 transition-colors line-clamp-2 pr-8">${bName}</div>
+            <div class="batch-thumbnail relative overflow-hidden rounded-xl mb-4 bg-slate-950 border border-slate-800 h-36 flex items-center justify-center">
+                <img loading="lazy" src="${bImage}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src='${FALLBACK_IMG}'">
+            </div>
+            <div class="space-y-1.5 mb-4 text-xs font-semibold text-slate-400">
+                <div class="batch-info">👨‍🎓 ${bBy}</div>
+                <div class="batch-info">🗣️ ${bLang}</div>
+                <div class="batch-info">🗓️ ${bStart} → ${bEnd}</div>
+            </div>
+        </div>
+        <div>
+            <div class="batch-price font-extrabold text-sm text-blue-400 mb-3">${finalPrice}</div>
+            <button class="explore-btn w-full py-2.5 rounded-xl border-none font-extrabold text-sm text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-600/30 transition cursor-pointer" data-id="${bId}">Explore</button>
+        </div>
+    </div>`;
+      }
+
+      function loadMore(reset = false) {
+        if (loading) return;
+        loading = true;
+        if (reset) { total.innerHTML = ""; loaded = 0; }
+        let slice = filtered.slice(loaded, loaded + LIMIT);
+        if (!slice.length && loaded === 0) {
+          total.innerHTML = `<div class="empty col-span-full text-center py-16 text-slate-400 font-semibold bg-slate-900 rounded-2xl border border-slate-800">No batches found</div>`;
+          loading = false;
+          return;
+        }
+        total.innerHTML += slice.map(card).join("");
+        loaded += LIMIT;
+        loading = false;
+      }
+
+      content.addEventListener("scroll", () => {
+        if (total.style.display === "none") return;
+        if (content.scrollTop + content.clientHeight >= content.scrollHeight - 50) {
+          loadMore();
+        }
+      });
+
+      document.addEventListener("click", (e) => {
+        if (e.target.classList.contains("favorite-btn") || e.target.closest(".favorite-btn")) {
+          let btn = e.target.closest(".favorite-btn");
+          let id = btn.closest(".batch").dataset.id;
+          let batch = ALL.find((b) => (b._id || b.id || b.batchId) === id);
+
+          if (favs.includes(id)) {
+            favs = favs.filter((f) => f !== id);
+            delete cachedBatches[id];
+          } else {
+            favs.push(id);
+            if (batch) {
+              cachedBatches[id] = batch;
+            } else if (!cachedBatches[id]) {
+              fetch("/list.js")
+                .then((r) => r.json())
+                .then((d) => {
+                  let list = d.batches || d.data?.batches || d.data || [];
+                  let found = list.find((b) => (b._id || b.id || b.batchId) === id);
+                  if (found) {
+                    cachedBatches[id] = found;
+                    localStorage.setItem("fav_batches", JSON.stringify(cachedBatches));
+                  }
+                });
+            }
+          }
+
+          localStorage.setItem("favs", JSON.stringify(favs));
+          localStorage.setItem("fav_batches", JSON.stringify(cachedBatches));
+
+          document.querySelectorAll(`.batch[data-id="${id}"] .favorite-btn`).forEach((bEl) => {
+              const isNowFav = favs.includes(id);
+              bEl.classList.toggle("favorited", isNowFav);
+              bEl.classList.toggle("bg-rose-500", isNowFav);
+              bEl.classList.toggle("border-rose-500", isNowFav);
+              bEl.classList.toggle("text-white", isNowFav);
+              bEl.classList.toggle("text-slate-300", !isNowFav);
+              bEl.innerHTML = isNowFav ? "❤️" : "♡";
+          });
+
+          if (fav.style.display === "grid") { renderFav(); }
+        }
+
+        if (e.target.classList.contains("explore-btn")) {
+          let id = e.target.dataset.id;
+          window.location.href = "/batches.html?batch_id=" + id;
+        }
+      });
+
+      function setActive(tab) {
+        totalTab.classList.remove("bg-blue-600", "text-white", "shadow-md", "shadow-blue-600/30");
+        totalTab.classList.add("bg-slate-900", "border", "border-slate-800", "text-slate-300", "shadow-sm");
+        
+        favTab.classList.remove("bg-blue-600", "text-white", "shadow-md", "shadow-blue-600/30");
+        favTab.classList.add("bg-slate-900", "border", "border-slate-800", "text-slate-300", "shadow-sm");
+
+        tab.classList.add("bg-blue-600", "text-white", "shadow-md", "shadow-blue-600/30");
+        tab.classList.remove("bg-slate-900", "border", "border-slate-800", "text-slate-300", "shadow-sm");
+      }
+
+      totalTab.onclick = () => {
+        setActive(totalTab);
+        total.style.display = "grid";
+        fav.style.display = "none";
+      };
+
+      favTab.onclick = () => {
+        setActive(favTab);
+        total.style.display = "none";
+        fav.style.display = "grid";
+        renderFav();
+      };
+
+      function renderFav() {
+        let items = favs.map((id) => cachedBatches[id]).filter(Boolean);
+        fav.innerHTML = items.length
+          ? items.map(card).join("")
+          : `<div class="empty col-span-full text-center py-16 text-slate-400 font-semibold bg-slate-900 rounded-2xl border border-slate-800">No favourites yet ❤️</div>`;
+      }
+
+      document.getElementById("searchInput").oninput = function () {
+        let q = this.value.trim();
+        content.scrollTo({ top: 0, behavior: "smooth" });
+        filtered = performFuzzySearch(q, ALL);
+        loadMore(true);
+      };
+    </script>
 </body>
 </html>
