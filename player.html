@@ -22,11 +22,11 @@
  <div id="status">🔄 Initializing...</div>
 
  <div class="menu-container">
-    <button class="dot-btn" onclick="toggleMenu(event)">⋮</button>
+    <button class="dot-btn" id="dotMenuBtn">⋮</button>
     <div class="dropdown-menu" id="dropdownMenu">
-        <div class="dropdown-item" onclick="openNotes(event)">📄 Notes</div>
-        <div class="dropdown-item" onclick="toggleSidebar(event)">🖼️ Slides</div>
-        <div class="dropdown-item" onclick="alert('Download feature coming soon!'); toggleMenu(event);">📥 Download</div>
+        <div class="dropdown-item" id="notesItem">📄 Notes</div>
+        <div class="dropdown-item" id="slidesItem">🖼️ Slides</div>
+        <div class="dropdown-item" id="downloadItem">📥 Download</div>
     </div>
  </div>
 
@@ -37,7 +37,7 @@
   <div class="dev">Developed by - Devansh Sharma</div>
  </div>
  
- <div class="center-play" id="centerPlay"><span>▶</span></div>
+ <div class="center-play hide" id="centerPlay"><span>▶</span></div>
  
  <div class="controls hide" id="controls">
   <div class="progress" id="progress"><div class="progress-fill" id="bar"></div><div class="thumb" id="thumb"></div></div>
@@ -67,16 +67,435 @@
   <select id="quality"><option value="-1">AUTO</option></select>
  </div>
 
- <div id="sidebar" onclick="event.stopPropagation()">
+ <div id="sidebar">
     <div class="sidebar-header">
         <span>Lecture Slides</span>
-        <button class="close-sidebar" onclick="toggleSidebar(event)">✕</button>
+        <button class="close-sidebar" id="closeSidebarBtn">✕</button>
     </div>
     <div class="slide-list" id="slideList"></div>
  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-<script src="player-script.js"></script>
+<script>
+const playerElem = document.getElementById('player');
+const videoElem = document.getElementById('video');
+const playButton = document.getElementById('play');
+const backButton = document.getElementById('back');
+const fwdButton = document.getElementById('fwd');
+const fsButton = document.getElementById('fs');
+const controlsElem = document.getElementById('controls');
+const centerPlayElem = document.getElementById('centerPlay');
+const progressElem = document.getElementById('progress');
+const barElem = document.getElementById('bar');
+const thumbElem = document.getElementById('thumb');
+const tgPopupElem = document.getElementById('tgPopup');
+const continueBtn = document.getElementById('continueBtn');
+const timeDisplayElem = document.getElementById('time');
+const settingsElem = document.getElementById('settings');
+const settingsBtnElem = document.getElementById('settingsBtn');
+const speedSelect = document.getElementById('speed');
+const qualitySelect = document.getElementById('quality');
+const statusElem = document.getElementById('status');
+const dotMenuBtn = document.getElementById('dotMenuBtn');
+const dropdownMenuElem = document.getElementById('dropdownMenu');
+const notesItem = document.getElementById('notesItem');
+const slidesItem = document.getElementById('slidesItem');
+const downloadItem = document.getElementById('downloadItem');
+const sidebarElem = document.getElementById('sidebar');
+const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+const slideListElem = document.getElementById('slideList');
+
+let isDragging = false, hideTimeoutRef, hlsInstance, wasVideoPlaying = false;
+let globalNotesUrl = "";
+let globalSlidesArray = [];
+
+if (continueBtn) {
+    continueBtn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (tgPopupElem) tgPopupElem.style.display = "none";
+        if (centerPlayElem) centerPlayElem.classList.remove("hide");
+        if (controlsElem) {
+            controlsElem.classList.remove("hide");
+            clearTimeout(hideTimeoutRef);
+            hideTimeoutRef = setTimeout(() => controlsElem.classList.add("hide"), 3000);
+        }
+    };
+}
+
+function updateStatusText(msg, type = 'info') {
+    if (!statusElem) return;
+    statusElem.innerText = msg;
+    statusElem.style.display = "block";
+    if (type === 'success') {
+        setTimeout(() => { statusElem.style.display = 'none'; }, 2500);
+    }
+}
+
+if (dotMenuBtn) {
+    dotMenuBtn.onclick = (e) => {
+        e.stopPropagation();
+        dropdownMenuElem.classList.toggle('active');
+    };
+}
+
+if (slidesItem) {
+    slidesItem.onclick = (e) => {
+        e.stopPropagation();
+        dropdownMenuElem.classList.remove('active');
+        sidebarElem.classList.toggle('active');
+    };
+}
+
+if (closeSidebarBtn) {
+    closeSidebarBtn.onclick = (e) => {
+        e.stopPropagation();
+        sidebarElem.classList.remove('active');
+    };
+}
+
+if (notesItem) {
+    notesItem.onclick = (e) => {
+        e.stopPropagation();
+        dropdownMenuElem.classList.remove('active');
+        if (globalNotesUrl) {
+            window.open(globalNotesUrl, '_blank');
+        } else {
+            alert('Notes not available for this session.');
+        }
+    };
+}
+
+if (downloadItem) {
+    downloadItem.onclick = (e) => {
+        e.stopPropagation();
+        dropdownMenuElem.classList.remove('active');
+        alert('Download feature coming soon!');
+    };
+}
+
+window.addEventListener('click', () => { 
+    if (dropdownMenuElem) dropdownMenuElem.classList.remove('active'); 
+});
+
+const urlParamsExtractor = new URLSearchParams(location.search);
+const bId = urlParamsExtractor.get("batchId");
+const sId = urlParamsExtractor.get("subjectId");
+const lId = urlParamsExtractor.get("lectureId");
+const directStreamUrl = urlParamsExtractor.get("m3u8Url") || urlParamsExtractor.get("Url");
+
+async function initializePlayerEngine() {
+    let resolvedStreamUrl = "";
+    
+    if (directStreamUrl) {
+        resolvedStreamUrl = decodeURIComponent(directStreamUrl);
+    } else if (bId && sId && lId) {
+        try {
+            updateStatusText('🔄 Fetching secure configurations...');
+            const endpointRoute = `https://devcoderz-backend.vercel.app/api/config`;
+            
+            const networkResponse = await fetch(endpointRoute, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ batchId: bId, subjectId: sId, lectureId: lId })
+            });
+
+            if (!networkResponse.ok) throw new Error(`Network failure code: ${networkResponse.status}`);
+            const responsePayload = await networkResponse.json();
+            
+            if (responsePayload) {
+                resolvedStreamUrl = responsePayload.m3u8Url || responsePayload.url;
+                if (responsePayload.notes && responsePayload.notes.length > 0) {
+                    globalNotesUrl = responsePayload.notes[0].url;
+                }
+                if (responsePayload.slides && responsePayload.slides.length > 0) {
+                    globalSlidesArray = responsePayload.slides;
+                    buildSlideItems();
+                }
+            }
+        } catch (err) {
+            updateStatusText('❌ Error connecting to stream service', 'error');
+            return;
+        }
+    } else {
+        updateStatusText('❌ Required parameters missing!', 'error');
+        return;
+    }
+
+    if (!resolvedStreamUrl) {
+        updateStatusText('❌ Target stream source not found!', 'error');
+        return;
+    }
+
+    setupHlsPlayer(resolvedStreamUrl);
+}
+
+function setupHlsPlayer(url) {
+    updateStatusText('🔄 Initializing stream buffer...');
+
+    if (videoElem.canPlayType('application/vnd.apple.mpegurl')) {
+        videoElem.src = url;
+        videoElem.addEventListener('loadedmetadata', () => {
+            updateStatusText('✅ Playing natively via HLS', 'success');
+        });
+    } else if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+        hlsInstance = new Hls({ 
+            enableWorker: true, 
+            lowLatencyMode: true,
+            maxBufferLength: 30,
+            maxMaxBufferLength: 60
+        });
+        hlsInstance.loadSource(url);
+        hlsInstance.attachMedia(videoElem);
+
+        hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+            updateStatusText('✅ Stream ready!', 'success');
+            qualitySelect.innerHTML = '<option value="-1">AUTO</option>';
+            hlsInstance.levels.forEach((lvl, idx) => {
+                let opt = document.createElement("option");
+                opt.value = idx;
+                opt.text = lvl.height + "p";
+                qualitySelect.appendChild(opt);
+            });
+        });
+
+        hlsInstance.on(Hls.Events.LEVEL_SWITCHED, (ev, data) => {
+            qualitySelect.value = data.level;
+        });
+
+        hlsInstance.on(Hls.Events.ERROR, (ev, data) => {
+            if (data.fatal) {
+                switch (data.type) {
+                    case Hls.ErrorTypes.NETWORK_ERROR:
+                        hlsInstance.startLoad();
+                        break;
+                    case Hls.ErrorTypes.MEDIA_ERROR:
+                        hlsInstance.recoverMediaError();
+                        break;
+                    default:
+                        hlsInstance.destroy();
+                        updateStatusText('❌ Fatal stream error encountered', 'error');
+                        break;
+                }
+            }
+        });
+    } else {
+        updateStatusText('❌ Unsupported browser configuration', 'error');
+    }
+}
+
+function buildSlideItems() {
+    if (!slideListElem) return;
+    slideListElem.innerHTML = "";
+    globalSlidesArray.forEach((slide) => {
+        const card = document.createElement('div');
+        card.className = 'slide-item';
+        const timeStr = formatTimestamp(slide.timestamp);
+        
+        card.innerHTML = `
+            <img src="${slide.image}" alt="Slide">
+            <div class="slide-time">🕒 ${timeStr}</div>
+        `;
+        card.onclick = (e) => {
+            e.stopPropagation();
+            videoElem.currentTime = slide.timestamp;
+            triggerSafePlayback();
+            if (window.innerWidth < 600) sidebarElem.classList.remove('active');
+        };
+        slideListElem.appendChild(card);
+    });
+}
+
+window.addEventListener('load', () => {
+    setTimeout(initializePlayerEngine, 400);
+});
+
+function formatTimestamp(sec) {
+    if (!sec || isNaN(sec) || sec === Infinity) return "00:00:00";
+    let h = Math.floor(sec / 3600);
+    let m = Math.floor((sec % 3600) / 60);
+    let s = Math.floor(sec % 60);
+    return [h, m, s].map(num => String(num).padStart(2, "0")).join(":");
+}
+
+function refreshProgressBarUI(pct, curr, dur) {
+    if (!barElem || !thumbElem || !timeDisplayElem) return;
+    barElem.style.width = pct + "%";
+    thumbElem.style.left = pct + "%";
+    timeDisplayElem.innerText = `${formatTimestamp(curr)} / ${formatTimestamp(dur)}`;
+}
+
+function triggerSafePlayback() {
+    videoElem.play().catch(() => {
+        videoElem.muted = true;
+        videoElem.play();
+    });
+}
+
+function handleControlVisibility(permanent = false) {
+    if (!controlsElem) return;
+    controlsElem.classList.remove("hide");
+    clearTimeout(hideTimeoutRef);
+    if (!permanent) {
+        hideTimeoutRef = setTimeout(() => controlsElem.classList.add("hide"), 3000);
+    }
+}
+
+if (centerPlayElem) {
+    centerPlayElem.onclick = e => {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerSafePlayback();
+    };
+}
+
+if (playButton) {
+    playButton.onclick = e => {
+        e.preventDefault();
+        e.stopPropagation();
+        videoElem.paused ? triggerSafePlayback() : videoElem.pause();
+    };
+}
+
+if (backButton) {
+    backButton.onclick = e => {
+        e.preventDefault();
+        e.stopPropagation();
+        videoElem.currentTime = Math.max(0, videoElem.currentTime - 10);
+        handleControlVisibility(true);
+    };
+}
+
+if (fwdButton) {
+    fwdButton.onclick = e => {
+        e.preventDefault();
+        e.stopPropagation();
+        videoElem.currentTime = Math.min(videoElem.duration, videoElem.currentTime + 10);
+        handleControlVisibility(true);
+    };
+}
+
+if (settingsBtnElem) {
+    settingsBtnElem.onclick = e => {
+        e.preventDefault();
+        e.stopPropagation();
+        settingsElem.style.display = (settingsElem.style.display === "block" ? "none" : "block");
+        handleControlVisibility(true);
+    };
+}
+
+if (speedSelect) {
+    speedSelect.onchange = () => {
+        videoElem.playbackRate = parseFloat(speedSelect.value);
+    };
+}
+
+if (qualitySelect) {
+    qualitySelect.onchange = () => {
+        if (hlsInstance) hlsInstance.currentLevel = parseInt(qualitySelect.value);
+    };
+}
+
+if (fsButton) {
+    fsButton.onclick = async e => {
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+            if (!document.fullscreenElement) {
+                await playerElem.requestFullscreen();
+                if (screen.orientation && screen.orientation.lock) {
+                    await screen.orientation.lock('landscape').catch(() => {});
+                }
+            } else {
+                if (screen.orientation && screen.orientation.unlock) {
+                    screen.orientation.unlock();
+                }
+                await document.exitFullscreen();
+            }
+        } catch (err) {}
+    };
+}
+
+function extractPointerPosition(e) {
+    const rect = progressElem.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    let calcPos = (clientX - rect.left) / rect.width;
+    return Math.max(0, Math.min(1, calcPos));
+}
+
+if (progressElem) {
+    progressElem.onpointerdown = e => {
+        e.preventDefault();
+        e.stopPropagation();
+        isDragging = true;
+        wasVideoPlaying = !videoElem.paused;
+        videoElem.pause();
+        progressElem.setPointerCapture(e.pointerId);
+        let pos = extractPointerPosition(e);
+        if (videoElem.duration) {
+            videoElem.currentTime = pos * videoElem.duration;
+            refreshProgressBarUI(pos * 100, videoElem.currentTime, videoElem.duration);
+        }
+    };
+
+    progressElem.onpointermove = e => {
+        if (!isDragging) return;
+        e.preventDefault();
+        e.stopPropagation();
+        let pos = extractPointerPosition(e);
+        if (videoElem.duration) {
+            videoElem.currentTime = pos * videoElem.duration;
+            refreshProgressBarUI(pos * 100, videoElem.currentTime, videoElem.duration);
+        }
+    };
+
+    progressElem.onpointerup = e => {
+        if (!isDragging) return;
+        e.preventDefault();
+        e.stopPropagation();
+        isDragging = false;
+        try { progressElem.releasePointerCapture(e.pointerId); } catch(err) {}
+        if (wasVideoPlaying) { triggerSafePlayback(); }
+    };
+}
+
+videoElem.ontimeupdate = () => {
+    if (!isDragging && videoElem.duration) {
+        refreshProgressBarUI((videoElem.currentTime / videoElem.duration) * 100, videoElem.currentTime, videoElem.duration);
+    }
+};
+
+videoElem.onloadedmetadata = () => {
+    if (videoElem.duration) {
+        refreshProgressBarUI(0, videoElem.currentTime, videoElem.duration);
+    }
+};
+
+videoElem.onplay = () => {
+    if (playButton) playButton.classList.add("pause");
+    if (centerPlayElem) centerPlayElem.classList.add("hide");
+    handleControlVisibility();
+};
+
+videoElem.onpause = () => {
+    if (playButton) playButton.classList.remove("pause");
+    if (centerPlayElem) centerPlayElem.classList.add("hide");
+    handleControlVisibility(true);
+};
+
+playerElem.onclick = e => {
+    if (tgPopupElem && tgPopupElem.style.display !== "none") return;
+    if (e.target === videoElem || e.target === playerElem) {
+        sidebarElem.classList.remove('active');
+        if (controlsElem.classList.contains("hide")) {
+            handleControlVisibility();
+        } else {
+            controlsElem.classList.add("hide");
+            settingsElem.style.display = "none";
+        }
+    }
+};
+</script>
 </body>
 </html>
