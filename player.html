@@ -23,7 +23,6 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
 .btn{width:36px;height:36px;border:1.5px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer}
 #play{font-size:0}#play::before{content:"▶";font-size:14px}#play.pause::before{content:"❚❚";font-size:12px}
 
-/* Custom Black Settings Menu Popup */
 .custom-settings-menu {
     position: absolute;
     bottom: 65px;
@@ -60,7 +59,6 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
 .dropdown-item{padding:12px 16px;font-size:13px;color:#fff;cursor:pointer;border-bottom:1px solid #2a2a2a}
 .dropdown-item:hover{background:#333}
 
-/* Slide & Attachment Drawer Sidebar */
 #sidebar{position:fixed;top:0;right:-100%;width:100%;height:100%;background:rgba(12,12,12,.98);backdrop-filter:blur(8px);transition:right .3s ease;z-index:200;display:flex;flex-direction:column;border-left:1px solid #333}
 #sidebar.active{right:0}
 @media(min-width:600px){#sidebar{width:420px;right:-420px;}}
@@ -84,6 +82,13 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
 .attachment-item:hover{border-color:#4fc3f7;background:#1c1c1c}
 
 .no-data-text{color:#888;text-align:center;padding:30px;font-size:13px}
+
+#downloadModal{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:300;display:none;flex-direction:column}
+#downloadModal.active{display:flex}
+.modal-header{padding:12px 15px;background:#1a1a1a;display:flex;justify-content:space-between;align-items:center;color:#fff;border-bottom:1px solid #333}
+.modal-close{background:none;border:none;color:#fff;font-size:22px;cursor:pointer}
+.modal-body{flex:1;width:100%;height:100%}
+.modal-body iframe{width:100%;height:100%;border:none;background:#000}
 </style>
 </head>
 <body>
@@ -124,12 +129,12 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
        <div class="btn" id="back">⟲10</div>
        <div class="btn" id="play"></div>
        <div class="btn" id="fwd">10⟳</div>
+       <div class="btn" id="downloadBtnCtrl">📥</div>
        <div class="btn" id="settingsBtn">⚙️</div>
        <div class="btn" id="fs">⛶</div>
       </div>
      </div>
      
-     <!-- Custom Black Settings Popup with All Speeds & Quality -->
      <div class="custom-settings-menu" id="customSettingsMenu">
          <div class="settings-section-title">Playback Speed</div>
          <div class="settings-options-grid" id="speedOptionsGrid">
@@ -154,7 +159,6 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
     </div>
 </div>
 
-<!-- Slide & Attachment Drawer Sidebar -->
 <div id="sidebar">
     <div class="sidebar-header">
         <span>Study Material</span>
@@ -169,6 +173,16 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
     </div>
     <div class="tab-content" id="attachmentsTabContent">
         <div id="attachmentsList"><div class="no-data-text">No attachments available.</div></div>
+    </div>
+</div>
+
+<div id="downloadModal">
+    <div class="modal-header">
+        <span>Download Lecture</span>
+        <button class="modal-close" id="closeDownloadModal">✕</button>
+    </div>
+    <div class="modal-body">
+        <iframe id="downloadIframe" src=""></iframe>
     </div>
 </div>
 
@@ -199,15 +213,19 @@ const slideListElem = document.getElementById('slideList');
 const attachmentsListElem = document.getElementById('attachmentsList');
 
 const settingsBtnElem = document.getElementById('settingsBtn');
+const downloadBtnCtrl = document.getElementById('downloadBtnCtrl');
 const customSettingsMenu = document.getElementById('customSettingsMenu');
 const speedOptionsGrid = document.getElementById('speedOptionsGrid');
 const qualityOptionsGrid = document.getElementById('qualityOptionsGrid');
+const downloadModal = document.getElementById('downloadModal');
+const closeDownloadModal = document.getElementById('closeDownloadModal');
+const downloadIframe = document.getElementById('downloadIframe');
 
 let isDragging = false, hideTimeoutRef, hlsInstance, wasVideoPlaying = false;
 let globalSlidesArray = [];
 let globalAttachmentsArray = [];
+let activeStreamUrl = "";
 
-// Sidebar Tabs Switching
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.onclick = (e) => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -240,7 +258,6 @@ function updateStatusText(msg, type = 'info') {
     }
 }
 
-// 3-Dot Menu Handling
 if (dotMenuBtn) {
     dotMenuBtn.onclick = (e) => {
         e.stopPropagation();
@@ -264,11 +281,38 @@ if (closeSidebarBtn) {
     };
 }
 
+function triggerDownloadModal() {
+    if (!activeStreamUrl) {
+        alert('Stream URL not loaded yet!');
+        return;
+    }
+    downloadIframe.src = `https://pwxyro.ai.studio/?url=${encodeURIComponent(activeStreamUrl)}`;
+    downloadModal.classList.add('active');
+}
+
 if (downloadItem) {
     downloadItem.onclick = (e) => {
         e.stopPropagation();
         dropdownMenuElem.classList.remove('active');
-        alert('Download feature coming soon!');
+        triggerDownloadModal();
+    };
+}
+
+if (downloadBtnCtrl) {
+    downloadBtnCtrl.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        customSettingsMenu.classList.remove('active');
+        triggerDownloadModal();
+        handleControlVisibility(true);
+    };
+}
+
+if (closeDownloadModal) {
+    closeDownloadModal.onclick = (e) => {
+        e.stopPropagation();
+        downloadIframe.src = "";
+        downloadModal.classList.remove('active');
     };
 }
 
@@ -338,6 +382,7 @@ async function initializePlayerEngine() {
         return;
     }
 
+    activeStreamUrl = resolvedStreamUrl;
     setupHlsPlayer(resolvedStreamUrl);
 }
 
@@ -362,7 +407,6 @@ function setupHlsPlayer(url) {
         hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
             updateStatusText('✅ Stream ready!', 'success');
             
-            // Populate quality options dynamically
             qualityOptionsGrid.innerHTML = `<div class="setting-chip active" data-quality="-1">Auto</div>`;
             hlsInstance.levels.forEach((lvl, idx) => {
                 let chip = document.createElement("div");
@@ -394,7 +438,6 @@ function setupHlsPlayer(url) {
     }
 }
 
-// Setup Speed Chips Events (0.25x to 3x)
 document.querySelectorAll('#speedOptionsGrid .setting-chip').forEach(chip => {
     chip.onclick = (e) => {
         e.stopPropagation();
@@ -406,7 +449,6 @@ document.querySelectorAll('#speedOptionsGrid .setting-chip').forEach(chip => {
     };
 });
 
-// Auto Quality Chip Click Handler
 document.addEventListener('click', (e) => {
     if (e.target && e.target.dataset.quality === "-1") {
         e.stopPropagation();
