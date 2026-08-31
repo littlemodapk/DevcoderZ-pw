@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DevCoderz Ultra Secure Shaka Player</title>
+<title>DevCoderz Secure Shaka Player</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:sans-serif;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}html,body{width:100%;height:100%;background:#000;overflow:hidden;touch-action:none;display:flex;flex-direction:column}
 
@@ -82,13 +82,6 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
 .attachment-item:hover{border-color:#4fc3f7;background:#1c1c1c}
 
 .no-data-text{color:#888;text-align:center;padding:30px;font-size:13px}
-
-#downloadModal{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:300;display:none;flex-direction:column}
-#downloadModal.active{display:flex}
-.modal-header{padding:12px 15px;background:#1a1a1a;display:flex;justify-content:space-between;align-items:center;color:#fff;border-bottom:1px solid #333}
-.modal-close{background:none;border:none;color:#fff;font-size:22px;cursor:pointer}
-.modal-body{flex:1;width:100%;height:100%}
-.modal-body iframe{width:100%;height:100%;border:none;background:#000}
 </style>
 </head>
 <body>
@@ -109,7 +102,6 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
         <button class="dot-btn" id="dotMenuBtn">⋮</button>
         <div class="dropdown-menu" id="dropdownMenu">
             <div class="dropdown-item" id="openSidebarMenuBtn">🖼️ Lecture Slides & Notes</div>
-            <div class="dropdown-item" id="downloadItem">📥 Download Lecture</div>
         </div>
      </div>
 
@@ -129,7 +121,6 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
        <div class="btn" id="back">⟲10</div>
        <div class="btn" id="play"></div>
        <div class="btn" id="fwd">10⟳</div>
-       <div class="btn" id="downloadBtnCtrl">📥</div>
        <div class="btn" id="settingsBtn">⚙️</div>
        <div class="btn" id="fs">⛶</div>
       </div>
@@ -176,16 +167,6 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
     </div>
 </div>
 
-<div id="downloadModal">
-    <div class="modal-header">
-        <span>Download Lecture</span>
-        <button class="modal-close" id="closeDownloadModal">✕</button>
-    </div>
-    <div class="modal-body">
-        <iframe id="downloadIframe" src=""></iframe>
-    </div>
-</div>
-
 <!-- Shaka Player Compiled Library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.js"></script>
 <script>
@@ -207,25 +188,19 @@ const statusElem = document.getElementById('status');
 const dotMenuBtn = document.getElementById('dotMenuBtn');
 const dropdownMenuElem = document.getElementById('dropdownMenu');
 const openSidebarMenuBtn = document.getElementById('openSidebarMenuBtn');
-const downloadItem = document.getElementById('downloadItem');
 const sidebarElem = document.getElementById('sidebar');
 const closeSidebarBtn = document.getElementById('closeSidebarBtn');
 const slideListElem = document.getElementById('slideList');
 const attachmentsListElem = document.getElementById('attachmentsList');
 
 const settingsBtnElem = document.getElementById('settingsBtn');
-const downloadBtnCtrl = document.getElementById('downloadBtnCtrl');
 const customSettingsMenu = document.getElementById('customSettingsMenu');
 const speedOptionsGrid = document.getElementById('speedOptionsGrid');
 const qualityOptionsGrid = document.getElementById('qualityOptionsGrid');
-const downloadModal = document.getElementById('downloadModal');
-const closeDownloadModal = document.getElementById('closeDownloadModal');
-const downloadIframe = document.getElementById('downloadIframe');
 
 let isDragging = false, hideTimeoutRef, shakaPlayerInstance = null, wasVideoPlaying = false;
 let globalSlidesArray = [];
 let globalAttachmentsArray = [];
-let activeStreamUrl = "";
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.onclick = (e) => {
@@ -282,41 +257,6 @@ if (closeSidebarBtn) {
     };
 }
 
-function triggerDownloadModal() {
-    if (!activeStreamUrl) {
-        alert('Stream URL not loaded yet!');
-        return;
-    }
-    downloadIframe.src = `https://pwxyro.ai.studio/?url=${encodeURIComponent(activeStreamUrl)}`;
-    downloadModal.classList.add('active');
-}
-
-if (downloadItem) {
-    downloadItem.onclick = (e) => {
-        e.stopPropagation();
-        dropdownMenuElem.classList.remove('active');
-        triggerDownloadModal();
-    };
-}
-
-if (downloadBtnCtrl) {
-    downloadBtnCtrl.onclick = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        customSettingsMenu.classList.remove('active');
-        triggerDownloadModal();
-        handleControlVisibility(true);
-    };
-}
-
-if (closeDownloadModal) {
-    closeDownloadModal.onclick = (e) => {
-        e.stopPropagation();
-        downloadIframe.src = "";
-        downloadModal.classList.remove('active');
-    };
-}
-
 window.addEventListener('click', () => { 
     if (dropdownMenuElem) dropdownMenuElem.classList.remove('active');
     if (customSettingsMenu) customSettingsMenu.classList.remove('active');
@@ -335,10 +275,21 @@ async function initializePlayerEngine() {
         resolvedStreamUrl = decodeURIComponent(directStreamUrl);
     } else if (batchId && lectureId) {
         try {
-            updateStatusText('🔄 Fetching from DevCoderZ API...');
-            const apiEndpoint = `https://devcoderz-backend.vercel.app/api/init?batchId=${batchId}&childId=${lectureId}`;
+            updateStatusText('🔄 Fetching via POST request...');
+            const apiEndpoint = `https://devcoderz-backend.vercel.app/api/init`;
             
-            const networkResponse = await fetch(apiEndpoint);
+            // POST request bhej rahe hain batchId aur childId ke sath
+            const networkResponse = await fetch(apiEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    batchId: batchId,
+                    childId: lectureId
+                })
+            });
+
             if (!networkResponse.ok) throw new Error(`Network failure code: ${networkResponse.status}`);
             const jsonPayload = await networkResponse.json();
             
@@ -375,14 +326,12 @@ async function initializePlayerEngine() {
         return;
     }
 
-    activeStreamUrl = resolvedStreamUrl;
     initShakaPlayer(resolvedStreamUrl, extractedKeys);
 }
 
 async function initShakaPlayer(url, clearKeys) {
     updateStatusText('🔄 Initializing Shaka Player...');
     
-    // Install polyfills
     shaka.polyfill.installAll();
 
     if (!shaka.Player.isBrowserSupported()) {
@@ -396,7 +345,6 @@ async function initShakaPlayer(url, clearKeys) {
 
     shakaPlayerInstance = new shaka.Player(videoElem);
 
-    // Configure ClearKey DRM if keys are present
     if (clearKeys) {
         let formattedKeys = {};
         for (let keyId in clearKeys) {
@@ -429,7 +377,6 @@ function populateShakaQualities() {
     let tracks = shakaPlayerInstance.getVariantTracks();
     qualityOptionsGrid.innerHTML = `<div class="setting-chip active" data-quality="-1">Auto</div>`;
 
-    // Filter unique heights
     let map = new Map();
     tracks.forEach(track => {
         if (track.height && !map.has(track.height)) {
