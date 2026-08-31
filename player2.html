@@ -314,6 +314,18 @@ async function initShakaPlayer(url, clearKeys) {
 
     shakaPlayerInstance = new shaka.Player(videoElem);
 
+    shakaPlayerInstance.getNetworkingEngine().registerRequestFilter((type, request) => {
+        if (type === shaka.net.NetworkingEngine.RequestType.MANIFEST || type === shaka.net.NetworkingEngine.RequestType.SEGMENT) {
+            if (url.includes('?')) {
+                const urlObj = new URL(url);
+                const searchParams = urlObj.search;
+                if (searchParams && !request.uris[0].includes('?')) {
+                    request.uris[0] += searchParams;
+                }
+            }
+        }
+    });
+
     if (clearKeys) {
         let formattedKeys = {};
         for (let keyId in clearKeys) {
@@ -548,7 +560,7 @@ if (progressElem) {
         progressElem.setPointerCapture(e.pointerId);
         let pos = extractPointerPosition(e);
         if (videoElem.duration) {
-            videoElem.currentTime = pos * videoElem.duration;
+            videoElem.currentTime = pos * video_duration;
             refreshProgressBarUI(pos * 100, videoElem.currentTime, videoElem.duration);
         }
     };
