@@ -406,22 +406,7 @@ function setupHlsPlayer(url) {
 
         hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
             updateStatusText('✅ Stream ready!', 'success');
-            
-            qualityOptionsGrid.innerHTML = `<div class="setting-chip active" data-quality="-1">Auto</div>`;
-            hlsInstance.levels.forEach((lvl, idx) => {
-                let chip = document.createElement("div");
-                chip.className = "setting-chip";
-                chip.dataset.quality = idx;
-                chip.innerText = lvl.height + "p";
-                chip.onclick = (e) => {
-                    e.stopPropagation();
-                    hlsInstance.currentLevel = idx;
-                    document.querySelectorAll('#qualityOptionsGrid .setting-chip').forEach(c => c.classList.remove('active'));
-                    chip.classList.add('active');
-                    customSettingsMenu.classList.remove('active');
-                };
-                qualityOptionsGrid.appendChild(chip);
-            });
+            populateQualityLevels();
         });
 
         hlsInstance.on(Hls.Events.ERROR, (ev, data) => {
@@ -436,6 +421,25 @@ function setupHlsPlayer(url) {
     } else {
         updateStatusText('❌ Unsupported browser configuration', 'error');
     }
+}
+
+function populateQualityLevels() {
+    if (!hlsInstance || !hlsInstance.levels) return;
+    qualityOptionsGrid.innerHTML = `<div class="setting-chip active" data-quality="-1">Auto</div>`;
+    hlsInstance.levels.forEach((lvl, idx) => {
+        let chip = document.createElement("div");
+        chip.className = "setting-chip";
+        chip.dataset.quality = idx;
+        chip.innerText = lvl.height ? lvl.height + "p" : `Quality ${idx + 1}`;
+        chip.onclick = (e) => {
+            e.stopPropagation();
+            hlsInstance.currentLevel = idx;
+            document.querySelectorAll('#qualityOptionsGrid .setting-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            customSettingsMenu.classList.remove('active');
+        };
+        qualityOptionsGrid.appendChild(chip);
+    });
 }
 
 document.querySelectorAll('#speedOptionsGrid .setting-chip').forEach(chip => {
