@@ -335,7 +335,7 @@ async function initializePlayerEngine() {
     } else if (bId && sId && lId) {
         try {
             updateStatusText('🔄 Fetching secure configurations...');
-            const endpointRoute = `/api/player`;
+            const endpointRoute = 'https://devcoderz-backend.vercel.app/api/config';
             
             const networkResponse = await fetch(endpointRoute, {
                 method: 'POST',
@@ -346,21 +346,21 @@ async function initializePlayerEngine() {
             if (!networkResponse.ok) throw new Error(`Network failure code: ${networkResponse.status}`);
             const responsePayload = await networkResponse.json();
             
-            if (responsePayload && responsePayload.data) {
-                resolvedStreamUrl = responsePayload.data.videoUrl || responsePayload.m3u8Url || responsePayload.url;
+            if (responsePayload) {
+                resolvedStreamUrl = responsePayload.m3u8Url || responsePayload.url || responsePayload.video_url;
                 
-                if (responsePayload.data.slides && responsePayload.data.slides.length > 0) {
-                    globalSlidesArray = responsePayload.data.slides;
+                if (responsePayload.slides && responsePayload.slides.length > 0) {
+                    globalSlidesArray = responsePayload.slides;
                     buildSlideItems();
                 } else {
                     slideListElem.innerHTML = `<div class="no-data-text">No slides found for this lecture.</div>`;
                 }
 
-                if (responsePayload.data.notes && responsePayload.data.notes.length > 0) {
-                    globalAttachmentsArray = responsePayload.data.notes;
+                if (responsePayload.notes && responsePayload.notes.length > 0) {
+                    globalAttachmentsArray = responsePayload.notes;
                     buildAttachmentItems();
-                } else if (responsePayload.data.attachments && responsePayload.data.attachments.length > 0) {
-                    globalAttachmentsArray = responsePayload.data.attachments;
+                } else if (responsePayload.dpp_notes && responsePayload.dpp_notes.length > 0) {
+                    globalAttachmentsArray = responsePayload.dpp_notes;
                     buildAttachmentItems();
                 } else {
                     attachmentsListElem.innerHTML = `<div class="no-data-text">No attachments found.</div>`;
