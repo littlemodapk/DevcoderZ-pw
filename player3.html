@@ -98,11 +98,11 @@
                 }
 
                 const manifestUri = data.url;
-                const clearKeys = data.keys || {};
+                const rawKeys = data.keys || {};
 
-                // Extract query parameters (Signature, Policy, Key-Pair-Id) from the main manifest URL
+                // Extract query parameters (Signature, Policy, Key-Pair-Id) from main manifest URL
                 const mainUrlObj = new URL(manifestUri);
-                const searchParamsString = mainUrlObj.search; // Contains ?Signature=...&Key-Pair-Id=...&Policy=...
+                const searchParamsString = mainUrlObj.search; 
 
                 videoTitle.textContent = `Lecture ID: ${lectureId}`;
                 statusText.textContent = "Loading Shaka Player...";
@@ -115,20 +115,18 @@
 
                 const player = new shaka.Player(video);
 
-                // Configure DRM ClearKeys if present
-                if (Object.keys(clearKeys).length > 0) {
+                // 4. Configure DRM ClearKeys properly
+                if (Object.keys(rawKeys).length > 0) {
                     player.configure({
                         drm: {
-                            clearKeys: clearKeys
+                            clearKeys: rawKeys
                         }
                     });
                 }
 
-                // 4. CRITICAL FIX: Intercept every segment/init request and inject query parameters
+                // 5. Intercept segments to inject Signature & Policy automatically
                 player.getNetworkingEngine().registerRequestFilter((type, request) => {
-                    // Check if it's a segment or license request (excluding manifest itself if needed)
                     if (searchParamsString && !request.uris[0].includes('Signature=')) {
-                        // Agar URL me pehle se query parameters nahi hain, toh main URL wale parameters laga do
                         if (request.uris[0].includes('?')) {
                             request.uris[0] += '&' + searchParamsString.substring(1);
                         } else {
