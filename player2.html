@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DevCoderZ Video Player</title>
+<title>DevCoderZ Video Player Debugger</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.js"></script>
 <style>
   body {
@@ -38,18 +38,25 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', async () => {
+    // Shaka polyfills install kar rahe hain taaki sabhi browsers me dash/hls support mile
     shaka.polyfill.installAll();
+    
+    // Check kar rahe hain ki browser Shaka Player ko support karta hai ya nahi
     if (!shaka.Player.isBrowserSupported()) {
+      console.error('Browser error: Shaka Player is not supported on this browser.');
       alert('Browser not supported for Shaka Player.');
       return;
     }
 
+    // URL se query parameters (batchId, subjectId, lectureId) nikal rahe hain
     const params = new URLSearchParams(window.location.search);
     const batchId = params.get('batchId');
     const subjectId = params.get('subjectId');
     const lectureId = params.get('lectureId');
 
+    // Agar parameters missing hain toh console me error print karke rok denge
     if (!batchId || !lectureId) {
+      console.error('Validation error: Missing batchId or lectureId in URL query parameters.');
       alert('Missing batchId or lectureId in URL query parameters.');
       return;
     }
@@ -57,11 +64,29 @@
     const video = document.getElementById('videoElement');
     const player = new shaka.Player(video);
 
+    // Player ke andar hone wale har error ko track karne ke liye event listener
     player.addEventListener('error', (event) => {
-      console.error('Error code', event.detail.code, 'object', event.detail);
+      console.error('Shaka Player Error Triggered:', {
+        code: event.detail.code,        // Error code (jaise network error, decryption error, media error)
+        category: event.detail.category, // Error category
+        data: event.detail.data,          // Extra details / URLs jahan error aaya
+        severity: event.detail.severity   // Critical hai ya warning
+      });
     });
 
+    // Networking errors aur segment fetch fail hone par detail check karne ke liye networking engine filter
+    const networkingEngine = player.getNetworkingEngine();
+    if (networkingEngine) {
+      networkingEngine.registerRequestFilter((type, request) => {
+        // Har segment ya manifest request ko track karne ke liye
+        console.log(`[Network Request] Type: ${type}, URL: ${request.uris[0]}`);
+      });
+    }
+
     try {
+      console.log('Fetching video metadata from API...');
+      
+      // Video URL aur DRM key lene ke liye POST request mar rahe hain
       const response = await fetch(`https://examcrushers.in/api/video-url`, {
         method: 'POST',
         headers: {
@@ -72,25 +97,40 @@
 
       const result = await response.json();
 
+      // Agar API response success nahi hai toh error show karenge
       if (!result.success) {
+        console.error('API Error Response:', result);
         alert('Failed to fetch video: ' + (result.error || 'Unknown error'));
         return;
       }
 
-      const playUrl = result.data.streamDash;
+      console.log('API Response received successfully:', result);
 
+      // Segments ko proxy ke through chalane wala streamDash URL use kar rahe hain
+      const playUrl = result.data.streamDash;
+      console.log('Final Stream URL assigned to player:', playUrl);
+
+      // Agar DRM ClearKeys available hain toh player me configure karenge
       if (result.license && result.license.clearKeys) {
+        console.log('Configuring DRM ClearKeys:', result.license.clearKeys);
         player.configure({
           drm: {
             clearKeys: result.license.clearKeys
           }
         });
+      } else {
+        console.warn('Warning: No DRM clearKeys found in API response for this video.');
       }
 
+      // Player me video load karna shuru kar rahe hain
+      console.log('Loading video into Shaka Player...');
       await player.load(playUrl);
+      console.log('Playback started successfully.');
+
     } catch (err) {
-      console.error('Playback error:', err);
-      alert('An error occurred while loading the video.');
+      // Catch block me fetching ya loading ke dauran aane wali unexpected errors pakdi jayengi
+      console.error('Critical Playback/Fetch Exception Error:', err);
+      alert('An error occurred while loading the video. Check console for details.');
     }
   });
 </script>
