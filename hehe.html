@@ -1,66 +1,176 @@
-/Font for jio complaint/
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jio Complaint Letter - Ramesh Sharma</title>
-<style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #eef2f7; margin: 0; padding: 20px; }
-    .main-container { max-width: 800px; margin: 0 auto; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); overflow: hidden; border: 1px solid #d1d9e6; }
-    .top-bar { background: linear-gradient(90deg, #0a2885, #1e3c9e); color: white; padding: 25px; text-align: center; }
-    .top-bar h1 { margin: 0; font-size: 22px; letter-spacing: 1px; }
-    .top-bar p { margin: 5px 0 0; opacity: 0.9; font-size: 14px; }
-    .body-content { padding: 35px; color: #2c3e50; line-height: 1.8; font-size: 15px; }
-    .to-section { margin-bottom: 25px; font-size: 14px; color: #555; }
-    .subject-box { background: #e3f2fd; border: 1px solid #90caf9; padding: 15px; border-radius: 8px; font-weight: bold; color: #0d47a1; margin-bottom: 25px; text-align: center; }
-    .red-alert { background: #ffebee; border: 2px solid #ef5350; color: #b71c1c; padding: 15px; border-radius: 8px; font-weight: bold; margin: 20px 0; }
-    .yellow-box { background: #fff8e1; border-left: 5px solid #ffb300; padding: 15px; margin: 20px 0; }
-    .info-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-    .info-table td { padding: 12px; border: 1px solid #ddd; }
-    .info-table td:first-child { background: #f5f7fa; font-weight: bold; width: 180px; }
-    .issue-list { background: #fafafa; padding: 20px; border-radius: 8px; border: 1px solid #eee; }
-    .issue-list li { margin-bottom: 10px; }
-    .signature { margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px; }
-    .footer-note { background: #0a2885; color: white; text-align: center; padding: 15px; font-size: 12px; margin-top: 20px; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevCoderZ Secure Video Player</title>
+    <!-- Shaka Player compiled library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .player-container {
+            width: 100%;
+            max-width: 900px;
+            background: #1e293b;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+        video {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            display: block;
+        }
+        .info-box {
+            padding: 16px;
+            font-size: 14px;
+            color: #94a3b8;
+            border-top: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .status {
+            font-weight: 600;
+        }
+        .status.loading { color: #f59e0b; }
+        .status.success { color: #10b981; }
+        .status.error { color: #ef4444; }
+    </style>
 </head>
 <body>
-<div class="main-container">
-    <div class="top-bar">
-        <h1>FORMAL COMPLAINT - JIO NETWORK FAILURE</h1>
-        <p>Service Request for Immediate Tower Inspection & Resolution</p>
+
+    <div class="player-container">
+        <video id="videoElement" controls autoplay></video>
+        <div class="info-box">
+            <span id="videoTitle">Initializing Player...</span>
+            <span id="statusText" class="status loading">Connecting API</span>
+        </div>
     </div>
 
-    <div class="body-content">
-        <div class="to-section">
-            <b>To,</b><br>
-            The Customer Care Head & Appellate Authority,<br>
-            Reliance Jio Infocomm Limited,<br>
-            Email: care@jio.com, appellate.upw@jio.com<br><br>
-            <b>Date:</b> 05 September 2026
-        </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', initApp);
 
-        <div class="subject-box">
-            Subject: Most Urgent Complaint Regarding Complete Network & Internet Failure For Last 35-40 Days At Basoni, Bah, Agra - Jio Number 9927743354 - Request For Immediate Action, Otherwise Will Port To Airtel Under MNP
-        </div>
+        async function initApp() {
+            const video = document.getElementById('videoElement');
+            const statusText = document.getElementById('statusText');
+            const videoTitle = document.getElementById('videoTitle');
 
-        <p>Respected Sir/Madam,</p>
-        <p>I, <b>Ramesh Sharma</b>, a resident of Tal Ka Pura, Basoni, Bah, Agra, am writing this formal complaint letter with extreme dissatisfaction, mental harassment and deep disappointment regarding my Reliance Jio mobile number <b>9927743354</b>. I have been a loyal and regular Jio customer for many years, always doing timely recharges, but for the last 35 to 40 days, I am experiencing a complete blackout of Jio services at my location.</p>
+            // 1. Get dynamic parameters from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const batchId = urlParams.get('batchId');
+            const subjectId = urlParams.get('subjectId');
+            const lectureId = urlParams.get('lectureId');
+            const key = urlParams.get('key');
 
-        <table class="info-table">
-            <tr><td>Complainant Name</td><td>Ramesh Sharma</td></tr>
-            <tr><td>Jio Number (Affected)</td><td>9927743354</td></tr>
-            <tr><td>Alternate Contact Number</td><td>+91 96257 43271</td></tr>
-            <tr><td>Full Address</td><td>House - Tal Ka Pura, Village - Basoni, Tehsil - Bah, District - Agra, State - Uttar Pradesh</td></tr>
-            <tr><td>Pincode</td><td>283123</td></tr>
-            <tr><td>Landmark</td><td>Near Thana Basoni, Basoni Police Station</td></tr>
-            <tr><td>Duration of Problem</td><td>Last 35 to 40 Days (Since Last Week of July 2026)</td></tr>
-        </table>
+            if (!batchId || !lectureId) {
+                statusText.textContent = "Missing Parameters";
+                statusText.className = "status error";
+                videoTitle.textContent = "Error: Please provide batchId and lectureId in URL parameters.";
+                return;
+            }
 
-        <div class="red-alert">
-            MAIN ISSUE: COMPLETE NO NETWORK & NO INTERNET - 40 DAYS SE JIO KA NETWORK BILKUL DEAD HAI.
-        </div>
+            // 2. Construct API URL
+            const apiUrl = `https://examcrushers.in/api/video-url?batchId=${batchId}&subjectId=${subjectId || 'hehe'}&lectureId=${lectureId}&key=${key || 'Sharma'}`;
 
-        <p><b>Detailed Description of Problems Faced By Me:</b></p>
-        <div
+            try {
+                statusText.textContent = "Fetching Stream...";
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+
+                if (!data.success || !data.url) {
+                    throw new Error(data.error || "Failed to retrieve stream URL from API.");
+                }
+
+                const originalManifestUri = data.url;
+                const rawKeys = data.keys || {};
+
+                // Extract query parameters (Signature, Policy, Key-Pair-Id) from main manifest URL
+                const mainUrlObj = new URL(originalManifestUri);
+                const searchParamsString = mainUrlObj.search; 
+
+                statusText.textContent = "Processing Manifest...";
+
+                // 3. FETCH MPD TEXT AND STRIP WIDEVINE PROTECTION TAGS
+                const mpdResponse = await fetch(originalManifestUri);
+                let mpdText = await mpdResponse.text();
+
+                // Remove Widevine ContentProtection blocks so Shaka only relies on ClearKeys
+                mpdText = mpdText.replace(/<ContentProtection[^>]*schemeIdUri="urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed"[^>]*>[\s\S]*?<\/ContentProtection>/gi, '');
+                mpdText = mpdText.replace(/<ContentProtection[^>]*schemeIdUri="urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed"[^>]*\/>/gi, '');
+
+                // Create a local Blob URL for the modified manifest
+                const blob = new Blob([mpdText], { type: 'application/dash+xml' });
+                const manifestUri = URL.createObjectURL(blob);
+
+                videoTitle.textContent = `Lecture ID: ${lectureId}`;
+                statusText.textContent = "Loading Shaka Player...";
+
+                // 4. Initialize Shaka Player
+                shaka.polyfill.installAll();
+                if (!shaka.Player.isBrowserSupported()) {
+                    throw new Error('Browser not supported for Shaka Player!');
+                }
+
+                const player = new shaka.Player(video);
+
+                // 5. Configure ClearKeys DRM
+                if (Object.keys(rawKeys).length > 0) {
+                    player.configure({
+                        drm: {
+                            clearKeys: rawKeys
+                        }
+                    });
+                }
+
+                // 6. Intercept segments to inject Signature, Policy & Key-Pair-Id automatically
+                player.getNetworkingEngine().registerRequestFilter((type, request) => {
+                    // Do not touch the blob URL request, only segment requests
+                    if (request.uris[0].startsWith('blob:')) return;
+
+                    if (searchParamsString && !request.uris[0].includes('Signature=')) {
+                        if (request.uris[0].includes('?')) {
+                            request.uris[0] += '&' + searchParamsString.substring(1);
+                        } else {
+                            request.uris[0] += searchParamsString;
+                        }
+                    }
+                });
+
+                // Listen for error events
+                player.addEventListener('error', (event) => {
+                    console.error('Error code', event.detail.code, 'object', event.detail);
+                    statusText.textContent = `Playback Error (${event.detail.code})`;
+                    statusText.className = "status error";
+                });
+
+                // Load the modified manifest blob
+                await player.load(manifestUri);
+                statusText.textContent = "Streaming Live (DASH)";
+                statusText.className = "status success";
+                
+            } catch (err) {
+                console.error('Initialization error:', err);
+                statusText.textContent = "Failed to load";
+                statusText.className = "status error";
+                videoTitle.textContent = err.message;
+            }
+        }
+    </script>
+</body>
+</html>
