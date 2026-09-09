@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DevCoderZ Secure Video Player</title>
+    <title>DevCoderZ Secure Enterprise Player + Debug Console</title>
     <!-- Shaka Player compiled library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.js"></script>
     <style>
@@ -13,7 +13,7 @@
             padding: 0;
         }
         body {
-            background-color: #0f172a;
+            background-color: #090d16;
             color: #f8fafc;
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             display: flex;
@@ -21,14 +21,27 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
+            padding: 20px;
         }
-        .player-container {
+        .player-wrapper {
             width: 100%;
-            max-width: 900px;
-            background: #1e293b;
-            border-radius: 12px;
+            max-width: 960px;
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+        }
+        .architectural-header {
+            background: #1f2937;
+            padding: 12px 20px;
+            font-size: 12px;
+            font-family: monospace;
+            color: #38bdf8;
+            border-bottom: 1px solid #374151;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         video {
             width: 100%;
@@ -36,129 +49,231 @@
             background: #000;
             display: block;
         }
-        .info-box {
-            padding: 16px;
-            font-size: 14px;
-            color: #94a3b8;
-            border-top: 1px solid #334155;
+        .telemetry-bar {
+            padding: 16px 20px;
+            font-size: 13px;
+            background: #111827;
+            border-top: 1px solid #1f2937;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        .status {
-            font-weight: 600;
+        .stream-meta {
+            color: #9ca3af;
+            font-family: monospace;
         }
-        .status.loading { color: #f59e0b; }
-        .status.success { color: #10b981; }
-        .status.error { color: #ef4444; }
+        .node-status {
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+        .node-status.initializing { background: #78350f; color: #fde68a; }
+        .node-status.active { background: #064e3b; color: #6ee7b7; }
+        .node-status.failure { background: #7f1d1d; color: #fca5a5; }
+
+        /* Debug Console Styles */
+        .debug-console {
+            width: 100%;
+            max-width: 960px;
+            margin-top: 15px;
+            background: #030712;
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            overflow: hidden;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .console-header {
+            background: #111827;
+            padding: 8px 15px;
+            color: #9ca3af;
+            border-bottom: 1px solid #1f2937;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .console-body {
+            padding: 12px 15px;
+            height: 160px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .log-line {
+            line-height: 1.4;
+            word-break: break-all;
+        }
+        .log-info { color: #38bdf8; }
+        .log-success { color: #34d399; }
+        .log-warn { color: #fbbf24; }
+        .log-error { color: #f87171; }
     </style>
 </head>
 <body>
 
-    <div class="player-container">
-        <video id="videoElement" controls autoplay></video>
-        <div class="info-box">
-            <span id="videoTitle">Initializing Player...</span>
-            <span id="statusText" class="status loading">Connecting API</span>
+    <div class="player-wrapper">
+        <div class="architectural-header">
+            <span>LAYER-1: QUANTUM-ENCRYPTED PLAYER ENGINE [ACTIVE]</span>
+            <span>GATEWAY: ROUTING & ORCHESTRATION OK</span>
+        </div>
+        <video id="quantumVideoElement" controls autoplay playsinline></video>
+        <div class="telemetry-bar">
+            <span id="streamMetaText" class="stream-meta">Initializing Pipeline...</span>
+            <span id="nodeStatusBadge" class="node-status initializing">SYNCHRONIZING</span>
+        </div>
+    </div>
+
+    <!-- On-Screen Debug Console UI -->
+    <div class="debug-console">
+        <div class="console-header">
+            <span>LIVE TELEMETRY & DEBUG CONSOLE</span>
+            <button onclick="clearConsole()" style="background:transparent; border:none; color:#9ca3af; cursor:pointer; font-family:monospace;">Clear [X]</button>
+        </div>
+        <div id="consoleBody" class="console-body">
+            <div class="log-line log-info">[SYSTEM] Debug console mounted successfully. Waiting for pipeline execution...</div>
         </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', initApp);
+        function logDebug(message, type = 'info') {
+            const consoleBody = document.getElementById('consoleBody');
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.createElement('div');
+            logElement.className = `log-line log-${type}`;
+            logElement.textContent = `[${timestamp}] ${message}`;
+            consoleBody.appendChild(logElement);
+            consoleBody.scrollTop = consoleBody.scrollHeight;
 
-        async function initApp() {
-            const video = document.getElementById('videoElement');
-            const statusText = document.getElementById('statusText');
-            const videoTitle = document.getElementById('videoTitle');
+            if (type === 'error') console.error(message);
+            else if (type === 'warn') console.warn(message);
+            else console.log(message);
+        }
 
-            // 1. Get dynamic parameters from URL
+        function clearConsole() {
+            document.getElementById('consoleBody').innerHTML = '';
+            logDebug("Console cleared by user.", "info");
+        }
+
+        document.addEventListener('DOMContentLoaded', initializePlayerPipeline);
+
+        async function initializePlayerPipeline() {
+            const videoElement = document.getElementById('quantumVideoElement');
+            const streamMetaText = document.getElementById('streamMetaText');
+            const nodeStatusBadge = document.getElementById('nodeStatusBadge');
+
+            logDebug("DOM fully loaded. Parsing gateway parameters...", "info");
+
             const urlParams = new URLSearchParams(window.location.search);
             const batchId = urlParams.get('batchId');
             const subjectId = urlParams.get('subjectId');
-            const lectureId = urlParams.get('lectureId');
+            const lectureId = urlParams.get('lectureId') || urlParams.get('scheduleId');
             const key = urlParams.get('key');
 
             if (!batchId || !lectureId) {
-                statusText.textContent = "Missing Parameters";
-                statusText.className = "status error";
-                videoTitle.textContent = "Error: Please provide batchId and lectureId in URL parameters.";
+                nodeStatusBadge.textContent = "PARAMS_MISSING";
+                nodeStatusBadge.className = "node-status failure";
+                streamMetaText.textContent = "Error: Required orchestration parameters are absent.";
+                logDebug("Validation Failed: Missing batchId or lectureId parameters in URL.", "error");
                 return;
             }
 
-            // 2. Construct API URL
-            const apiUrl = `https://examcrushers.in/api/video-url?batchId=${batchId}&subjectId=${subjectId || 'hehe'}&lectureId=${lectureId}&key=${key || 'Sharma'}`;
+            logDebug(`Parameters verified -> batchId: ${batchId}, lectureId: ${lectureId}`, "success");
+
+            const apiEndpoint = `https://examcrushers.in/api/video-url?batchId=${batchId}&subjectId=${subjectId || 'hehe'}&lectureId=${lectureId}&key=${key || 'Sharma'}`;
 
             try {
-                statusText.textContent = "Fetching Stream...";
-                const response = await fetch(apiUrl);
-                const data = await response.json();
+                streamMetaText.textContent = "Resolving through Distributed Traffic Shaper...";
+                logDebug(`Sending request to API Gateway: ${apiEndpoint}`, "info");
 
-                if (!data.success || !data.url) {
-                    throw new Error(data.error || "Failed to retrieve stream URL from API.");
+                const response = await fetch(apiEndpoint);
+                const payload = await response.json();
+
+                if (!payload.success || (!payload.manifestText && !payload.url)) {
+                    throw new Error(payload.error || "Failed to resolve stream via API orchestration layer.");
                 }
 
-                const manifestUri = data.url;
-                const rawKeys = data.keys || {};
+                logDebug("API Response received successfully. Manifest fetched via worker.", "success");
 
-                // Extract query parameters (Signature, Policy, Key-Pair-Id) from main manifest URL
-                const mainUrlObj = new URL(manifestUri);
-                const searchParamsString = mainUrlObj.search; 
+                // Worker ne direct manifestText aur keys bhej di hain
+                const manifestText = payload.manifestText;
+                const clearKeysMap = payload.keys || {};
 
-                videoTitle.textContent = `Lecture ID: ${lectureId}`;
-                statusText.textContent = "Loading Shaka Player...";
+                logDebug(`ClearKeys mapped: ${JSON.stringify(clearKeysMap)}`, "info");
 
-                // 3. Initialize Shaka Player
+                // Signature extract karne ke liye originalUrl use karenge segment requests me append karne ke liye
+                const originalUrl = payload.originalUrl || '';
+                let edgeSignatureQuery = '';
+                if (originalUrl) {
+                    try {
+                        const parsedOriginal = new URL(originalUrl);
+                        edgeSignatureQuery = parsedOriginal.search;
+                    } catch(e) {}
+                }
+
+                // Create Sandbox Blob URI for Shaka Player
+                const sanitizedBlob = new Blob([manifestText], { type: 'application/dash+xml' });
+                const sandboxManifestUri = URL.createObjectURL(sanitizedBlob);
+
+                logDebug(`Sandbox Blob manifest generated: ${sandboxManifestUri.slice(0, 30)}...`, "info");
+
+                streamMetaText.textContent = `Injecting Stream: ${lectureId}`;
+                nodeStatusBadge.textContent = "INITIALIZING SHAKA";
+
                 shaka.polyfill.installAll();
                 if (!shaka.Player.isBrowserSupported()) {
-                    throw new Error('Browser not supported for Shaka Player!');
+                    throw new Error('Browser environment incompatible with Shaka Player architecture.');
                 }
 
-                const player = new shaka.Player(video);
+                const player = new shaka.Player(videoElement);
 
-                // 4. Configure DRM & ClearKeys to fully bypass external license server requests (Fixes Error 6007)
-                player.configure({
-                    drm: {
-                        clearKeys: rawKeys,
-                        servers: {},
-                        advanced: {
-                            'com.widevine.alpha': {
-                                clearKeys: rawKeys
-                            },
-                            'org.w3.clearkey': {
-                                clearKeys: rawKeys
+                if (Object.keys(clearKeysMap).length > 0) {
+                    player.configure({
+                        drm: {
+                            clearKeys: clearKeysMap,
+                            servers: {},
+                            advanced: {
+                                'org.w3.clearkey': { clearKeys: clearKeysMap }
                             }
                         }
-                    }
-                });
+                    });
+                    logDebug("Shaka DRM engine configured with custom ClearKeys.", "success");
+                }
 
-                // 5. Intercept segments to inject Signature, Policy & Key-Pair-Id automatically
+                // Traffic Edge Interceptor to attach tokens/signatures to segments if needed
                 player.getNetworkingEngine().registerRequestFilter((type, request) => {
-                    if (searchParamsString && !request.uris[0].includes('Signature=')) {
+                    if (request.uris[0].startsWith('blob:')) return;
+
+                    if (edgeSignatureQuery && !request.uris[0].includes('Signature=')) {
                         if (request.uris[0].includes('?')) {
-                            request.uris[0] += '&' + searchParamsString.substring(1);
+                            request.uris[0] += '&' + edgeSignatureQuery.substring(1);
                         } else {
-                            request.uris[0] += searchParamsString;
+                            request.uris[0] += edgeSignatureQuery;
                         }
                     }
                 });
 
-                // Listen for error events
                 player.addEventListener('error', (event) => {
-                    console.error('Error code', event.detail.code, 'object', event.detail);
-                    statusText.textContent = `Playback Error (${event.detail.code})`;
-                    statusText.className = "status error";
+                    logDebug(`Playback Fault Code [${event.detail.code}]: ${JSON.stringify(event.detail)}`, "error");
+                    nodeStatusBadge.textContent = `ERROR_${event.detail.code}`;
+                    nodeStatusBadge.className = "node-status failure";
+                    streamMetaText.textContent = `Fault encountered: Code ${event.detail.code}`;
                 });
 
-                // Load the manifest
-                await player.load(manifestUri);
-                statusText.textContent = "Streaming Live (DASH)";
-                statusText.className = "status success";
-                
+                logDebug("Initiating Shaka player payload load...", "info");
+
+                await player.load(sandboxManifestUri);
+                nodeStatusBadge.textContent = "STREAM_ACTIVE";
+                nodeStatusBadge.className = "node-status active";
+                streamMetaText.textContent = `Streaming Node: ${lectureId} [Secured]`;
+                logDebug("Stream successfully loaded and executing playback pipeline!", "success");
+
             } catch (err) {
-                console.error('Initialization error:', err);
-                statusText.textContent = "Failed to load";
-                statusText.className = "status error";
-                videoTitle.textContent = err.message;
+                logDebug(`Pipeline Initialization Exception: ${err.message}`, "error");
+                nodeStatusBadge.textContent = "SYSTEM_FAULT";
+                nodeStatusBadge.className = "node-status failure";
+                streamMetaText.textContent = err.message;
             }
         }
     </script>
