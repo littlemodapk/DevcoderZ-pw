@@ -28,55 +28,29 @@
     border-radius: 8px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
   }
-  .input-group {
-    margin-top: 20px;
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  input, button {
-    padding: 10px 15px;
-    background: #1e1e1e;
-    color: #fff;
-    border: 1px solid #333;
-    border-radius: 5px;
-    font-size: 14px;
-    outline: none;
-  }
-  input {
-    flex: 1;
-    min-width: 180px;
-  }
-  button {
-    background: #e50914;
-    border: none;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background 0.2s;
-  }
-  button:hover {
-    background: #b20710;
-  }
 </style>
 </head>
 <body>
 
 <div class="player-container">
   <video id="videoElement" controls autoplay></video>
-  <div class="input-group">
-    <input type="text" id="batchIdInput" placeholder="Batch ID">
-    <input type="text" id="subjectIdInput" placeholder="Subject ID">
-    <input type="text" id="lectureIdInput" placeholder="Lecture ID">
-    <button id="playBtn">Play</button>
-  </div>
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', async () => {
     shaka.polyfill.installAll();
     if (!shaka.Player.isBrowserSupported()) {
       alert('Browser not supported for Shaka Player.');
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const batchId = params.get('batchId');
+    const subjectId = params.get('subjectId');
+    const lectureId = params.get('lectureId');
+
+    if (!batchId || !lectureId) {
+      alert('Missing batchId or lectureId in URL query parameters.');
       return;
     }
 
@@ -87,50 +61,37 @@
       console.error('Error code', event.detail.code, 'object', event.detail);
     });
 
-    document.getElementById('playBtn').addEventListener('click', async () => {
-      const batchId = document.getElementById('batchIdInput').value.trim();
-      const subjectId = document.getElementById('subjectIdInput').value.trim();
-      const lectureId = document.getElementById('lectureIdInput').value.trim();
+    try {
+      const response = await fetch(`https://Examcrushers.in/api/handler`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ batchId, subjectId, lectureId })
+      });
 
-      if (!batchId || !lectureId) {
-        alert('Batch ID and Lecture ID are required.');
+      const result = await response.json();
+
+      if (!result.success) {
+        alert('Failed to fetch video: ' + (result.error || 'Unknown error'));
         return;
       }
 
-      try {
-        const response = await fetch(`https://Examcrushers.in/api/handler`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ batchId, subjectId, lectureId })
+      const playUrl = result.data.streamDash;
+
+      if (result.license && result.license.clearKeys) {
+        player.configure({
+          drm: {
+            clearKeys: result.license.clearKeys
+          }
         });
-
-        const result = await response.json();
-
-        if (!result.success) {
-          alert('Failed to fetch video: ' + (result.error || 'Unknown error'));
-          return;
-        }
-
-        const playUrl = result.data.streamDash || result.data.fullDash;
-
-        if (result.kid && result.license) {
-          player.configure({
-            drm: {
-              clearKeys: {
-                [result.kid]: result.license.key || result.license
-              }
-            }
-          });
-        }
-
-        await player.load(playUrl);
-      } catch (err) {
-        console.error('Playback error:', err);
-        alert('An error occurred while loading the video.');
       }
-    });
+
+      await player.load(playUrl);
+    } catch (err) {
+      console.error('Playback error:', err);
+      alert('An error occurred while loading the video.');
+    }
   });
 </script>
 
