@@ -83,6 +83,7 @@
         .log-line { line-height: 1.4; word-break: break-all; }
         .log-info { color: #38bdf8; }
         .log-success { color: #34d399; }
+        .log-warn { color: #fbbf24; }
         .log-error { color: #f87171; }
     </style>
 </head>
@@ -91,7 +92,7 @@
     <div class="player-wrapper">
         <div class="architectural-header">
             <span>ENGINE: DELTA STREAM PIPELINE [ACTIVE]</span>
-            <span>MODE: BUNNYCDN DIRECT DASH</span>
+            <span>MODE: CLEARKEYS & DIRECT DASH</span>
         </div>
         <video id="quantumVideoElement" controls autoplay playsinline></video>
         <div class="telemetry-bar">
@@ -142,10 +143,10 @@
                 return;
             }
 
-            const apiEndpoint = `https://examcrushers.in/api/video?batchId=${batchId}&subjectId=${subjectId || 'hehe'}&lectureId=${lectureId}&key=${key || 'Sharma'}`;
+            const apiEndpoint = `https://examcrushers.in/api/video-url?batchId=${batchId}&subjectId=${subjectId || 'hehe'}&lectureId=${lectureId}&key=${key || 'Sharma'}`;
 
             try {
-                streamMetaText.textContent = "Fetching stream URL from Worker...";
+                streamMetaText.textContent = "Fetching stream URL and keys from Worker...";
                 logDebug(`Requesting API: ${apiEndpoint}`, "info");
 
                 const response = await fetch(apiEndpoint);
@@ -156,7 +157,9 @@
                 }
 
                 const streamUrl = payload.url;
-                logDebug("Stream URL received successfully.", "success");
+                const clearKeysMap = payload.keys || {};
+
+                logDebug(`Stream URL received. Keys mapped: ${JSON.stringify(clearKeysMap)}`, "success");
 
                 streamMetaText.textContent = "Initializing Shaka Player...";
                 shaka.polyfill.installAll();
@@ -165,6 +168,21 @@
                 }
 
                 const player = new shaka.Player(videoElement);
+
+                if (Object.keys(clearKeysMap).length > 0) {
+                    player.configure({
+                        drm: {
+                            clearKeys: clearKeysMap,
+                            servers: {},
+                            advanced: {
+                                'org.w3.clearkey': { clearKeys: clearKeysMap }
+                            }
+                        }
+                    });
+                    logDebug("Shaka DRM engine configured with ClearKeys.", "success");
+                } else {
+                    logDebug("No encryption keys detected. Proceeding with clear stream.", "warn");
+                }
 
                 player.addEventListener('error', (event) => {
                     logDebug(`Playback Error [${event.detail.code}]: ${JSON.stringify(event.detail)}`, "error");
