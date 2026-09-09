@@ -38,43 +38,88 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', async () => {
+    // Shaka Player polyfills install kar rahe hain
     shaka.polyfill.installAll();
+    
     if (!shaka.Player.isBrowserSupported()) {
+      console.error('Browser error: Shaka Player is not supported.');
       alert('Browser not supported for Shaka Player.');
       return;
     }
 
+    // URL se batchId, subjectId aur lectureId read kar rahe hain
     const params = new URLSearchParams(window.location.search);
-    const streamUrl = params.get('url');
-    const kid = params.get('kid');
-    const key = params.get('key');
+    const batchId = params.get('batchId');
+    const subjectId = params.get('subjectId');
+    const lectureId = params.get('lectureId');
 
-    if (!streamUrl) {
-      alert('Missing "url" query parameter.');
+    if (!batchId || !lectureId) {
+      console.error('Validation error: Missing batchId or lectureId in URL query parameters.');
+      alert('Missing batchId or lectureId in URL query parameters.');
       return;
     }
 
     const video = document.getElementById('videoElement');
     const player = new shaka.Player(video);
 
+    // Player errors track karne ke liye
     player.addEventListener('error', (event) => {
-      console.error('Error code', event.detail.code, 'object', event.detail);
+      console.error('Shaka Player Error:', event.detail);
     });
 
     try {
-      if (kid && key) {
+      console.log('Fetching video details from API...');
+      
+      // API se video data lene ke liye POST request
+      const response = await fetch(`https://examcrushers.in/api/video-url`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ batchId, subjectId, lectureId })
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        console.error('API Error Response:', result);
+        alert('Failed to fetch video: ' + (result.error || 'Unknown error'));
+        return;
+      }
+
+      console.log('API Response received:', result);
+
+      // Raw dashboard/manifest URL nikal kar naye format me wrap kar rahe hain
+      const rawDashUrl = result.data.fullDash || result.data.dashUrl;
+      const playUrl = `https://www.learnxpw.site/api/play?url=${encodeURIComponent(rawDashUrl)}`;
+      console.log('Constructed Play URL:', playUrl);
+
+      // DRM ClearKeys configure karna
+      if (result.kid && result.license) {
+        let clearKeysObj = {};
+        if (result.license.clearKeys) {
+          clearKeysObj = result.license.clearKeys;
+        } else {
+          clearKeysObj = {
+            [result.kid]: result.license.key || result.license
+          };
+        }
+
+        console.log('Configuring DRM ClearKeys:', clearKeysObj);
         player.configure({
           drm: {
-            clearKeys: {
-              [kid]: key
-            }
+            clearKeys: clearKeysObj
           }
         });
       }
 
-      await player.load(decodeURIComponent(streamUrl));
+      // Player me video load karna
+      console.log('Loading video stream into Shaka Player...');
+      await player.load(playUrl);
+      console.log('Playback started successfully.');
+
     } catch (err) {
-      console.error('Playback error:', err);
+      console.error('Playback Exception Error:', err);
       alert('An error occurred while loading the video.');
     }
   });
