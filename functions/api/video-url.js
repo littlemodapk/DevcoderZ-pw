@@ -142,7 +142,7 @@ export async function onRequest(context) {
     } catch (err) {
     }
 
-    const streamHls = `https://examcrushers.in/api/play/${fullHls}`;
+    const streamHls = `https://examcrushers.in/api/play?url=${fullHls}`;
     const streamDash = `https://examcrushers.in/api/play?url=${encodeURIComponent(fullDash)}`;
 
     const modifiedResponse = {
