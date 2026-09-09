@@ -12,87 +12,30 @@ export async function onRequest(context) {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
-  if (request.method !== 'GET' && request.method !== 'POST') {
-    return new Response(JSON.stringify({ success: false, error: "Method not allowed." }), {
-      status: 405,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
-  }
-
-  let batchId = null;
-  let subjectId = null;
-  let lectureId = null;
-
-  if (request.method === 'GET') {
-    const key = url.searchParams.get('key');
-    if (key !== 'Sharma' && key !== 'devansh') {
-      return new Response(JSON.stringify({ success: false, error: "Unauthorized GET request. Key is required." }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-    batchId = url.searchParams.get('batchId');
-    subjectId = url.searchParams.get('subjectId');
-    lectureId = url.searchParams.get('lectureId') || url.searchParams.get('scheduleId');
-  } else if (request.method === 'POST') {
-    try {
-      const body = await request.json();
-      batchId = body.batchId;
-      subjectId = body.subjectId;
-      lectureId = body.lectureId || body.scheduleId;
-    } catch (e) {
-      return new Response(JSON.stringify({ success: false, error: "Invalid JSON body." }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-  }
+  let batchId = url.searchParams.get('batchId');
+  let subjectId = url.searchParams.get('subjectId');
+  let lectureId = url.searchParams.get('lectureId') || url.searchParams.get('scheduleId');
 
   if (!batchId || !lectureId) {
-    return new Response(JSON.stringify({ 
-      success: false, 
-      error: "Missing 'batchId','subjectId' or 'lectureId' parameters." 
-    }), {
-      status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    return new Response(JSON.stringify({ success: false, error: "Missing parameters" }), {
+      status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
 
   try {
     const targetUrl = `https://www.learnxpw.site/api/video-url?batch_id=${batchId}&subject_id=${subjectId}&video_id=${lectureId}`;
-
     const apiResponse = await fetch(targetUrl, {
       headers: {
-        'Accept': 'application/json, text/plain, */*',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
         'Referer': 'https://studyparcham.in/',
         'Origin': 'https://studyparcham.in'
       }
     });
 
-    const responseText = await apiResponse.text();
-
-    let data;
-    try {
-      data = JSON.parse(responseText);
-    } catch (e) {
-      return new Response(JSON.stringify({
-        success: false,
-        error: "Cloudflare Blocked: Upstream API returned HTML instead of JSON.",
-        rawResponse: responseText.slice(0, 300)
-      }), {
-        status: 502,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
+    const data = await apiResponse.json();
     if (!data.success || !data.data) {
-      return new Response(JSON.stringify({ success: false, error: "Invalid response structure from upstream API", raw: data }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      return new Response(JSON.stringify({ success: false, error: "Upstream API error", raw: data }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -100,56 +43,38 @@ export async function onRequest(context) {
     const rawSignedUrl = data.data.signedUrl || '';
     const fullDash = rawSignedUrl ? `${rawUrl}${rawSignedUrl}` : rawUrl;
 
+    // Fetch MPD and strip Widevine tags inside the worker itself (Bypasses browser CORS)
+    const mpdRes = await fetch(fullDash);
+    let mpdText = await mpdRes.text();
+
+    mpdText = mpdText.replace(/<ContentProtection[^>]*schemeIdUri="urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed"[^>]*>[\s\S]*?<\/ContentProtection>/gi, '');
+    mpdText = mpdText.replace(/<ContentProtection[^>]*schemeIdUri="urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed"[^>]*\/>/gi, '');
+
+    // Extract Kid for license/keys if needed
     let kid = null;
     let licenseInfo = null;
+    const kidMatch = mpdText.match(/(?:default_KID|cenc:default_KID)\s*=\s*"([^"]+)"/i);
+    if (kidMatch && kidMatch[1]) {
+      kid = kidMatch[1].replace(/-/g, '').toLowerCase();
+      const otpResponse = await fetch(`https://www.learnxpw.site/api/get-otp?kid=${kid}`, {
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://studyparcham.in/' }
+      });
+      try { licenseInfo = await otpResponse.json(); } catch(e){}
+    }
 
-    try {
-      const mpdResponse = await fetch(fullDash);
-      let mpdText = await mpdResponse.text();
-      
-      const kidMatch = mpdText.match(/(?:default_KID|cenc:default_KID)\s*=\s*"([^"]+)"/i);
-      if (kidMatch && kidMatch[1]) {
-        kid = kidMatch[1].replace(/-/g, '').toLowerCase();
-      }
-
-      if (kid) {
-        const otpResponse = await fetch(`https://www.learnxpw.site/api/get-otp?kid=${kid}`, {
-          headers: {
-            'Accept': 'application/json, text/plain, */*',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-            'Referer': 'https://studyparcham.in/',
-            'Origin': 'https://studyparcham.in'
-          }
-        });
-        const otpText = await otpResponse.text();
-        try {
-          licenseInfo = JSON.parse(otpText);
-        } catch (err) {
-          licenseInfo = otpText;
-        }
-      }
-
-      // Agar client direct MPD fetch kare ya koi proxy route ho, toh hum optional handling rakh sakte hain.
-      // Par agar aap chaho ki player ko direct modified MPD text mile, toh aap isko stream bhi kar sakte ho.
-    } catch (err) {}
-
-    const proxiedUrl = fullDash.replace(/^https?:\/\//, 'https://proxy.studypanda.live/');
-
-    const minimalResponse = {
+    return new Response(JSON.stringify({
       success: true,
-      url: proxiedUrl,
-      keys: licenseInfo?.clearKeys || licenseInfo || {}
-    };
-
-    return new Response(JSON.stringify(minimalResponse), {
+      manifestText: mpdText,
+      originalUrl: fullDash,
+      keys: licenseInfo?.clearKeys || data.data.keys || {}
+    }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (err) {
     return new Response(JSON.stringify({ success: false, error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
 }
