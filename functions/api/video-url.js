@@ -4,7 +4,7 @@ export async function onRequest(context) {
 
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cookie',
   };
 
@@ -12,14 +12,46 @@ export async function onRequest(context) {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
-  const batchId = url.searchParams.get('batchId');
-  const subjectId = url.searchParams.get('subjectId');
-  const lectureId = url.searchParams.get('lectureId');
+  if (request.method !== 'GET' && request.method !== 'POST') {
+    return new Response(JSON.stringify({ success: false, error: "Method not allowed." }), {
+      status: 405,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+
+  let batchId = null;
+  let subjectId = null;
+  let lectureId = null;
+
+  if (request.method === 'GET') {
+    const key = url.searchParams.get('key');
+    if (key !== 'Sharma') {
+      return new Response(JSON.stringify({ success: false, error: "Unauthorized GET request. Key 'Sharma' is required." }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    batchId = url.searchParams.get('batchId');
+    subjectId = url.searchParams.get('subjectId');
+    lectureId = url.searchParams.get('lectureId');
+  } else if (request.method === 'POST') {
+    try {
+      const body = await request.json();
+      batchId = body.batchId;
+      subjectId = body.subjectId;
+      lectureId = body.lectureId;
+    } catch (e) {
+      return new Response(JSON.stringify({ success: false, error: "Invalid JSON body." }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+  }
 
   if (!batchId || !lectureId) {
     return new Response(JSON.stringify({ 
       success: false, 
-      error: "Missing 'batchId','subjectId' or 'lectureId' query parameters." 
+      error: "Missing 'batchId','subjectId' or 'lectureId' parameters." 
     }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -110,8 +142,8 @@ export async function onRequest(context) {
     } catch (err) {
     }
 
-    const playingmpd = `https://Examcrushers.in/api/play?url=${encodeURIComponent(fullDash)}`;
-    const playingHls = `https://Examcrushers.in/api/play?url=${encodeURIComponent(fullHls)}`;
+    const streamHls = `https://Examcrushers.in/api/play?url=${encodeURIComponent(fullHls)}`;
+    const streamDash = `https://Examcrushers.in/api/play?url=${encodeURIComponent(fullDash)}`;
 
     const modifiedResponse = {
       success: true,
@@ -121,8 +153,8 @@ export async function onRequest(context) {
         signedUrl: rawSignedUrl,
         fullHls: fullHls,
         fullDash: fullDash,
-        proxiedHls: proxiedHls,
-        proxiedDash: proxiedDash
+        streamHls: streamHls,
+        streamDash: streamDash
       },
       kid: kid,
       license: licenseInfo,
