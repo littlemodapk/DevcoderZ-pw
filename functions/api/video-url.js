@@ -142,8 +142,8 @@ export async function onRequest(context) {
     } catch (err) {
     }
 
-    const streamHls = `https://proxy.studyparcham.in/${encodeURIComponent(fullHls)}`;
-    const streamDash = `https://www.learnxpw.site/api/play?url=${encodeURIComponent(fullDash)}`;
+    const streamHls = `https://examcrushers.in/api/play/${fullHls}`;
+    const streamDash = `https://examcrushers.in/api/play?url=${encodeURIComponent(fullDash)}`;
 
     const modifiedResponse = {
       success: true,
