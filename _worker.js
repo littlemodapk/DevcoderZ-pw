@@ -139,7 +139,7 @@ export default {
           }
         } catch (err) {}
 
-        const streamHls = `https://examcrushers.in/api/play?url=${encodeURIComponent(fullHls)}`;
+        const streamHls = `https://proxy.studyparcham.in/${encodeURIComponent(fullHls)}`;
         const streamDash = `https://examcrushers.in/api/play?url=${encodeURIComponent(fullDash)}`;
 
         const modifiedResponse = {
