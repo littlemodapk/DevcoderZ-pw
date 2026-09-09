@@ -92,7 +92,7 @@
     <div class="player-wrapper">
         <div class="architectural-header">
             <span>ENGINE: DELTA STREAM PIPELINE [ACTIVE]</span>
-            <span>MODE: CLEARKEYS & DIRECT DASH</span>
+            <span>MODE: BUNNYCDN TOKEN PROPAGATION</span>
         </div>
         <video id="quantumVideoElement" controls autoplay playsinline></video>
         <div class="telemetry-bar">
@@ -161,6 +161,13 @@
 
                 logDebug(`Stream URL received. Keys mapped: ${JSON.stringify(clearKeysMap)}`, "success");
 
+                // Extract query parameters (Signature, Policy, Key-Pair-Id) to append to segments
+                let edgeSignatureQuery = '';
+                try {
+                    const parsedUrl = new URL(streamUrl);
+                    edgeSignatureQuery = parsedUrl.search;
+                } catch (e) {}
+
                 streamMetaText.textContent = "Initializing Shaka Player...";
                 shaka.polyfill.installAll();
                 if (!shaka.Player.isBrowserSupported()) {
@@ -180,9 +187,18 @@
                         }
                     });
                     logDebug("Shaka DRM engine configured with ClearKeys.", "success");
-                } else {
-                    logDebug("No encryption keys detected. Proceeding with clear stream.", "warn");
                 }
+
+                // Attach query tokens to all segment requests so BunnyCDN doesn't throw 403 Forbidden
+                player.getNetworkingEngine().registerRequestFilter((type, request) => {
+                    if (edgeSignatureQuery && !request.uris[0].includes('Signature=')) {
+                        if (request.uris[0].includes('?')) {
+                            request.uris[0] += '&' + edgeSignatureQuery.substring(1);
+                        } else {
+                            request.uris[0] += edgeSignatureQuery;
+                        }
+                    }
+                });
 
                 player.addEventListener('error', (event) => {
                     logDebug(`Playback Error [${event.detail.code}]: ${JSON.stringify(event.detail)}`, "error");
