@@ -2,19 +2,20 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
+    const rawSearch = url.search;
 
-    // Sirf /api/ se shuru hone wali requests ko proxy karenge
-    if (path.startsWith("/api/")) {
-      const subPath = path.replace(/^\/api/, '');
-      const rawSearch = url.search;
-      
-      const searchParams = new URLSearchParams(rawSearch);
-      const explicitUrl = searchParams.get('url');
+    const searchParams = new URLSearchParams(rawSearch);
+    const explicitUrl = searchParams.get('url');
 
+    // Sirf tabhi proxy chalayein jab request HLS stream ki ho ya 'url' parameter ho
+    // Aapke /api/video-url jaise normal APIs seedha pass-through honge
+    if (path.startsWith("/api/hls/") || explicitUrl) {
       let actualTargetUrl = "";
+      
       if (explicitUrl) {
         actualTargetUrl = explicitUrl;
       } else {
+        const subPath = path.replace(/^\/api/, '');
         actualTargetUrl = "https://d1d34p8vz63oiq.cloudfront.net" + subPath + rawSearch;
       }
 
@@ -46,7 +47,7 @@ export default {
       }
     }
 
-    // Baaki sabhi normal static files ke liye fetch() call karein
+    // Baaki sabhi requests (jaise /api/video-url aur static files) apne normal route par jayengi
     return env.ASSETS.fetch(request);
   }
 };
