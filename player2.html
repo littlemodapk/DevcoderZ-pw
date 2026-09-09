@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DevCoderZ Video Player Debugger</title>
+<title>DevCoderZ Video Player - Permanent Fix</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.js"></script>
 <style>
   body {
@@ -127,25 +127,44 @@
     const video = document.getElementById('videoElement');
     const player = new shaka.Player(video);
 
+    // Player configurations to prevent interruption errors (Error 1002)
+    player.configure({
+      streaming: {
+        bufferingGoal: 30,
+        rebufferingGoal: 2,
+        stallEnabled: true,
+        // Retry configuration to handle minor proxy hiccups smoothly without throwing 1002
+        retryParameters: {
+          maxAttempts: 5,
+          baseDelay: 1000,
+          backoffFactor: 2,
+          fuzzFactor: 0.5,
+          timeout: 30000
+        }
+      }
+    });
+
     player.addEventListener('error', (event) => {
       logToConsole(`Shaka Error Code: ${event.detail.code}, Category: ${event.detail.category}`, 'error');
       console.error('Shaka Player Runtime Error:', event.detail);
     });
 
-    // Networking engine filter: Cloudfront ke kisi bhi request (manifest ya segments/init) ko automatic proxy se route karega
+    // Permanent Request Filter: Properly intercepts all child segments and rewrites them to the proxy
     const networkingEngine = player.getNetworkingEngine();
     if (networkingEngine) {
       networkingEngine.registerRequestFilter((type, request) => {
         let originalUrl = request.uris[0];
 
-        // Agar URL me pehle se proxy laga hai ya cloudfront ka nahi hai toh chhod do
-        if (originalUrl.includes('/api/play?url=') || !originalUrl.includes('d1d34p8vz63oiq.cloudfront.net')) {
+        // Agar URL me pehle se proxy laga hai toh bypass karo
+        if (originalUrl.includes('/api/play?url=')) {
           return;
         }
 
-        // Cloudfront ke har request ko proxy URL me wrap kar do
-        request.uris[0] = `https://www.learnxpw.site/api/play?url=${encodeURIComponent(originalUrl)}`;
-        logToConsole(`Proxied Request: ${originalUrl.split('/').pop().split('?')[0]}`, 'info');
+        // Sirf cloudfront ya target CDN URLs ko proxy ke andar route karo
+        if (originalUrl.includes('cloudfront.net')) {
+          request.uris[0] = `https://www.learnxpw.site/api/play?url=${encodeURIComponent(originalUrl)}`;
+          logToConsole(`Proxy Routed: ${originalUrl.split('/').pop().split('?')[0]}`, 'info');
+        }
       });
     }
 
@@ -172,10 +191,11 @@
 
       const rawDashUrl = result.data.fullDash || result.data.dashUrl;
       
-      // Manifest URL ko shuru me hi proxy ke sath load karwayenge
+      // Manifest ko shuru me hi proxy ke through pass karna zaroori hai
       const playUrl = `https://www.learnxpw.site/api/play?url=${encodeURIComponent(rawDashUrl)}`;
       logToConsole(`Final Manifest URL: ${playUrl}`, 'info');
 
+      // DRM ClearKeys Configuration
       if (result.kid && result.license) {
         let clearKeysObj = {};
         if (result.license.clearKeys) {
