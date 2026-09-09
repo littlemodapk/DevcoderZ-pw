@@ -231,6 +231,8 @@ const closeDownloadModal = document.getElementById('closeDownloadModal');
 const downloadIframe = document.getElementById('downloadIframe');
 
 let isDragging = false, hideTimeoutRef, hlsInstance, wasVideoPlaying = false;
+let globalSlidesArray = [];
+let globalAttachmentsArray = [];
 let activeStreamUrl = "";
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -333,16 +335,16 @@ window.addEventListener('click', () => {
 });
 
 const urlParamsExtractor = new URLSearchParams(location.search);
-const directApiUrl = urlParamsExtractor.get("apiUrl") || urlParamsExtractor.get("api") || urlParamsExtractor.get("url");
+const directApiUrl = urlParamsExtractor.get("apiUrl") || urlParamsExtractor.get("api") || urlParamsExtractor.get("url") || 
+                     `https://examcrushers.in/api/video-url?batchId=698ad3519549b300a5e1cc6a&subjectId=physics-by-rajwant-singh-sir-964222&lectureId=6a7ecfc310002885ba91700c&key=Sharma`;
 
 async function initializePlayerEngine() {
     let hlsUrl = "";
 
     try {
-        updateStatusText('🔄 Fetching dynamic HLS stream configurations...');
-        let targetApi = directApiUrl || 'https://examcrushers.in/api/video-url';
+        updateStatusText('🔄 Fetching dynamic HLS stream configurations via GET...');
         
-        const networkResponse = await fetch(targetApi, {
+        const networkResponse = await fetch(directApiUrl, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
         });
@@ -350,12 +352,21 @@ async function initializePlayerEngine() {
         if (networkResponse.ok) {
             const responsePayload = await networkResponse.json();
             if (responsePayload && responsePayload.success && responsePayload.data) {
-                // Dynamically extract hlsUrl and signedUrl from the API response
                 let rawHls = responsePayload.data.hlsUrl || responsePayload.data.fullHls || responsePayload.data.streamHls;
                 let signature = responsePayload.data.signedUrl || "";
                 
                 if (rawHls) {
                     hlsUrl = rawHls.startsWith('http') ? rawHls : (rawHls + (rawHls.includes('?') ? '' : signature));
+                }
+
+                // Populate sidebar slides/notes if available in response
+                if (responsePayload.data.slides && Array.isArray(responsePayload.data.slides)) {
+                    globalSlidesArray = responsePayload.data.slides;
+                    renderSlidesList();
+                }
+                if (responsePayload.data.attachments && Array.isArray(responsePayload.data.attachments)) {
+                    globalAttachmentsArray = responsePayload.data.attachments;
+                    renderAttachmentsList();
                 }
             }
         }
@@ -373,6 +384,52 @@ async function initializePlayerEngine() {
     activeStreamUrl = hlsUrl;
     setupHlsPlayer(hlsUrl);
 }
+
+function renderSlidesList() {
+    if (!slideListElem) return;
+    if (globalSlidesArray.length === 0) {
+        slideListElem.innerHTML = '<div class="no-data-text">No slides available.</div>';
+        return;
+    }
+    let html = '';
+    globalSlidesArray.forEach((slide, idx) => {
+        let timeLabel = slide.time ? formatTimestamp(slide.time) : `Slide ${idx + 1}`;
+        let imgUrl = slide.image || slide.url || '';
+        html += `
+        <div class="slide-item" onclick="jumpToSlideTime(${slide.time || 0})">
+            <img src="${imgUrl}" alt="Slide ${idx + 1}" loading="lazy">
+            <div class="slide-footer-info">
+                <span class="slide-time-badge">⏱ ${timeLabel}</span>
+            </div>
+        </div>`;
+    });
+    slideListElem.innerHTML = html;
+}
+
+function renderAttachmentsList() {
+    if (!attachmentsListElem) return;
+    if (globalAttachmentsArray.length === 0) {
+        attachmentsListElem.innerHTML = '<div class="no-data-text">No attachments available.</div>';
+        return;
+    }
+    let html = '';
+    globalAttachmentsArray.forEach((att) => {
+        html += `
+        <a class="attachment-item" href="${att.url}" target="_blank">
+            <span>📄 ${att.name || 'Lecture Notes'}</span>
+            <span>⬇️</span>
+        </a>`;
+    });
+    attachmentsListElem.innerHTML = html;
+}
+
+window.jumpToSlideTime = function(sec) {
+    if (videoElem) {
+        videoElem.currentTime = sec;
+        sidebarElem.classList.remove('active');
+        triggerSafePlayback();
+    }
+};
 
 function setupHlsPlayer(streamUrl) {
     updateStatusText('🔄 Initializing HLS Engine...');
@@ -406,7 +463,6 @@ function setupHlsPlayer(streamUrl) {
             }
         });
     } else if (videoElem.canPlayType('application/vnd.apple.mpegurl')) {
-        // Native Safari HLS support
         videoElem.src = streamUrl;
         videoElem.addEventListener('loadedmetadata', () => {
             updateStatusText('✅ HLS Stream Ready!', 'success');
@@ -451,7 +507,7 @@ document.addEventListener('click', (e) => {
     if (e.target && e.target.dataset.quality === "-1") {
         e.stopPropagation();
         if (hlsInstance) {
-            hlsInstance.currentLevel = -1; // Auto
+            hlsInstance.currentLevel = -1;
         }
         document.querySelectorAll('#qualityOptionsGrid .setting-chip').forEach(c => c.classList.remove('active'));
         e.target.classList.add('active');
