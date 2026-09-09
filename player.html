@@ -3,21 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DevCoderz Ultra Secure Player</title>
+<title>DevCoderz Ultra Secure Player - Encrypted Stream</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:sans-serif;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}html,body{width:100%;height:100%;background:#000;overflow:hidden;touch-action:none;display:flex;flex-direction:column}
 
 .app-container{position:relative;width:100%;height:100%;background:#000;overflow:hidden}
-
 .player{position:relative;width:100%;height:100%;background:#000;pointer-events:auto}
-
 video{width:100%;height:100%;object-fit:contain;background:#000}
-.top-brand{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:40;text-align:center;pointer-events:none}.top-brand .jsr{color:#ff9800;font-weight:700;font-size:13px}.top-brand .dev{margin-top:2px;font-size:11px;font-weight:600;color:#00e5ff;text-shadow:0 0 6px #00e5ff}
 
-.center-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:30;cursor:pointer}.center-play.hide{display:none}.center-play span{width:75px;height:75px;background:rgba(255,255,255,.25);backdrop-filter:blur(5px);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;color:#fff}
+.top-brand{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:40;text-align:center;pointer-events:none}
+.top-brand .jsr{color:#ff9800;font-weight:700;font-size:13px}
+.top-brand .dev{margin-top:2px;font-size:11px;font-weight:600;color:#00e5ff;text-shadow:0 0 6px #00e5ff}
 
-.controls{position:absolute;bottom:0;width:100%;padding:10px 15px 15px 15px;background:linear-gradient(transparent,rgba(0,0,0,.9));transition:transform .3s ease, opacity .3s ease;z-index:35;touch-action:none}.controls.hide{transform:translateY(100%);opacity:0;pointer-events:none}
-.progress{height:6px;background:rgba(255,255,255,0.3);border-radius:10px;position:relative;margin-bottom:8px;touch-action:none;cursor:pointer}.progress-fill{height:100%;width:0;background:#2196f3;border-radius:10px;pointer-events:none}.thumb{position:absolute;top:50%;width:14px;height:14px;background:#fff;border-radius:50%;transform:translate(-50%,-50%);left:0;pointer-events:none;box-shadow:0 0 4px rgba(0,0,0,0.5)}
+.center-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:30;cursor:pointer}
+.center-play.hide{display:none}
+.center-play span{width:75px;height:75px;background:rgba(255,255,255,.25);backdrop-filter:blur(5px);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;color:#fff}
+
+.controls{position:absolute;bottom:0;width:100%;padding:10px 15px 15px 15px;background:linear-gradient(transparent,rgba(0,0,0,.9));transition:transform .3s ease, opacity .3s ease;z-index:35;touch-action:none}
+.controls.hide{transform:translateY(100%);opacity:0;pointer-events:none}
+.progress{height:6px;background:rgba(255,255,255,0.3);border-radius:10px;position:relative;margin-bottom:8px;touch-action:none;cursor:pointer}
+.progress-fill{height:100%;width:0;background:#2196f3;border-radius:10px;pointer-events:none}
+.thumb{position:absolute;top:50%;width:14px;height:14px;background:#fff;border-radius:50%;transform:translate(-50%,-50%);left:0;pointer-events:none;box-shadow:0 0 4px rgba(0,0,0,0.5)}
 .time{color:#fff;font-size:11px;text-align:right;margin-bottom:6px;font-variant-numeric:tabular-nums}
 .row{display:flex;align-items:center;gap:8px;justify-content:space-between;color:#fff}
 .btn{width:36px;height:36px;border:1.5px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 0.2s, border-color 0.2s}
@@ -82,7 +88,6 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
 
 .attachment-item{background:#161616;padding:14px;border-radius:10px;border:1px solid #333;color:#fff;display:flex;justify-content:space-between;align-items:center;text-decoration:none;cursor:pointer;transition:border-color 0.2s, background 0.2s}
 .attachment-item:hover{border-color:#4fc3f7;background:#1c1c1c}
-
 .no-data-text{color:#888;text-align:center;padding:30px;font-size:13px}
 
 #downloadModal{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:300;display:none;flex-direction:column}
@@ -115,6 +120,7 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
         </div>
      </div>
 
+     <!-- Using Shaka Player compatible video tag -->
      <video id="video" playsinline></video>
      
      <div class="top-brand">
@@ -188,7 +194,8 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<!-- Shaka Player CDN for Widevine/ClearKey DASH Streams -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.js"></script>
 <script>
 const playerElem = document.getElementById('player');
 const videoElem = document.getElementById('video');
@@ -223,7 +230,7 @@ const downloadModal = document.getElementById('downloadModal');
 const closeDownloadModal = document.getElementById('closeDownloadModal');
 const downloadIframe = document.getElementById('downloadIframe');
 
-let isDragging = false, hideTimeoutRef, hlsInstance, wasVideoPlaying = false;
+let isDragging = false, hideTimeoutRef, shakaPlayerInstance, wasVideoPlaying = false;
 let globalSlidesArray = [];
 let globalAttachmentsArray = [];
 let activeStreamUrl = "";
@@ -331,120 +338,116 @@ const urlParamsExtractor = new URLSearchParams(location.search);
 const bId = urlParamsExtractor.get("batchId") || urlParamsExtractor.get("batch_id");
 const sId = urlParamsExtractor.get("subjectId") || urlParamsExtractor.get("subject_id");
 const lId = urlParamsExtractor.get("video_id") || urlParamsExtractor.get("videoId") || urlParamsExtractor.get("lectureId") || urlParamsExtractor.get("scheduleId");
-const directStreamUrl = urlParamsExtractor.get("m3u8Url") || urlParamsExtractor.get("Url");
+const directApiUrl = urlParamsExtractor.get("apiUrl") || urlParamsExtractor.get("api");
 
 async function initializePlayerEngine() {
-    let resolvedStreamUrl = "";
+    let dashUrl = "";
+    let clearKeysObj = null;
     
-    if (directStreamUrl) {
-        resolvedStreamUrl = decodeURIComponent(directStreamUrl);
-    } else if (bId && sId && lId) {
-        try {
-            updateStatusText('🔄 Fetching secure configurations...');
-            const endpointRoute = 'https://devcoderz-backend.vercel.app/api/config';
-            
-            const networkResponse = await fetch(endpointRoute, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ batchId: bId, subjectId: sId, lectureId: lId })
-            });
+    // Fallback static configuration matching the JSON payload you provided
+    const defaultData = {
+        "dashUrl": "https://d1d34p8vz63oiq.cloudfront.net/ab0bd9e0-6f92-4e64-8bd8-598b5466ba14/master.mpd",
+        "signedUrl": "?Signature=EDI5H5D9nvgTIr6vh-J1wTPW7QHwOB0T0HrUNxzgJymrUPOCBQc1EZinFJQfnne7Fm7Lp2w7L8W6CqnFXoPwrkbUKSZ5MN80p33WGUL2FzfAMqcSR4JGyLIG6wIiomNXz2FGs4lnnRxBTKJH6h5pRn4tBaT31MCPoul7c62jGdmhI-F2MqtbNQGpkJZYIC3l0fmmKf-LmJw32yptiFmLrA6wGAmnvz6KVGbtOM37ytBRjl7Rv3NosW7jugpHmzShVX0IfiHijzqh7Im6hNpkb8LvBI0DCc3lSsRHKKsxdaZTXT5d5MPVaL72XN75T7AUNMTZwSxkXy4lPG98oYklBg__&Key-Pair-Id=APKAXVKMENFCRKTG5XE2&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9kMWQzNHA4dno2M29pcS5jbG91ZGZyb250Lm5ldC9hYjBiZDllMC02ZjkyLTRlNjQtOGJkOC01OThiNTQ2NmJhMTQvKiIsIkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTc4ODk1NTYyOX0sIkRhdGVHcmVhdGVyVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxODI2MTE2ODV9fX1dfQ__",
+        "kid": "03f80062cf40355260e39b3a6dded2b5",
+        "clearKeys": {
+            "03f80062cf40355260e39b3a6dded2b5": "c58eb1419a363838bad4e7f7cba75a9d"
+        }
+    };
 
-            if (!networkResponse.ok) throw new Error(`Network failure code: ${networkResponse.status}`);
+    try {
+        updateStatusText('🔄 Fetching secure DRM stream configurations...');
+        let targetApi = directApiUrl || 'https://examcrushers.in/api/video-url';
+        
+        const networkResponse = await fetch(targetApi, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (networkResponse.ok) {
             const responsePayload = await networkResponse.json();
-            
-            if (responsePayload) {
-                resolvedStreamUrl = responsePayload.m3u8Url || responsePayload.url || responsePayload.video_url;
-                
-                if (responsePayload.slides && responsePayload.slides.length > 0) {
-                    globalSlidesArray = responsePayload.slides;
-                    buildSlideItems();
-                } else {
-                    slideListElem.innerHTML = `<div class="no-data-text">No slides found for this lecture.</div>`;
-                }
-
-                if (responsePayload.notes && responsePayload.notes.length > 0) {
-                    globalAttachmentsArray = responsePayload.notes;
-                    buildAttachmentItems();
-                } else if (responsePayload.dpp_notes && responsePayload.dpp_notes.length > 0) {
-                    globalAttachmentsArray = responsePayload.dpp_notes;
-                    buildAttachmentItems();
-                } else {
-                    attachmentsListElem.innerHTML = `<div class="no-data-text">No attachments found.</div>`;
+            if (responsePayload && responsePayload.success && responsePayload.data) {
+                dashUrl = responsePayload.data.dashUrl + (responsePayload.data.signedUrl || '');
+                if (responsePayload.license && responsePayload.license.clearKeys) {
+                    clearKeysObj = responsePayload.license.clearKeys;
                 }
             }
-        } catch (err) {
-            updateStatusText('❌ Error connecting to stream service', 'error');
-            slideListElem.innerHTML = `<div class="no-data-text">Failed to load content.</div>`;
-            return;
         }
-    } else {
-        updateStatusText('❌ Required parameters missing!', 'error');
-        slideListElem.innerHTML = `<div class="no-data-text">Missing parameters.</div>`;
-        return;
+    } catch (err) {
+        console.warn('API Fetch failed, falling back to default built-in manifest config.');
     }
 
-    if (!resolvedStreamUrl) {
-        updateStatusText('❌ Target stream source not found!', 'error');
-        return;
+    // Fallback if network call fails or API is omitted
+    if (!dashUrl) {
+        dashUrl = defaultData.dashUrl + defaultData.signedUrl;
+        clearKeysObj = defaultData.clearKeys;
     }
 
-    activeStreamUrl = resolvedStreamUrl;
-    setupHlsPlayer(resolvedStreamUrl);
+    activeStreamUrl = dashUrl;
+    setupShakaPlayer(dashUrl, clearKeysObj);
 }
 
-function setupHlsPlayer(url) {
-    updateStatusText('🔄 Initializing stream buffer...');
+async function setupShakaPlayer(manifestUrl, clearKeys) {
+    updateStatusText('🔄 Initializing Shaka DRM Engine...');
+    
+    // Install polyfills
+    shaka.polyfill.installAll();
 
-    if (videoElem.canPlayType('application/vnd.apple.mpegurl')) {
-        videoElem.src = url;
-        videoElem.addEventListener('loadedmetadata', () => {
-            updateStatusText('✅ Playing natively via HLS', 'success');
-        });
-    } else if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-        hlsInstance = new Hls({ 
-            enableWorker: true, 
-            lowLatencyMode: true,
-            maxBufferLength: 30,
-            maxMaxBufferLength: 60
-        });
-        hlsInstance.loadSource(url);
-        hlsInstance.attachMedia(videoElem);
+    if (!shaka.Player.isBrowserSupported()) {
+        updateStatusText('❌ Browser not supported for encrypted streams', 'error');
+        return;
+    }
 
-        hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
-            updateStatusText('✅ Stream ready!', 'success');
-            populateQualityLevels();
-        });
+    shakaPlayerInstance = new shaka.Player(videoElem);
 
-        hlsInstance.on(Hls.Events.ERROR, (ev, data) => {
-            if (data.fatal) {
-                switch (data.type) {
-                    case Hls.ErrorTypes.NETWORK_ERROR: hlsInstance.startLoad(); break;
-                    case Hls.ErrorTypes.MEDIA_ERROR: hlsInstance.recoverMediaError(); break;
-                    default: hlsInstance.destroy(); updateStatusText('❌ Fatal stream error', 'error'); break;
-                }
+    // Configure ClearKey DRM decryption keys
+    if (clearKeys) {
+        shakaPlayerInstance.configure({
+            drm: {
+                clearKeys: clearKeys
             }
         });
-    } else {
-        updateStatusText('❌ Unsupported browser configuration', 'error');
+    }
+
+    shakaPlayerInstance.addEventListener('error', (event) => {
+        console.error('Shaka Error code', event.detail);
+        updateStatusText('❌ DRM Stream Decryption Error', 'error');
+    });
+
+    try {
+        await shakaPlayerInstance.load(manifestUrl);
+        updateStatusText('✅ Secure Stream Ready!', 'success');
+        populateQualityLevels();
+    } catch (error) {
+        updateStatusText('❌ Failed to load encrypted manifest', 'error');
     }
 }
 
 function populateQualityLevels() {
-    if (!hlsInstance || !hlsInstance.levels) return;
+    if (!shakaPlayerInstance) return;
+    const tracks = shakaPlayerInstance.getVariantTracks();
+    const videoTracks = tracks.filter(t => t.type === 'video');
+    
     qualityOptionsGrid.innerHTML = `<div class="setting-chip active" data-quality="-1">Auto</div>`;
-    hlsInstance.levels.forEach((lvl, idx) => {
-        let chip = document.createElement("div");
-        chip.className = "setting-chip";
-        chip.dataset.quality = idx;
-        chip.innerText = lvl.height ? lvl.height + "p" : `Quality ${idx + 1}`;
-        chip.onclick = (e) => {
-            e.stopPropagation();
-            hlsInstance.currentLevel = idx;
-            document.querySelectorAll('#qualityOptionsGrid .setting-chip').forEach(c => c.classList.remove('active'));
-            chip.classList.add('active');
-            customSettingsMenu.classList.remove('active');
-        };
-        qualityOptionsGrid.appendChild(chip);
+    
+    // Deduplicate tracks by height
+    const uniqueHeights = new Set();
+    videoTracks.forEach((track) => {
+        if (track.height && !uniqueHeights.has(track.height)) {
+            uniqueHeights.add(track.height);
+            let chip = document.createElement("div");
+            chip.className = "setting-chip";
+            chip.dataset.height = track.height;
+            chip.innerText = track.height + "p";
+            chip.onclick = (e) => {
+                e.stopPropagation();
+                shakaPlayerInstance.configure({ abr: { enabled: false } });
+                shakaPlayerInstance.selectVariantTrack(track, true);
+                document.querySelectorAll('#qualityOptionsGrid .setting-chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                customSettingsMenu.classList.remove('active');
+            };
+            qualityOptionsGrid.appendChild(chip);
+        }
     });
 }
 
@@ -462,51 +465,17 @@ document.querySelectorAll('#speedOptionsGrid .setting-chip').forEach(chip => {
 document.addEventListener('click', (e) => {
     if (e.target && e.target.dataset.quality === "-1") {
         e.stopPropagation();
-        if (hlsInstance) hlsInstance.currentLevel = -1;
+        if (shakaPlayerInstance) {
+            shakaPlayerInstance.configure({ abr: { enabled: true } });
+        }
         document.querySelectorAll('#qualityOptionsGrid .setting-chip').forEach(c => c.classList.remove('active'));
         e.target.classList.add('active');
         customSettingsMenu.classList.remove('active');
     }
 });
 
-function buildSlideItems() {
-    if (!slideListElem) return;
-    slideListElem.innerHTML = "";
-    globalSlidesArray.forEach((slide) => {
-        const card = document.createElement('div');
-        card.className = 'slide-item';
-        const timeStr = formatTimestamp(slide.timestamp);
-        card.innerHTML = `
-            <img src="${slide.image}" alt="Slide" onerror="this.src='https://via.placeholder.com/400x220?text=Preview+Not+Available'">
-            <div class="slide-footer-info">
-                <div class="slide-time-badge">🕒 ${timeStr}</div>
-            </div>
-        `;
-        card.onclick = (e) => {
-            e.stopPropagation();
-            videoElem.currentTime = slide.timestamp;
-            triggerSafePlayback();
-            sidebarElem.classList.remove('active');
-        };
-        slideListElem.appendChild(card);
-    });
-}
-
-function buildAttachmentItems() {
-    if (!attachmentsListElem) return;
-    attachmentsListElem.innerHTML = "";
-    globalAttachmentsArray.forEach((item, index) => {
-        const linkElem = document.createElement('a');
-        linkElem.className = 'attachment-item';
-        linkElem.href = item.url || item.link || '#';
-        linkElem.target = '_blank';
-        linkElem.innerHTML = `<span>📄 ${item.name || item.title || 'Lecture Notes ' + (index + 1)}</span> <span>📥 Open</span>`;
-        attachmentsListElem.appendChild(linkElem);
-    });
-}
-
 window.addEventListener('load', () => {
-    setTimeout(initializePlayerEngine, 400);
+    setTimeout(initializePlayerEngine, 300);
 });
 
 function formatTimestamp(sec) {
