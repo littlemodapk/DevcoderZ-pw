@@ -132,22 +132,20 @@
       console.error('Shaka Player Runtime Error:', event.detail);
     });
 
-    // Networking engine me filter lagakar ensure kar rahe hain ki har segment request proxy ke through jaye
+    // Networking engine filter: Cloudfront ke kisi bhi request (manifest ya segments/init) ko automatic proxy se route karega
     const networkingEngine = player.getNetworkingEngine();
     if (networkingEngine) {
       networkingEngine.registerRequestFilter((type, request) => {
         let originalUrl = request.uris[0];
 
-        // Agar URL me pehle se hi hamara proxy laga hua hai toh dobara wrap mat karo
-        if (originalUrl.includes('/api/play?url=')) {
+        // Agar URL me pehle se proxy laga hai ya cloudfront ka nahi hai toh chhod do
+        if (originalUrl.includes('/api/play?url=') || !originalUrl.includes('d1d34p8vz63oiq.cloudfront.net')) {
           return;
         }
 
-        // Agar absolute URL hai aur Cloudfront ka part hai toh use proxy se route karo
-        if (originalUrl.startsWith('http://') || originalUrl.startsWith('https://')) {
-          request.uris[0] = `https://www.learnxpw.site/api/play?url=${encodeURIComponent(originalUrl)}`;
-          logToConsole(`Proxy Routed: ${originalUrl.split('?')[0]}`, 'info');
-        }
+        // Cloudfront ke har request ko proxy URL me wrap kar do
+        request.uris[0] = `https://www.learnxpw.site/api/play?url=${encodeURIComponent(originalUrl)}`;
+        logToConsole(`Proxied Request: ${originalUrl.split('/').pop().split('?')[0]}`, 'info');
       });
     }
 
@@ -172,9 +170,11 @@
 
       logToConsole('API Response received successfully.', 'info');
 
-      // Direct CDN mpd URL ko uthana hai, proxy me wrap nahi karna kyunki networking engine khud ba khud baki requests ko proxy karega
       const rawDashUrl = result.data.fullDash || result.data.dashUrl;
-      logToConsole(`Target Manifest URL: ${rawDashUrl.split('?')[0]}`, 'info');
+      
+      // Manifest URL ko shuru me hi proxy ke sath load karwayenge
+      const playUrl = `https://www.learnxpw.site/api/play?url=${encodeURIComponent(rawDashUrl)}`;
+      logToConsole(`Final Manifest URL: ${playUrl}`, 'info');
 
       if (result.kid && result.license) {
         let clearKeysObj = {};
@@ -197,7 +197,7 @@
       }
 
       logToConsole('Loading manifest into Shaka Player...', 'info');
-      await player.load(rawDashUrl);
+      await player.load(playUrl);
       logToConsole('Playback started successfully!', 'info');
 
     } catch (err) {
