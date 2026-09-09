@@ -132,19 +132,21 @@
       console.error('Shaka Player Runtime Error:', event.detail);
     });
 
+    // Networking engine me filter lagakar ensure kar rahe hain ki har segment request proxy ke through jaye
     const networkingEngine = player.getNetworkingEngine();
     if (networkingEngine) {
       networkingEngine.registerRequestFilter((type, request) => {
         let originalUrl = request.uris[0];
-        logToConsole(`Network Request Type ${type}: ${originalUrl}`, 'info');
 
+        // Agar URL me pehle se hi hamara proxy laga hua hai toh dobara wrap mat karo
         if (originalUrl.includes('/api/play?url=')) {
           return;
         }
 
+        // Agar absolute URL hai aur Cloudfront ka part hai toh use proxy se route karo
         if (originalUrl.startsWith('http://') || originalUrl.startsWith('https://')) {
           request.uris[0] = `https://www.learnxpw.site/api/play?url=${encodeURIComponent(originalUrl)}`;
-          logToConsole(`Rewritten via Proxy: ${request.uris[0]}`, 'warn');
+          logToConsole(`Proxy Routed: ${originalUrl.split('?')[0]}`, 'info');
         }
       });
     }
@@ -170,9 +172,9 @@
 
       logToConsole('API Response received successfully.', 'info');
 
+      // Direct CDN mpd URL ko uthana hai, proxy me wrap nahi karna kyunki networking engine khud ba khud baki requests ko proxy karega
       const rawDashUrl = result.data.fullDash || result.data.dashUrl;
-      const playUrl = `https://www.learnxpw.site/api/play?url=${encodeURIComponent(rawDashUrl)}`;
-      logToConsole(`Final Manifest URL: ${playUrl}`, 'info');
+      logToConsole(`Target Manifest URL: ${rawDashUrl.split('?')[0]}`, 'info');
 
       if (result.kid && result.license) {
         let clearKeysObj = {};
@@ -195,7 +197,7 @@
       }
 
       logToConsole('Loading manifest into Shaka Player...', 'info');
-      await player.load(playUrl);
+      await player.load(rawDashUrl);
       logToConsole('Playback started successfully!', 'info');
 
     } catch (err) {
