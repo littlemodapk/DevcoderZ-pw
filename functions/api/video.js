@@ -95,10 +95,42 @@ export async function onRequest(context) {
       });
     }
 
+    const fullDash = data.data.url;
+
+    let kid = null;
+    let licenseInfo = null;
+
+    try {
+      const mpdResponse = await fetch(fullDash);
+      let mpdText = await mpdResponse.text();
+
+      const kidMatch = mpdText.match(/(?:default_KID|cenc:default_KID)\s*=\s*"([^"]+)"/i);
+      if (kidMatch && kidMatch[1]) {
+        kid = kidMatch[1].replace(/-/g, '').toLowerCase();
+      }
+
+      if (kid) {
+        const otpResponse = await fetch(`https://www.learnxpw.site/api/get-otp?kid=${kid}`, {
+          headers: {
+            'Accept': 'application/json, text/plain, */*',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Referer': 'https://studyparcham.in/',
+            'Origin': 'https://studyparcham.in'
+          }
+        });
+        const otpText = await otpResponse.text();
+        try {
+          licenseInfo = JSON.parse(otpText);
+        } catch (err) {
+          licenseInfo = otpText;
+        }
+      }
+    } catch (err) {}
+
     const minimalResponse = {
       success: true,
-      url: data.data.url,
-      keys: {}
+      url: fullDash,
+      keys: licenseInfo?.clearKeys || licenseInfo || data.data.keys || data.data.clearkeys || {}
     };
 
     return new Response(JSON.stringify(minimalResponse), {
