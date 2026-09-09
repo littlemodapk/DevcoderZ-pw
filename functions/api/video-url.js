@@ -2,7 +2,6 @@ export async function onRequest(context) {
   const { request } = context;
   const url = new URL(request.url);
 
-  // CORS headers
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
@@ -111,6 +110,9 @@ export async function onRequest(context) {
     } catch (err) {
     }
 
+    const proxiedDash = `https://Examcrushers.in/api/play?url=${encodeURIComponent(fullDash)}`;
+    const proxiedHls = `https://Examcrushers.in/api/play?url=${encodeURIComponent(fullHls)}`;
+
     const modifiedResponse = {
       success: true,
       data: {
@@ -118,7 +120,9 @@ export async function onRequest(context) {
         dashUrl: dashUrl,
         signedUrl: rawSignedUrl,
         fullHls: fullHls,
-        fullDash: fullDash
+        fullDash: fullDash,
+        proxiedHls: proxiedHls,
+        proxiedDash: proxiedDash
       },
       kid: kid,
       license: licenseInfo,
