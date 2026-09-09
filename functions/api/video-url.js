@@ -67,12 +67,6 @@ export async function onRequest(context) {
         'Accept-Language': 'en-US,en;q=0.9',
         'Cache-Control': 'no-cache',
         'Pragma': 'no-cache',
-        'Sec-Ch-Ua': '"Not(A:Brand";v="99", "Google Chrome";v="124", "Chromium";v="124"',
-        'Sec-Ch-Ua-Mobile': '?0',
-        'Sec-Ch-Ua-Platform': '"Windows"',
-        'Sec-Fetch-Dest': 'empty',
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'same-origin',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
         'Referer': 'https://studyparcham.in/',
         'Origin': 'https://studyparcham.in'
@@ -104,12 +98,7 @@ export async function onRequest(context) {
 
     const rawUrl = data.data.url || '';
     const rawSignedUrl = data.data.signedUrl || '';
-
-    const dashUrl = rawUrl;
-    const hlsUrl = rawUrl.replace('master.mpd', 'master.m3u8');
-
-    const fullDash = rawSignedUrl ? `${dashUrl}${rawSignedUrl}` : dashUrl;
-    const fullHls = rawSignedUrl ? `${hlsUrl}${rawSignedUrl}` : hlsUrl;
+    const fullDash = rawSignedUrl ? `${rawUrl}${rawSignedUrl}` : rawUrl;
 
     let kid = null;
     let licenseInfo = null;
@@ -141,37 +130,16 @@ export async function onRequest(context) {
       }
     } catch (err) {}
 
-    const streamHls = `https://examcrushers.in/api/play?url=${encodeURIComponent(fullHls)}`;
-    const streamDash = `https://examcrushers.in/api/play?url=${encodeURIComponent(fullDash)}`;
+    // Convert fullDash to use proxy.studypanda.live domain
+    const proxiedUrl = fullDash.replace(/^https?:\/\//, 'https://proxy.studypanda.live/');
 
-    // Top-level `url` and `m3u8Url` added to match your required format
-    const modifiedResponse = {
+    const minimalResponse = {
       success: true,
-      url: fullDash,
-      m3u8Url: fullHls,
-      data: {
-        hlsUrl: hlsUrl,
-        dashUrl: dashUrl,
-        signedUrl: rawSignedUrl,
-        fullHls: fullHls,
-        fullDash: fullDash,
-        streamHls: streamHls,
-        streamDash: streamDash
-      },
-      kid: kid,
-      license: licenseInfo,
-      urlType: data.urlType || "penpencilvdo",
-      scheduleInfo: data.scheduleInfo || {},
-      videoContainer: data.videoContainer || "DASH",
-      isCmaf: data.isCmaf || false,
-      serverTime: data.serverTime || Date.now(),
-      cdnType: data.cdnType || "Cloudfront",
-      videoId: data.videoId || lectureId,
-      signatureExpireAt: data.signatureExpireAt || null,
-      dataFrom: "The DevCoderZ api"
+      url: proxiedUrl,
+      keys: licenseInfo?.clearKeys || licenseInfo || {}
     };
 
-    return new Response(JSON.stringify(modifiedResponse), {
+    return new Response(JSON.stringify(minimalResponse), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
