@@ -105,9 +105,9 @@ export async function onRequest(context) {
 
     try {
       const mpdResponse = await fetch(fullDash);
-      const mpdText = await mpdResponse.text();
+      let mpdText = await mpdResponse.text();
+      
       const kidMatch = mpdText.match(/(?:default_KID|cenc:default_KID)\s*=\s*"([^"]+)"/i);
-
       if (kidMatch && kidMatch[1]) {
         kid = kidMatch[1].replace(/-/g, '').toLowerCase();
       }
@@ -128,9 +128,11 @@ export async function onRequest(context) {
           licenseInfo = otpText;
         }
       }
+
+      // Agar client direct MPD fetch kare ya koi proxy route ho, toh hum optional handling rakh sakte hain.
+      // Par agar aap chaho ki player ko direct modified MPD text mile, toh aap isko stream bhi kar sakte ho.
     } catch (err) {}
 
-    // Convert fullDash to use proxy.studypanda.live domain
     const proxiedUrl = fullDash.replace(/^https?:\/\//, 'https://proxy.studypanda.live/');
 
     const minimalResponse = {
