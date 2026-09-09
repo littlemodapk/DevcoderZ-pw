@@ -10,10 +10,17 @@ export async function onRequest(context) {
   const targetUrl = "https://proxy.studyparcham.in/" + actualTargetUrl;
 
   try {
+    const incomingHeaders = context.request.headers;
+    const fetchHeaders = {
+      "User-Agent": incomingHeaders.get("user-agent") || "Mozilla/5.0",
+    };
+
+    if (incomingHeaders.has("range")) {
+      fetchHeaders["Range"] = incomingHeaders.get("range");
+    }
+
     const upstreamResponse = await fetch(targetUrl, {
-      headers: {
-        "User-Agent": context.request.headers.get("user-agent") || "Mozilla/5.0",
-      },
+      headers: fetchHeaders,
     });
 
     const responseHeaders = new Headers(upstreamResponse.headers);
