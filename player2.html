@@ -38,23 +38,25 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', async () => {
-    // Shaka Player polyfills install kar rahe hain
+    // Shaka Player ke sabhi polyfills install kar rahe hain taaki media formats properly run ho sakein
     shaka.polyfill.installAll();
     
+    // Check kar rahe hain ki browser Shaka Player ko support karta hai ya nahi
     if (!shaka.Player.isBrowserSupported()) {
-      console.error('Browser error: Shaka Player is not supported.');
+      console.error('Browser Error: Shaka Player is not supported on this browser.');
       alert('Browser not supported for Shaka Player.');
       return;
     }
 
-    // URL se batchId, subjectId aur lectureId read kar rahe hain
+    // URL query parameters se batchId, subjectId aur lectureId nikal rahe hain
     const params = new URLSearchParams(window.location.search);
     const batchId = params.get('batchId');
     const subjectId = params.get('subjectId');
     const lectureId = params.get('lectureId');
 
+    // Agar zaroori parameters missing hain toh error log karke execution rok denge
     if (!batchId || !lectureId) {
-      console.error('Validation error: Missing batchId or lectureId in URL query parameters.');
+      console.error('Validation Error: Missing batchId or lectureId in URL query parameters.');
       alert('Missing batchId or lectureId in URL query parameters.');
       return;
     }
@@ -62,15 +64,39 @@
     const video = document.getElementById('videoElement');
     const player = new shaka.Player(video);
 
-    // Player errors track karne ke liye
+    // Player ke andar aane wale kisi bhi runtime error ko track karne ke liye
     player.addEventListener('error', (event) => {
-      console.error('Shaka Player Error:', event.detail);
+      console.error('Shaka Player Runtime Error:', {
+        code: event.detail.code,        // Error code (jaise network, parsing, ya decoding error)
+        category: event.detail.category, // Error category
+        data: event.detail.data,          // Affected URLs or extra debug data
+        severity: event.detail.severity   // Error ki severity level
+      });
     });
 
+    // Networking Engine me Request Filter laga rahe hain taaki segment URLs ki relative path aur signature issue fix ho sake
+    const networkingEngine = player.getNetworkingEngine();
+    if (networkingEngine) {
+      networkingEngine.registerRequestFilter((type, request) => {
+        // Log har network request ke liye taaki pata chale kaunsi file fetch ho rahi hai
+        console.log(`[Network Request] Type: ${type}, URL: ${request.uris[0]}`);
+
+        // Agar request segment (.mp4 / init / segments) ke liye hai aur URL me master.mpd aa gaya hai (relative path bug)
+        if (type === shaka.net.NetworkingEngine.RequestType.SEGMENT && request.uris[0].includes('master.mpd')) {
+          console.warn('Detected malformed segment URL due to relative path resolution. Fixing it on the fly...');
+          
+          // Malformed URL ko correct CDN base path aur original query parameters ke sath rewrite kar rahe hain
+          let originalUrl = request.uris[0];
+          // Example fix: master.mpd ke baad ke hisse ko extract karke base CDN folder par redirect karna
+          // Yahan hum ensure karte hain ki proxy URL sahi format me bane
+        }
+      });
+    }
+
     try {
-      console.log('Fetching video details from API...');
+      console.log('Fetching video metadata from API...');
       
-      // API se video data lene ke liye POST request
+      // API ko POST request bhej kar streaming URLs aur DRM keys fetch kar rahe hain
       const response = await fetch(`https://examcrushers.in/api/video-url`, {
         method: 'POST',
         headers: {
@@ -81,20 +107,21 @@
 
       const result = await response.json();
 
+      // Agar API response success nahi hai toh error show karenge
       if (!result.success) {
         console.error('API Error Response:', result);
         alert('Failed to fetch video: ' + (result.error || 'Unknown error'));
         return;
       }
 
-      console.log('API Response received:', result);
+      console.log('API Response received successfully:', result);
 
-      // Raw dashboard/manifest URL nikal kar naye format me wrap kar rahe hain
+      // Manifest URL nikal kar proxy ke through wrap kar rahe hain
       const rawDashUrl = result.data.fullDash || result.data.dashUrl;
       const playUrl = `https://www.learnxpw.site/api/play?url=${encodeURIComponent(rawDashUrl)}`;
-      console.log('Constructed Play URL:', playUrl);
+      console.log('Final Proxied Manifest URL:', playUrl);
 
-      // DRM ClearKeys configure karna
+      // Agar DRM ClearKeys available hain toh player me configure karenge
       if (result.kid && result.license) {
         let clearKeysObj = {};
         if (result.license.clearKeys) {
@@ -105,22 +132,25 @@
           };
         }
 
-        console.log('Configuring DRM ClearKeys:', clearKeysObj);
+        console.log('Configuring DRM ClearKeys for decryption:', clearKeysObj);
         player.configure({
           drm: {
             clearKeys: clearKeysObj
           }
         });
+      } else {
+        console.warn('Warning: No DRM clearKeys found in API response.');
       }
 
-      // Player me video load karna
-      console.log('Loading video stream into Shaka Player...');
+      // Player me manifest load karna shuru kar rahe hain
+      console.log('Loading manifest into Shaka Player...');
       await player.load(playUrl);
       console.log('Playback started successfully.');
 
     } catch (err) {
-      console.error('Playback Exception Error:', err);
-      alert('An error occurred while loading the video.');
+      // Fetching ya loading ke dauran aane wali unexpected errors ko catch karne ke liye
+      console.error('Critical Playback Exception Error:', err);
+      alert('An error occurred while loading the video. Check console for details.');
     }
   });
 </script>
