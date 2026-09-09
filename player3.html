@@ -71,7 +71,7 @@
             const statusText = document.getElementById('statusText');
             const videoTitle = document.getElementById('videoTitle');
 
-            // 1. Get dynamic parameters from the current URL
+            // 1. Get dynamic parameters from URL
             const urlParams = new URLSearchParams(window.location.search);
             const batchId = urlParams.get('batchId');
             const subjectId = urlParams.get('subjectId');
@@ -100,6 +100,10 @@
                 const manifestUri = data.url;
                 const clearKeys = data.keys || {};
 
+                // Extract query parameters (Signature, Policy, Key-Pair-Id) from the main manifest URL
+                const mainUrlObj = new URL(manifestUri);
+                const searchParamsString = mainUrlObj.search; // Contains ?Signature=...&Key-Pair-Id=...&Policy=...
+
                 videoTitle.textContent = `Lecture ID: ${lectureId}`;
                 statusText.textContent = "Loading Shaka Player...";
 
@@ -119,6 +123,19 @@
                         }
                     });
                 }
+
+                // 4. CRITICAL FIX: Intercept every segment/init request and inject query parameters
+                player.getNetworkingEngine().registerRequestFilter((type, request) => {
+                    // Check if it's a segment or license request (excluding manifest itself if needed)
+                    if (searchParamsString && !request.uris[0].includes('Signature=')) {
+                        // Agar URL me pehle se query parameters nahi hain, toh main URL wale parameters laga do
+                        if (request.uris[0].includes('?')) {
+                            request.uris[0] += '&' + searchParamsString.substring(1);
+                        } else {
+                            request.uris[0] += searchParamsString;
+                        }
+                    }
+                });
 
                 // Listen for error events
                 player.addEventListener('error', (event) => {
