@@ -1,12 +1,20 @@
 export async function onRequest(context) {
   const requestUrl = new URL(context.request.url);
-  const rawQueryString = requestUrl.search;
+  const rawPath = requestUrl.pathname;
+  const rawSearch = requestUrl.search;
 
-  if (!rawQueryString || !rawQueryString.includes('url=')) {
-    return new Response("URL parameter is missing", { status: 400 });
+  const subPath = rawPath.replace(/^\/api/, '');
+  
+  const searchParams = new URLSearchParams(rawSearch);
+  const explicitUrl = searchParams.get('url');
+
+  let actualTargetUrl = "";
+  if (explicitUrl) {
+    actualTargetUrl = explicitUrl;
+  } else {
+    actualTargetUrl = "https://d1d34p8vz63oiq.cloudfront.net" + subPath + rawSearch;
   }
 
-  const actualTargetUrl = rawQueryString.substring(rawQueryString.indexOf('url=') + 4);
   const targetUrl = "https://proxy.studyparcham.in/" + actualTargetUrl;
 
   try {
