@@ -115,14 +115,19 @@
 
                 const player = new shaka.Player(video);
 
-                // 4. Configure DRM ClearKeys properly
-                if (Object.keys(rawKeys).length > 0) {
-                    player.configure({
-                        drm: {
-                            clearKeys: rawKeys
+                // 4. Configure DRM & ClearKeys to prevent license network requests
+                player.configure({
+                    drm: {
+                        clearKeys: rawKeys,
+                        servers: {},
+                        advanced: {
+                            'com.widevine.alpha': {
+                                videoRobustness: 'SW_SECURE_CRYPTO',
+                                audioRobustness: 'SW_SECURE_CRYPTO'
+                            }
                         }
-                    });
-                }
+                    }
+                });
 
                 // 5. Intercept segments to inject Signature & Policy automatically
                 player.getNetworkingEngine().registerRequestFilter((type, request) => {
