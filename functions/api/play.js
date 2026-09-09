@@ -1,13 +1,16 @@
 export async function onRequest(context) {
   const urlObj = new URL(context.request.url);
-  const userUrl = urlObj.searchParams.get("url");
+  const rawUserUrl = urlObj.searchParams.get("url");
 
-  if (!userUrl) {
+  if (!rawUserUrl) {
     return new Response("URL parameter is missing", { status: 400 });
   }
 
-  // Yahan user ke diye gaye URL ko proxy.studyparcham.in ke sath combine kar diya gaya hai
-  const targetUrl = "https://proxy.studyparcham.in/" + userUrl;
+  // Yahan URL ko fully decode kiya jata hai taaki sare special characters (&, =, ?) wapas theek ho jayein
+  const decodedUserUrl = decodeURIComponent(rawUserUrl);
+
+  // Ab proxy domain ke sath properly combine karenge
+  const targetUrl = "https://proxy.studyparcham.in/" + decodedUserUrl;
 
   try {
     const upstreamResponse = await fetch(targetUrl, {
@@ -24,6 +27,6 @@ export async function onRequest(context) {
       headers: responseHeaders,
     });
   } catch (err) {
-    return new Response("Proxy failed: " + err.message, { status: 500 });
+    return new Response("api failed: " + err.message, { status: 500 });
   }
 }
