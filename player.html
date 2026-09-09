@@ -331,7 +331,12 @@ async function initializePlayerEngine() {
     let resolvedStreamUrl = "";
     
     if (directStreamUrl) {
-        resolvedStreamUrl = decodeURIComponent(directStreamUrl);
+        let rawDecoded = decodeURIComponent(directStreamUrl);
+        if (rawDecoded.startsWith("https://proxy.studyparcham.in/")) {
+            resolvedStreamUrl = rawDecoded;
+        } else {
+            resolvedStreamUrl = "https://proxy.studyparcham.in/" + rawDecoded;
+        }
     } else if (bId && sId && lId) {
         try {
             updateStatusText('🔄 Fetching secure configurations...');
@@ -342,7 +347,15 @@ async function initializePlayerEngine() {
             const responsePayload = await networkResponse.json();
             
             if (responsePayload && responsePayload.success && responsePayload.data) {
-                resolvedStreamUrl = responsePayload.data.streamHls || responsePayload.data.fullHls || responsePayload.data.hlsUrl;
+                let hlsUrlTarget = responsePayload.data.streamHls || responsePayload.data.fullHls || responsePayload.data.hlsUrl;
+                if (hlsUrlTarget) {
+                    let unencodedTarget = decodeURIComponent(hlsUrlTarget);
+                    if (unencodedTarget.startsWith("https://proxy.studyparcham.in/")) {
+                        resolvedStreamUrl = unencodedTarget;
+                    } else {
+                        resolvedStreamUrl = "https://proxy.studyparcham.in/" + unencodedTarget;
+                    }
+                }
             }
         } catch (err) {
             updateStatusText('❌ Error connecting to stream service', 'error');
@@ -598,7 +611,7 @@ videoElem.onloadedmetadata = () => {
 
 videoElem.onplay = () => {
     if (playButton) playButton.classList.add("pause");
-    if (centerPlayEmoji = document.getElementById('centerPlay')) centerPlayElem.classList.add("hide");
+    if (centerPlayElem) centerPlayElem.classList.add("hide");
     handleControlVisibility();
 };
 
@@ -612,12 +625,6 @@ playerElem.onclick = e => {
     if (e.target === videoElem || e.target === playerElem) {
         sidebarElem.classList.remove('active');
         customSettingsMenu.classList.remove('active');
-        dropdownMenuElem.classList.remove('active');
-        if (controlsElem.classList.contains("hide")) {
-            handleControlVisibility();
-        } else {
-            controlsElem.classList.add("hide");
-        }
     }
 };
 </script>
