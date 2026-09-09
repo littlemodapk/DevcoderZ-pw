@@ -25,21 +25,21 @@ export async function onRequest(context) {
 
   if (request.method === 'GET') {
     const key = url.searchParams.get('key');
-    if (key !== 'Sharma') {
-      return new Response(JSON.stringify({ success: false, error: "Unauthorized GET request. Key 'Sharma' is required." }), {
+    if (key !== 'Sharma' && key !== 'devansh') {
+      return new Response(JSON.stringify({ success: false, error: "Unauthorized GET request. Key is required." }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
     batchId = url.searchParams.get('batchId');
     subjectId = url.searchParams.get('subjectId');
-    lectureId = url.searchParams.get('lectureId');
+    lectureId = url.searchParams.get('lectureId') || url.searchParams.get('scheduleId');
   } else if (request.method === 'POST') {
     try {
       const body = await request.json();
       batchId = body.batchId;
       subjectId = body.subjectId;
-      lectureId = body.lectureId;
+      lectureId = body.lectureId || body.scheduleId;
     } catch (e) {
       return new Response(JSON.stringify({ success: false, error: "Invalid JSON body." }), {
         status: 400,
@@ -118,7 +118,7 @@ export async function onRequest(context) {
       const mpdResponse = await fetch(fullDash);
       const mpdText = await mpdResponse.text();
       const kidMatch = mpdText.match(/(?:default_KID|cenc:default_KID)\s*=\s*"([^"]+)"/i);
-      
+
       if (kidMatch && kidMatch[1]) {
         kid = kidMatch[1].replace(/-/g, '').toLowerCase();
       }
@@ -139,14 +139,16 @@ export async function onRequest(context) {
           licenseInfo = otpText;
         }
       }
-    } catch (err) {
-    }
+    } catch (err) {}
 
-    const streamHls = `https://examcrushers.in/api/play?url=${fullHls}`;
+    const streamHls = `https://examcrushers.in/api/play?url=${encodeURIComponent(fullHls)}`;
     const streamDash = `https://examcrushers.in/api/play?url=${encodeURIComponent(fullDash)}`;
 
+    // Top-level `url` and `m3u8Url` added to match your required format
     const modifiedResponse = {
       success: true,
+      url: fullDash,
+      m3u8Url: fullHls,
       data: {
         hlsUrl: hlsUrl,
         dashUrl: dashUrl,
