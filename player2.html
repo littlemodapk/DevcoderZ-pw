@@ -199,9 +199,9 @@
       logToConsole('Playback started successfully!', 'info');
 
     } catch (err) {
-      logToConsole('Critical Exception: ' + err.message, 'error');
+      const errorMsg = err && err.code ? `Shaka Error Code: ${err.code} (Category: ${err.category})` : (err.message || JSON.stringify(err));
+      logToConsole('Critical Exception: ' + errorMsg, 'error');
       console.error('Critical Playback Exception Error:', err);
-      alert('An error occurred while loading the video. Check console for details.');
     }
   });
 </script>
