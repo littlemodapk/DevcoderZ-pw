@@ -110,8 +110,8 @@ export async function onRequest(context) {
     } catch (err) {
     }
 
-    const Dash-url = `https://Examcrushers.in/api/play?url=${encodeURIComponent(fullDash)}`;
-    const Hls-url = `https://Examcrushers.in/api/play?url=${encodeURIComponent(fullHls)}`;
+    const playingmpd = `https://Examcrushers.in/api/play?url=${encodeURIComponent(fullDash)}`;
+    const playingHls = `https://Examcrushers.in/api/play?url=${encodeURIComponent(fullHls)}`;
 
     const modifiedResponse = {
       success: true,
