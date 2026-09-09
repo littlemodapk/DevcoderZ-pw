@@ -325,7 +325,7 @@ const urlParamsExtractor = new URLSearchParams(location.search);
 const bId = urlParamsExtractor.get("batchId") || urlParamsExtractor.get("batch_id");
 const sId = urlParamsExtractor.get("subjectId") || urlParamsExtractor.get("subject_id");
 const lId = urlParamsExtractor.get("video_id") || urlParamsExtractor.get("videoId") || urlParamsExtractor.get("lectureId") || urlParamsExtractor.get("scheduleId");
-const directStreamUrl = urlParamsExtractor.get("m3u8Url") || urlParamsExtractor.get("Url");
+const directStreamUrl = urlParamsExtractor.get("m3u8Url") || urlParamsExtractor.get("Url") || urlParamsExtractor.get("url");
 
 async function initializePlayerEngine() {
     let resolvedStreamUrl = "";
@@ -335,36 +335,14 @@ async function initializePlayerEngine() {
     } else if (bId && sId && lId) {
         try {
             updateStatusText('🔄 Fetching secure configurations...');
-            const endpointRoute = 'https://devcoderz-backend.vercel.app/api/config';
+            const endpointRoute = `https://examcrushers.in/api/video-url?batchId=${bId}&subjectId=${sId}&lectureId=${lId}&key=Sharma`;
             
-            const networkResponse = await fetch(endpointRoute, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ batchId: bId, subjectId: sId, lectureId: lId })
-            });
-
+            const networkResponse = await fetch(endpointRoute);
             if (!networkResponse.ok) throw new Error(`Network failure code: ${networkResponse.status}`);
             const responsePayload = await networkResponse.json();
             
-            if (responsePayload) {
-                resolvedStreamUrl = responsePayload.m3u8Url || responsePayload.url || responsePayload.video_url;
-                
-                if (responsePayload.slides && responsePayload.slides.length > 0) {
-                    globalSlidesArray = responsePayload.slides;
-                    buildSlideItems();
-                } else {
-                    slideListElem.innerHTML = `<div class="no-data-text">No slides found for this lecture.</div>`;
-                }
-
-                if (responsePayload.notes && responsePayload.notes.length > 0) {
-                    globalAttachmentsArray = responsePayload.notes;
-                    buildAttachmentItems();
-                } else if (responsePayload.dpp_notes && responsePayload.dpp_notes.length > 0) {
-                    globalAttachmentsArray = responsePayload.dpp_notes;
-                    buildAttachmentItems();
-                } else {
-                    attachmentsListElem.innerHTML = `<div class="no-data-text">No attachments found.</div>`;
-                }
+            if (responsePayload && responsePayload.success && responsePayload.data) {
+                resolvedStreamUrl = responsePayload.data.streamHls || responsePayload.data.fullHls || responsePayload.data.hlsUrl;
             }
         } catch (err) {
             updateStatusText('❌ Error connecting to stream service', 'error');
@@ -462,42 +440,6 @@ document.addEventListener('click', (e) => {
         customSettingsMenu.classList.remove('active');
     }
 });
-
-function buildSlideItems() {
-    if (!slideListElem) return;
-    slideListElem.innerHTML = "";
-    globalSlidesArray.forEach((slide) => {
-        const card = document.createElement('div');
-        card.className = 'slide-item';
-        const timeStr = formatTimestamp(slide.timestamp);
-        card.innerHTML = `
-            <img src="${slide.image}" alt="Slide" onerror="this.src='https://via.placeholder.com/400x220?text=Preview+Not+Available'">
-            <div class="slide-footer-info">
-                <div class="slide-time-badge">🕒 ${timeStr}</div>
-            </div>
-        `;
-        card.onclick = (e) => {
-            e.stopPropagation();
-            videoElem.currentTime = slide.timestamp;
-            triggerSafePlayback();
-            sidebarElem.classList.remove('active');
-        };
-        slideListElem.appendChild(card);
-    });
-}
-
-function buildAttachmentItems() {
-    if (!attachmentsListElem) return;
-    attachmentsListElem.innerHTML = "";
-    globalAttachmentsArray.forEach((item, index) => {
-        const linkElem = document.createElement('a');
-        linkElem.className = 'attachment-item';
-        linkElem.href = item.url || item.link || '#';
-        linkElem.target = '_blank';
-        linkElem.innerHTML = `<span>📄 ${item.name || item.title || 'Lecture Notes ' + (index + 1)}</span> <span>📥 Open</span>`;
-        attachmentsListElem.appendChild(linkElem);
-    });
-}
 
 window.addEventListener('load', () => {
     setTimeout(initializePlayerEngine, 400);
@@ -656,7 +598,7 @@ videoElem.onloadedmetadata = () => {
 
 videoElem.onplay = () => {
     if (playButton) playButton.classList.add("pause");
-    if (centerPlayElem) centerPlayElem.classList.add("hide");
+    if (centerPlayEmoji = document.getElementById('centerPlay')) centerPlayElem.classList.add("hide");
     handleControlVisibility();
 };
 
