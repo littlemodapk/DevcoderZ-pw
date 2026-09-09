@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DevCoderz Ultra Secure Player - Encrypted Stream</title>
+<title>DevCoderz Ultra Secure Player - HLS Stream</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:sans-serif;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}html,body{width:100%;height:100%;background:#000;overflow:hidden;touch-action:none;display:flex;flex-direction:column}
 
@@ -120,7 +120,7 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
         </div>
      </div>
 
-     <!-- Using Shaka Player compatible video tag -->
+     <!-- Using HLS.js compatible video tag -->
      <video id="video" playsinline></video>
      
      <div class="top-brand">
@@ -194,8 +194,8 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
     </div>
 </div>
 
-<!-- Shaka Player CDN for Widevine/ClearKey DASH Streams -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.js"></script>
+<!-- HLS.js CDN for dynamic m3u8 playback -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.10/hls.min.js"></script>
 <script>
 const playerElem = document.getElementById('player');
 const videoElem = document.getElementById('video');
@@ -230,9 +230,7 @@ const downloadModal = document.getElementById('downloadModal');
 const closeDownloadModal = document.getElementById('closeDownloadModal');
 const downloadIframe = document.getElementById('downloadIframe');
 
-let isDragging = false, hideTimeoutRef, shakaPlayerInstance, wasVideoPlaying = false;
-let globalSlidesArray = [];
-let globalAttachmentsArray = [];
+let isDragging = false, hideTimeoutRef, hlsInstance, wasVideoPlaying = false;
 let activeStreamUrl = "";
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -335,27 +333,13 @@ window.addEventListener('click', () => {
 });
 
 const urlParamsExtractor = new URLSearchParams(location.search);
-const bId = urlParamsExtractor.get("batchId") || urlParamsExtractor.get("batch_id");
-const sId = urlParamsExtractor.get("subjectId") || urlParamsExtractor.get("subject_id");
-const lId = urlParamsExtractor.get("video_id") || urlParamsExtractor.get("videoId") || urlParamsExtractor.get("lectureId") || urlParamsExtractor.get("scheduleId");
-const directApiUrl = urlParamsExtractor.get("apiUrl") || urlParamsExtractor.get("api");
+const directApiUrl = urlParamsExtractor.get("apiUrl") || urlParamsExtractor.get("api") || urlParamsExtractor.get("url");
 
 async function initializePlayerEngine() {
-    let dashUrl = "";
-    let clearKeysObj = null;
-    
-    // Fallback static configuration matching the JSON payload you provided
-    const defaultData = {
-        "dashUrl": "https://d1d34p8vz63oiq.cloudfront.net/ab0bd9e0-6f92-4e64-8bd8-598b5466ba14/master.mpd",
-        "signedUrl": "?Signature=EDI5H5D9nvgTIr6vh-J1wTPW7QHwOB0T0HrUNxzgJymrUPOCBQc1EZinFJQfnne7Fm7Lp2w7L8W6CqnFXoPwrkbUKSZ5MN80p33WGUL2FzfAMqcSR4JGyLIG6wIiomNXz2FGs4lnnRxBTKJH6h5pRn4tBaT31MCPoul7c62jGdmhI-F2MqtbNQGpkJZYIC3l0fmmKf-LmJw32yptiFmLrA6wGAmnvz6KVGbtOM37ytBRjl7Rv3NosW7jugpHmzShVX0IfiHijzqh7Im6hNpkb8LvBI0DCc3lSsRHKKsxdaZTXT5d5MPVaL72XN75T7AUNMTZwSxkXy4lPG98oYklBg__&Key-Pair-Id=APKAXVKMENFCRKTG5XE2&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9kMWQzNHA4dno2M29pcS5jbG91ZGZyb250Lm5ldC9hYjBiZDllMC02ZjkyLTRlNjQtOGJkOC01OThiNTQ2NmJhMTQvKiIsIkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTc4ODk1NTYyOX0sIkRhdGVHcmVhdGVyVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxODI2MTE2ODV9fX1dfQ__",
-        "kid": "03f80062cf40355260e39b3a6dded2b5",
-        "clearKeys": {
-            "03f80062cf40355260e39b3a6dded2b5": "c58eb1419a363838bad4e7f7cba75a9d"
-        }
-    };
+    let hlsUrl = "";
 
     try {
-        updateStatusText('🔄 Fetching secure DRM stream configurations...');
+        updateStatusText('🔄 Fetching dynamic HLS stream configurations...');
         let targetApi = directApiUrl || 'https://examcrushers.in/api/video-url';
         
         const networkResponse = await fetch(targetApi, {
@@ -366,88 +350,89 @@ async function initializePlayerEngine() {
         if (networkResponse.ok) {
             const responsePayload = await networkResponse.json();
             if (responsePayload && responsePayload.success && responsePayload.data) {
-                dashUrl = responsePayload.data.dashUrl + (responsePayload.data.signedUrl || '');
-                if (responsePayload.license && responsePayload.license.clearKeys) {
-                    clearKeysObj = responsePayload.license.clearKeys;
+                // Dynamically extract hlsUrl and signedUrl from the API response
+                let rawHls = responsePayload.data.hlsUrl || responsePayload.data.fullHls || responsePayload.data.streamHls;
+                let signature = responsePayload.data.signedUrl || "";
+                
+                if (rawHls) {
+                    hlsUrl = rawHls.startsWith('http') ? rawHls : (rawHls + (rawHls.includes('?') ? '' : signature));
                 }
             }
         }
     } catch (err) {
-        console.warn('API Fetch failed, falling back to default built-in manifest config.');
-    }
-
-    // Fallback if network call fails or API is omitted
-    if (!dashUrl) {
-        dashUrl = defaultData.dashUrl + defaultData.signedUrl;
-        clearKeysObj = defaultData.clearKeys;
-    }
-
-    activeStreamUrl = dashUrl;
-    setupShakaPlayer(dashUrl, clearKeysObj);
-}
-
-async function setupShakaPlayer(manifestUrl, clearKeys) {
-    updateStatusText('🔄 Initializing Shaka DRM Engine...');
-    
-    // Install polyfills
-    shaka.polyfill.installAll();
-
-    if (!shaka.Player.isBrowserSupported()) {
-        updateStatusText('❌ Browser not supported for encrypted streams', 'error');
+        console.warn('API Fetch failed, check network or API parameters.');
+        updateStatusText('❌ Failed to fetch dynamic API response', 'error');
         return;
     }
 
-    shakaPlayerInstance = new shaka.Player(videoElem);
-
-    // Configure ClearKey DRM decryption keys
-    if (clearKeys) {
-        shakaPlayerInstance.configure({
-            drm: {
-                clearKeys: clearKeys
-            }
-        });
+    if (!hlsUrl) {
+        updateStatusText('❌ Invalid or empty hlsUrl received from API', 'error');
+        return;
     }
 
-    shakaPlayerInstance.addEventListener('error', (event) => {
-        console.error('Shaka Error code', event.detail);
-        updateStatusText('❌ DRM Stream Decryption Error', 'error');
-    });
+    activeStreamUrl = hlsUrl;
+    setupHlsPlayer(hlsUrl);
+}
 
-    try {
-        await shakaPlayerInstance.load(manifestUrl);
-        updateStatusText('✅ Secure Stream Ready!', 'success');
-        populateQualityLevels();
-    } catch (error) {
-        updateStatusText('❌ Failed to load encrypted manifest', 'error');
+function setupHlsPlayer(streamUrl) {
+    updateStatusText('🔄 Initializing HLS Engine...');
+
+    if (Hls.isSupported()) {
+        hlsInstance = new Hls();
+        hlsInstance.loadSource(streamUrl);
+        hlsInstance.attachMedia(videoElem);
+        
+        hlsInstance.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+            updateStatusText('✅ HLS Stream Ready!', 'success');
+            populateQualityLevels(data.levels);
+        });
+
+        hlsInstance.on(Hls.Events.ERROR, (event, data) => {
+            if (data.fatal) {
+                switch (data.type) {
+                    case Hls.ErrorTypes.NETWORK_ERROR:
+                        updateStatusText('❌ Network error while loading stream', 'error');
+                        hlsInstance.startLoad();
+                        break;
+                    case Hls.ErrorTypes.MEDIA_ERROR:
+                        updateStatusText('❌ Media error, trying to recover...', 'error');
+                        hlsInstance.recoverMediaError();
+                        break;
+                    default:
+                        updateStatusText('❌ Fatal HLS error encountered', 'error');
+                        hlsInstance.destroy();
+                        break;
+                }
+            }
+        });
+    } else if (videoElem.canPlayType('application/vnd.apple.mpegurl')) {
+        // Native Safari HLS support
+        videoElem.src = streamUrl;
+        videoElem.addEventListener('loadedmetadata', () => {
+            updateStatusText('✅ HLS Stream Ready!', 'success');
+        });
+    } else {
+        updateStatusText('❌ Browser does not support HLS playback', 'error');
     }
 }
 
-function populateQualityLevels() {
-    if (!shakaPlayerInstance) return;
-    const tracks = shakaPlayerInstance.getVariantTracks();
-    const videoTracks = tracks.filter(t => t.type === 'video');
-    
+function populateQualityLevels(levels) {
+    if (!levels || levels.length === 0) return;
     qualityOptionsGrid.innerHTML = `<div class="setting-chip active" data-quality="-1">Auto</div>`;
     
-    // Deduplicate tracks by height
-    const uniqueHeights = new Set();
-    videoTracks.forEach((track) => {
-        if (track.height && !uniqueHeights.has(track.height)) {
-            uniqueHeights.add(track.height);
-            let chip = document.createElement("div");
-            chip.className = "setting-chip";
-            chip.dataset.height = track.height;
-            chip.innerText = track.height + "p";
-            chip.onclick = (e) => {
-                e.stopPropagation();
-                shakaPlayerInstance.configure({ abr: { enabled: false } });
-                shakaPlayerInstance.selectVariantTrack(track, true);
-                document.querySelectorAll('#qualityOptionsGrid .setting-chip').forEach(c => c.classList.remove('active'));
-                chip.classList.add('active');
-                customSettingsMenu.classList.remove('active');
-            };
-            qualityOptionsGrid.appendChild(chip);
-        }
+    levels.forEach((lvl, index) => {
+        let chip = document.createElement("div");
+        chip.className = "setting-chip";
+        chip.dataset.quality = index;
+        chip.innerText = (lvl.height ? lvl.height + "p" : `Quality ${index + 1}`);
+        chip.onclick = (e) => {
+            e.stopPropagation();
+            hlsInstance.currentLevel = index;
+            document.querySelectorAll('#qualityOptionsGrid .setting-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            customSettingsMenu.classList.remove('active');
+        };
+        qualityOptionsGrid.appendChild(chip);
     });
 }
 
@@ -465,8 +450,8 @@ document.querySelectorAll('#speedOptionsGrid .setting-chip').forEach(chip => {
 document.addEventListener('click', (e) => {
     if (e.target && e.target.dataset.quality === "-1") {
         e.stopPropagation();
-        if (shakaPlayerInstance) {
-            shakaPlayerInstance.configure({ abr: { enabled: true } });
+        if (hlsInstance) {
+            hlsInstance.currentLevel = -1; // Auto
         }
         document.querySelectorAll('#qualityOptionsGrid .setting-chip').forEach(c => c.classList.remove('active'));
         e.target.classList.add('active');
