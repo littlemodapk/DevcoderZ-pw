@@ -115,21 +115,23 @@
 
                 const player = new shaka.Player(video);
 
-                // 4. Configure DRM & ClearKeys to prevent license network requests
+                // 4. Configure DRM & ClearKeys to fully bypass external license server requests (Fixes Error 6007)
                 player.configure({
                     drm: {
                         clearKeys: rawKeys,
                         servers: {},
                         advanced: {
                             'com.widevine.alpha': {
-                                videoRobustness: 'SW_SECURE_CRYPTO',
-                                audioRobustness: 'SW_SECURE_CRYPTO'
+                                clearKeys: rawKeys
+                            },
+                            'org.w3.clearkey': {
+                                clearKeys: rawKeys
                             }
                         }
                     }
                 });
 
-                // 5. Intercept segments to inject Signature & Policy automatically
+                // 5. Intercept segments to inject Signature, Policy & Key-Pair-Id automatically
                 player.getNetworkingEngine().registerRequestFilter((type, request) => {
                     if (searchParamsString && !request.uris[0].includes('Signature=')) {
                         if (request.uris[0].includes('?')) {
