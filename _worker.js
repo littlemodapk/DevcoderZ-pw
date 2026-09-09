@@ -7,7 +7,7 @@ export default {
     const corsHeaders = {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cookie',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cookie, X-Cookie',
     };
 
     if (request.method === 'OPTIONS') {
@@ -29,21 +29,21 @@ export default {
 
       if (request.method === 'GET') {
         const key = url.searchParams.get('key');
-        if (key !== 'Sharma') {
-          return new Response(JSON.stringify({ success: false, error: "Unauthorized GET request. Key 'Sharma' is required." }), {
+        if (key !== 'Sharma' && key !== 'devansh') {
+          return new Response(JSON.stringify({ success: false, error: "Unauthorized GET request. Key is required." }), {
             status: 403,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
         }
         batchId = url.searchParams.get('batchId');
         subjectId = url.searchParams.get('subjectId');
-        lectureId = url.searchParams.get('lectureId');
+        lectureId = url.searchParams.get('lectureId') || url.searchParams.get('scheduleId');
       } else if (request.method === 'POST') {
         try {
           const body = await request.json();
           batchId = body.batchId;
           subjectId = body.subjectId;
-          lectureId = body.lectureId;
+          lectureId = body.lectureId || body.scheduleId;
         } catch (e) {
           return new Response(JSON.stringify({ success: false, error: "Invalid JSON body." }), {
             status: 400,
@@ -55,7 +55,7 @@ export default {
       if (!batchId || !lectureId) {
         return new Response(JSON.stringify({ 
           success: false, 
-          error: "Missing 'batchId','subjectId' or 'lectureId' parameters." 
+          error: "Missing 'batchId', 'subjectId' or 'lectureId' parameters." 
         }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -139,12 +139,16 @@ export default {
           }
         } catch (err) {}
 
-        const streamHls = `(fullHls)}`;
+        const streamHls = `https://proxy.studyparcham.in/${fullHls}`;
         const streamDash = `https://examcrushers.in/api/play?url=${encodeURIComponent(fullDash)}`;
 
+        // Response format matching your requirement with top-level url and m3u8Url
         const modifiedResponse = {
           success: true,
+          url: fullDash,
+          m3u8Url: fullHls,
           data: {
+            ...data.data,
             hlsUrl: hlsUrl,
             dashUrl: dashUrl,
             signedUrl: rawSignedUrl,
@@ -179,8 +183,9 @@ export default {
       }
     }
 
-    // 2. Handle HLS Streams / Proxy Logic (Fixed: Handles both /api/hls/ direct paths and /api/play?url=...)
+    // 2. Handle HLS Streams / Proxy Logic
     const explicitUrl = url.searchParams.get('url');
+    const customCookie = url.searchParams.get('cookie');
 
     if (path.startsWith("/api/play") || path.startsWith("/api/hls/") || explicitUrl) {
       let actualTargetUrl = "";
@@ -192,13 +197,21 @@ export default {
         if (idx !== -1) {
           actualTargetUrl = rawSearch.substring(idx + 4);
         } else {
-          // Yeh ensure karega ki agar direct /api/hls/240/main.m3u8 hit ho toh wo cloudfront par map ho jaye
           const subPath = path.replace(/^\/api/, '');
           actualTargetUrl = "https://d1d34p8vz63oiq.cloudfront.net" + subPath + rawSearch;
         }
       }
 
-      const targetUrl = "https://proxy.studyparcham.in/" + actualTargetUrl;
+      let finalTargetUrl = actualTargetUrl;
+      let cookieValue = customCookie;
+      
+      if (actualTargetUrl.includes('&cookie=')) {
+        const parts = actualTargetUrl.split('&cookie=');
+        finalTargetUrl = parts[0];
+        cookieValue = decodeURIComponent(parts[1]);
+      }
+
+      const targetUrl = "https://proxy.studyparcham.in/" + finalTargetUrl;
 
       try {
         const incomingHeaders = request.headers;
@@ -208,6 +221,13 @@ export default {
 
         if (incomingHeaders.has("range")) {
           fetchHeaders["Range"] = incomingHeaders.get("range");
+        }
+
+        const customCookieHeader = incomingHeaders.get("x-cookie") || incomingHeaders.get("X-Cookie");
+        if (customCookieHeader) {
+          fetchHeaders["Cookie"] = customCookieHeader;
+        } else if (cookieValue) {
+          fetchHeaders["Cookie"] = cookieValue;
         }
 
         const upstreamResponse = await fetch(targetUrl, {
