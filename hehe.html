@@ -74,7 +74,7 @@
         }
         .console-body {
             padding: 12px 15px;
-            height: 140px;
+            height: 160px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
@@ -92,7 +92,7 @@
     <div class="player-wrapper">
         <div class="architectural-header">
             <span>ENGINE: DELTA STREAM PIPELINE [ACTIVE]</span>
-            <span>MODE: BUNNYCDN TOKEN PROPAGATION</span>
+            <span>MODE: CLEARKEYS DRM FIX</span>
         </div>
         <video id="quantumVideoElement" controls autoplay playsinline></video>
         <div class="telemetry-bar">
@@ -146,7 +146,7 @@
             const apiEndpoint = `https://examcrushers.in/api/video?batchId=${batchId}&subjectId=${subjectId || 'hehe'}&lectureId=${lectureId}&key=${key || 'Sharma'}`;
 
             try {
-                streamMetaText.textContent = "Fetching stream URL and keys from Worker...";
+                streamMetaText.textContent = "Fetching stream URL and keys...";
                 logDebug(`Requesting API: ${apiEndpoint}`, "info");
 
                 const response = await fetch(apiEndpoint);
@@ -157,11 +157,23 @@
                 }
 
                 const streamUrl = payload.url;
-                const clearKeysMap = payload.keys || {};
+                const rawKeys = payload.keys || {};
 
-                logDebug(`Stream URL received. Keys mapped: ${JSON.stringify(clearKeysMap)}`, "success");
+                logDebug(`Raw Keys received: ${JSON.stringify(rawKeys)}`, "info");
 
-                // Extract query parameters (Signature, Policy, Key-Pair-Id) to append to segments
+                // Clean and format keys for Shaka Player (lowercase, no hyphens)
+                const formattedKeys = {};
+                for (let [kid, secretKey] of Object.entries(rawKeys)) {
+                    if (kid && secretKey) {
+                        const cleanKid = kid.replace(/-/g, '').toLowerCase();
+                        const cleanKey = secretKey.replace(/-/g, '').toLowerCase();
+                        formattedKeys[cleanKid] = cleanKey;
+                    }
+                }
+
+                logDebug(`Formatted ClearKeys: ${JSON.stringify(formattedKeys)}`, "success");
+
+                // Extract query parameters for BunnyCDN segments token propagation
                 let edgeSignatureQuery = '';
                 try {
                     const parsedUrl = new URL(streamUrl);
@@ -176,20 +188,18 @@
 
                 const player = new shaka.Player(videoElement);
 
-                if (Object.keys(clearKeysMap).length > 0) {
+                if (Object.keys(formattedKeys).length > 0) {
                     player.configure({
                         drm: {
-                            clearKeys: clearKeysMap,
-                            servers: {},
-                            advanced: {
-                                'org.w3.clearkey': { clearKeys: clearKeysMap }
-                            }
+                            clearKeys: formattedKeys
                         }
                     });
-                    logDebug("Shaka DRM engine configured with ClearKeys.", "success");
+                    logDebug("Shaka DRM engine successfully configured with ClearKeys.", "success");
+                } else {
+                    logDebug("Warning: No clear keys found in payload.", "warn");
                 }
 
-                // Attach query tokens to all segment requests so BunnyCDN doesn't throw 403 Forbidden
+                // Attach tokens to all segment requests
                 player.getNetworkingEngine().registerRequestFilter((type, request) => {
                     if (edgeSignatureQuery && !request.uris[0].includes('Signature=')) {
                         if (request.uris[0].includes('?')) {
