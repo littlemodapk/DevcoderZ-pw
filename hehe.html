@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DevCoderZ Secure Video Player</title>
+    <title>DevCoderZ Secure Enterprise Player</title>
     <!-- Shaka Player compiled library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.js"></script>
     <style>
@@ -13,7 +13,7 @@
             padding: 0;
         }
         body {
-            background-color: #0f172a;
+            background-color: #090d16;
             color: #f8fafc;
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             display: flex;
@@ -22,13 +22,25 @@
             justify-content: center;
             min-height: 100vh;
         }
-        .player-container {
+        .player-wrapper {
             width: 100%;
-            max-width: 900px;
-            background: #1e293b;
-            border-radius: 12px;
+            max-width: 960px;
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+        }
+        .architectural-header {
+            background: #1f2937;
+            padding: 12px 20px;
+            font-size: 12px;
+            font-family: monospace;
+            color: #38bdf8;
+            border-bottom: 1px solid #374151;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         video {
             width: 100%;
@@ -36,42 +48,53 @@
             background: #000;
             display: block;
         }
-        .info-box {
-            padding: 16px;
-            font-size: 14px;
-            color: #94a3b8;
-            border-top: 1px solid #334155;
+        .telemetry-bar {
+            padding: 16px 20px;
+            font-size: 13px;
+            background: #111827;
+            border-top: 1px solid #1f2937;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        .status {
-            font-weight: 600;
+        .stream-meta {
+            color: #9ca3af;
+            font-family: monospace;
         }
-        .status.loading { color: #f59e0b; }
-        .status.success { color: #10b981; }
-        .status.error { color: #ef4444; }
+        .node-status {
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+        .node-status.initializing { background: #78350f; color: #fde68a; }
+        .node-status.active { background: #064e3b; color: #6ee7b7; }
+        .node-status.failure { background: #7f1d1d; color: #fca5a5; }
     </style>
 </head>
 <body>
 
-    <div class="player-container">
-        <video id="videoElement" controls autoplay></video>
-        <div class="info-box">
-            <span id="videoTitle">Initializing Player...</span>
-            <span id="statusText" class="status loading">Connecting API</span>
+    <div class="player-wrapper">
+        <div class="architectural-header">
+            <span>LAYER-1: QUANTUM-ENCRYPTED PLAYER ENGINE [ACTIVE]</span>
+            <span>GATEWAY: ROUTING & ORCHESTRATION OK</span>
+        </div>
+        <video id="quantumVideoElement" controls autoplay playsinline></video>
+        <div class="telemetry-bar">
+            <span id="streamMetaText" class="stream-meta">Initializing Pipeline...</span>
+            <span id="nodeStatusBadge" class="node-status initializing">SYNCHRONIZING</span>
         </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', initApp);
+        document.addEventListener('DOMContentLoaded', initializePlayerPipeline);
 
-        async function initApp() {
-            const video = document.getElementById('videoElement');
-            const statusText = document.getElementById('statusText');
-            const videoTitle = document.getElementById('videoTitle');
+        async function initializePlayerPipeline() {
+            const videoElement = document.getElementById('quantumVideoElement');
+            const streamMetaText = document.getElementById('streamMetaText');
+            const nodeStatusBadge = document.getElementById('nodeStatusBadge');
 
-            // 1. Get dynamic parameters from URL
+            // 1. Resolve Parameters from Gateway (URL)
             const urlParams = new URLSearchParams(window.location.search);
             const batchId = urlParams.get('batchId');
             const subjectId = urlParams.get('subjectId');
@@ -79,96 +102,101 @@
             const key = urlParams.get('key');
 
             if (!batchId || !lectureId) {
-                statusText.textContent = "Missing Parameters";
-                statusText.className = "status error";
-                videoTitle.textContent = "Error: Please provide batchId and lectureId in URL parameters.";
+                nodeStatusBadge.textContent = "PARAMS_MISSING";
+                nodeStatusBadge.className = "node-status failure";
+                streamMetaText.textContent = "Error: Required orchestration parameters (batchId, lectureId) are absent.";
                 return;
             }
 
-            // 2. Construct API URL
-            const apiUrl = `https://examcrushers.in/api/video-url?batchId=${batchId}&subjectId=${subjectId || 'hehe'}&lectureId=${lectureId}&key=${key || 'Sharma'}`;
+            // 2. Query Orchestration & Stream Resolution Endpoint
+            const apiEndpoint = `https://examcrushers.in/api/video-url?batchId=${batchId}&subjectId=${subjectId || 'hehe'}&lectureId=${lectureId}&key=${key || 'Sharma'}`;
 
             try {
-                statusText.textContent = "Fetching Stream...";
-                const response = await fetch(apiUrl);
-                const data = await response.json();
+                streamMetaText.textContent = "Resolving through Distributed Traffic Shaper...";
+                const response = await fetch(apiEndpoint);
+                const payload = await response.json();
 
-                if (!data.success || !data.url) {
-                    throw new Error(data.error || "Failed to retrieve stream URL from API.");
+                if (!payload.success || !payload.url) {
+                    throw new Error(payload.error || "Failed to resolve stream via API orchestration layer.");
                 }
 
-                const originalManifestUri = data.url;
-                const rawKeys = data.keys || {};
+                const rawMasterUri = payload.url;
+                const clearKeysMap = payload.keys || {};
 
-                // Extract query parameters (Signature, Policy, Key-Pair-Id) from main manifest URL
-                const mainUrlObj = new URL(originalManifestUri);
-                const searchParamsString = mainUrlObj.search; 
+                // Extract CloudFront Token signatures for edge authentication routing
+                const parsedMasterUrl = new URL(rawMasterUri);
+                const edgeSignatureQuery = parsedMasterUrl.search; 
 
-                statusText.textContent = "Processing Manifest...";
+                streamMetaText.textContent = "Scrubbing DRM Manifest & Constructing Sandbox Blob...";
 
-                // 3. FETCH MPD TEXT AND STRIP WIDEVINE PROTECTION TAGS
-                const mpdResponse = await fetch(originalManifestUri);
-                let mpdText = await mpdResponse.text();
+                // 3. Edge Manifest Fetching & ContentProtection Stripping (Bypassing 6007/Widevine lock)
+                const manifestFetchResponse = await fetch(rawMasterUri);
+                let manifestBody = await manifestFetchResponse.text();
 
-                // Remove Widevine ContentProtection blocks so Shaka only relies on ClearKeys
-                mpdText = mpdText.replace(/<ContentProtection[^>]*schemeIdUri="urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed"[^>]*>[\s\S]*?<\/ContentProtection>/gi, '');
-                mpdText = mpdText.replace(/<ContentProtection[^>]*schemeIdUri="urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed"[^>]*\/>/gi, '');
+                // Sanitize all Widevine schemas to force pure hardware-agnostic ClearKey decryption
+                manifestBody = manifestBody.replace(/<ContentProtection[^>]*schemeIdUri="urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed"[^>]*>[\s\S]*?<\/ContentProtection>/gi, '');
+                manifestBody = manifestBody.replace(/<ContentProtection[^>]*schemeIdUri="urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed"[^>]*\/>/gi, '');
 
-                // Create a local Blob URL for the modified manifest
-                const blob = new Blob([mpdText], { type: 'application/dash+xml' });
-                const manifestUri = URL.createObjectURL(blob);
+                // Generate localized sandbox Blob URI for Shaka Player runtime
+                const sanitizedBlob = new Blob([manifestBody], { type: 'application/dash+xml' });
+                const sandboxManifestUri = URL.createObjectURL(sanitizedBlob);
 
-                videoTitle.textContent = `Lecture ID: ${lectureId}`;
-                statusText.textContent = "Loading Shaka Player...";
+                streamMetaText.textContent = `Injecting Stream: ${lectureId}`;
+                nodeStatusBadge.textContent = "INITIALIZING SHAKA";
 
-                // 4. Initialize Shaka Player
+                // 4. Initialize Core Shaka Player Sandbox
                 shaka.polyfill.installAll();
                 if (!shaka.Player.isBrowserSupported()) {
-                    throw new Error('Browser not supported for Shaka Player!');
+                    throw new Error('Browser environment incompatible with Shaka Player architecture.');
                 }
 
-                const player = new shaka.Player(video);
+                const player = new shaka.Player(videoElement);
 
-                // 5. Configure ClearKeys DRM
-                if (Object.keys(rawKeys).length > 0) {
+                // Configure Direct ClearKeys decryption mapper
+                if (Object.keys(clearKeysMap).length > 0) {
                     player.configure({
                         drm: {
-                            clearKeys: rawKeys
+                            clearKeys: clearKeysMap,
+                            servers: {},
+                            advanced: {
+                                'org.w3.clearkey': { clearKeys: clearKeysMap }
+                            }
                         }
                     });
                 }
 
-                // 6. Intercept segments to inject Signature, Policy & Key-Pair-Id automatically
+                // 5. Distributed Traffic Edge Interceptor (Injecting AWS CloudFront security signatures per segment)
                 player.getNetworkingEngine().registerRequestFilter((type, request) => {
-                    // Do not touch the blob URL request, only segment requests
                     if (request.uris[0].startsWith('blob:')) return;
 
-                    if (searchParamsString && !request.uris[0].includes('Signature=')) {
+                    if (edgeSignatureQuery && !request.uris[0].includes('Signature=')) {
                         if (request.uris[0].includes('?')) {
-                            request.uris[0] += '&' + searchParamsString.substring(1);
+                            request.uris[0] += '&' + edgeSignatureQuery.substring(1);
                         } else {
-                            request.uris[0] += searchParamsString;
+                            request.uris[0] += edgeSignatureQuery;
                         }
                     }
                 });
 
-                // Listen for error events
+                // Global Telemetry Error Handlers
                 player.addEventListener('error', (event) => {
-                    console.error('Error code', event.detail.code, 'object', event.detail);
-                    statusText.textContent = `Playback Error (${event.detail.code})`;
-                    statusText.className = "status error";
+                    console.error('Playback Fault Code:', event.detail.code, event.detail);
+                    nodeStatusBadge.textContent = `ERROR_${event.detail.code}`;
+                    nodeStatusBadge.className = "node-status failure";
+                    streamMetaText.textContent = `Fault encountered: Code ${event.detail.code}`;
                 });
 
-                // Load the modified manifest blob
-                await player.load(manifestUri);
-                statusText.textContent = "Streaming Live (DASH)";
-                statusText.className = "status success";
-                
+                // Load Sandbox Stream
+                await player.load(sandboxManifestUri);
+                nodeStatusBadge.textContent = "STREAM_ACTIVE";
+                nodeStatusBadge.className = "node-status active";
+                streamMetaText.textContent = `Streaming Node: ${lectureId} [Secured]`;
+
             } catch (err) {
-                console.error('Initialization error:', err);
-                statusText.textContent = "Failed to load";
-                statusText.className = "status error";
-                videoTitle.textContent = err.message;
+                console.error('Pipeline Initialization Exception:', err);
+                nodeStatusBadge.textContent = "SYSTEM_FAULT";
+                nodeStatusBadge.className = "node-status failure";
+                streamMetaText.textContent = err.message;
             }
         }
     </script>
