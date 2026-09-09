@@ -143,7 +143,7 @@
                 return;
             }
 
-            const apiEndpoint = `https://examcrushers.in/api/video-url?batchId=${batchId}&subjectId=${subjectId || 'hehe'}&lectureId=${lectureId}&key=${key || 'Sharma'}`;
+            const apiEndpoint = `https://examcrushers.in/api/video?batchId=${batchId}&subjectId=${subjectId || 'hehe'}&lectureId=${lectureId}&key=${key || 'Sharma'}`;
 
             try {
                 streamMetaText.textContent = "Fetching stream URL and keys from Worker...";
