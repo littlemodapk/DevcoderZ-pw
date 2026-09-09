@@ -1,75 +1,67 @@
-export async function onRequest(context) {
-  const { request } = context;
-  const url = new URL(request.url);
+// api/play.js
 
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS, HEAD',
-    'Access-Control-Allow-Headers': 'Range, Content-Type, Authorization, Cookie',
-  };
+export default async function handler(req, res) {
+  const { url } = req.query;
 
-  if (request.method === 'OPTIONS') {
-    return new Response(null, { status: 200, headers: corsHeaders });
-  }
-
-  const targetUrl = url.searchParams.get('url');
-
-  if (!targetUrl) {
-    return new Response(JSON.stringify({ success: false, error: "Missing 'url' query parameter." }), {
-      status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+  if (!url) {
+    return res.status(400).send("Missing URL parameter");
   }
 
   try {
-    const decodedTargetUrl = decodeURIComponent(targetUrl);
-
-    const modifiedHeaders = new Headers();
-    modifiedHeaders.set('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36');
-    modifiedHeaders.set('Referer', 'https://studyparcham.in/');
-    modifiedHeaders.set('Origin', 'https://studyparcham.in');
-
-    const range = request.headers.get('Range');
-    if (range) {
-      modifiedHeaders.set('Range', range);
-    }
-
-    const apiResponse = await fetch(decodedTargetUrl, {
-      headers: modifiedHeaders,
-      redirect: 'follow'
-    });
-
-    const responseHeaders = new Headers(corsHeaders);
+    const targetUrl = decodeURIComponent(url);
     
-    const contentType = apiResponse.headers.get('Content-Type');
+    // Fetch the target m3u8 playlist or segment
+    const response = await fetch(targetUrl, {
+      headers: {
+        "User-Agent": req.headers["user-agent"] || "Mozilla/5.0",
+        "Referer": new URL(targetUrl).origin,
+      },
+    });
+
+    if (!response.ok) {
+      return res.status(response.status).send(`Failed to fetch upstream: ${response.statusText}`);
+    }
+
+    const contentType = response.headers.get("content-type");
     if (contentType) {
-      responseHeaders.set('Content-Type', contentType);
+      res.setHeader("Content-Type", contentType);
     }
 
-    const contentLength = apiResponse.headers.get('Content-Length');
-    if (contentLength) {
-      responseHeaders.set('Content-Length', contentLength);
+    // Allow CORS for your player domain
+    res.setHeader("Access-Control-Allow-Origin", "*");
+
+    const bodyText = await response.text();
+
+    // If it's an m3u8 playlist, rewrite relative/absolute segment URLs to route through this proxy
+    if (targetUrl.includes(".m3u8") || bodyText.includes("#EXTM3U")) {
+      const baseUrl = new URL(targetUrl);
+      
+      const rewrittenLines = bodyText.split("\n").map(line => {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith("#")) {
+          return line;
+        }
+
+        let absoluteSegmentUrl;
+        if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+          absoluteSegmentUrl = trimmed;
+        } else if (trimmed.startsWith("/")) {
+          absoluteSegmentUrl = `${baseUrl.origin}${trimmed}`;
+        } else {
+          const basePath = baseUrl.pathname.substring(0, baseUrl.pathname.lastIndexOf("/") + 1);
+          absoluteSegmentUrl = `${baseUrl.origin}${basePath}${trimmed}`;
+        }
+
+        return `/api/play?url=${encodeURIComponent(absoluteSegmentUrl)}`;
+      });
+
+      return res.status(200).send(rewrittenLines.join("\n"));
     }
 
-    const contentRange = apiResponse.headers.get('Content-Range');
-    if (contentRange) {
-      responseHeaders.set('Content-Range', contentRange);
-    }
+    // For ts/m4s segments or other binary assets, return the text/buffer directly
+    return res.status(200).send(bodyText);
 
-    const acceptRanges = apiResponse.headers.get('Accept-Ranges');
-    if (acceptRanges) {
-      responseHeaders.set('Accept-Ranges', acceptRanges);
-    }
-
-    return new Response(apiResponse.body, {
-      status: apiResponse.status,
-      headers: responseHeaders
-    });
-
-  } catch (err) {
-    return new Response(JSON.stringify({ success: false, error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+  } catch (error) {
+    return res.status(500).send(`Proxy Error: ${error.message}`);
   }
 }
