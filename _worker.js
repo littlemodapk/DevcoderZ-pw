@@ -14,7 +14,7 @@ export default {
       return new Response(null, { status: 200, headers: corsHeaders });
     }
 
-    // 1. Handle /api/video-url endpoint with your original logic
+    // 1. Handle /api/video-url endpoint
     if (path === '/api/video-url') {
       if (request.method !== 'GET' && request.method !== 'POST') {
         return new Response(JSON.stringify({ success: false, error: "Method not allowed." }), {
@@ -71,12 +71,6 @@ export default {
             'Accept-Language': 'en-US,en;q=0.9',
             'Cache-Control': 'no-cache',
             'Pragma': 'no-cache',
-            'Sec-Ch-Ua': '"Not(A:Brand";v="99", "Google Chrome";v="124", "Chromium";v="124"',
-            'Sec-Ch-Ua-Mobile': '?0',
-            'Sec-Ch-Ua-Platform': '"Windows"',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-origin',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
             'Referer': 'https://studyparcham.in/',
             'Origin': 'https://studyparcham.in'
@@ -145,7 +139,8 @@ export default {
           }
         } catch (err) {}
 
-        const streamHls = `https://examcrushers.in/api/play?url=${fullHls}`;
+        // FIXED: Raw HLS URL ko direct proxy ke aage concatenate karne ki jagah properly encode karenge
+        const streamHls = `https://examcrushers.in/api/play?url=${encodeURIComponent(fullHls)}`;
         const streamDash = `https://examcrushers.in/api/play?url=${encodeURIComponent(fullDash)}`;
 
         const modifiedResponse = {
@@ -185,17 +180,23 @@ export default {
       }
     }
 
-    // 2. Handle HLS Streams / Proxy Logic
+    // 2. Handle HLS Streams / Proxy Logic (Fixed: Raw string splitting instead of URLSearchParams for long tokens)
     const explicitUrl = url.searchParams.get('url');
 
-    if (path.startsWith("/api/hls/") || explicitUrl) {
+    if (path.startsWith("/api/play") || path.startsWith("/api/hls/") || explicitUrl) {
       let actualTargetUrl = "";
       
       if (explicitUrl) {
         actualTargetUrl = explicitUrl;
       } else {
-        const subPath = path.replace(/^\/api/, '');
-        actualTargetUrl = "https://d1d34p8vz63oiq.cloudfront.net" + subPath + rawSearch;
+        // Raw query string parsing taaki lambe tokens aur signature na tootey
+        const idx = rawSearch.indexOf('url=');
+        if (idx !== -1) {
+          actualTargetUrl = rawSearch.substring(idx + 4);
+        } else {
+          const subPath = path.replace(/^\/api/, '');
+          actualTargetUrl = "https://d1d34p8vz63oiq.cloudfront.net" + subPath + rawSearch;
+        }
       }
 
       const targetUrl = "https://proxy.studyparcham.in/" + actualTargetUrl;
