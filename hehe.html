@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DevCoderZ Secure Enterprise Player</title>
+    <title>DevCoderZ Secure Enterprise Player + Debug Console</title>
     <!-- Shaka Player compiled library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.js"></script>
     <style>
@@ -21,6 +21,7 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
+            padding: 20px;
         }
         .player-wrapper {
             width: 100%;
@@ -70,6 +71,44 @@
         .node-status.initializing { background: #78350f; color: #fde68a; }
         .node-status.active { background: #064e3b; color: #6ee7b7; }
         .node-status.failure { background: #7f1d1d; color: #fca5a5; }
+
+        /* Debug Console Styles */
+        .debug-console {
+            width: 100%;
+            max-width: 960px;
+            margin-top: 15px;
+            background: #030712;
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            overflow: hidden;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .console-header {
+            background: #111827;
+            padding: 8px 15px;
+            color: #9ca3af;
+            border-bottom: 1px solid #1f2937;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .console-body {
+            padding: 12px 15px;
+            height: 160px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .log-line {
+            line-height: 1.4;
+            word-break: break-all;
+        }
+        .log-info { color: #38bdf8; }
+        .log-success { color: #34d399; }
+        .log-warn { color: #fbbf24; }
+        .log-error { color: #f87171; }
     </style>
 </head>
 <body>
@@ -86,13 +125,46 @@
         </div>
     </div>
 
+    <!-- On-Screen Debug Console UI -->
+    <div class="debug-console">
+        <div class="console-header">
+            <span>LIVE TELEMETRY & DEBUG CONSOLE</span>
+            <button onclick="clearConsole()" style="background:transparent; border:none; color:#9ca3af; cursor:pointer; font-family:monospace;">Clear [X]</button>
+        </div>
+        <div id="consoleBody" class="console-body">
+            <div class="log-line log-info">[SYSTEM] Debug console mounted successfully. Waiting for pipeline execution...</div>
+        </div>
+    </div>
+
     <script>
+        // Custom Logger to push logs to both browser console and UI debug window
+        function logDebug(message, type = 'info') {
+            const consoleBody = document.getElementById('consoleBody');
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.createElement('div');
+            logElement.className = `log-line log-${type}`;
+            logElement.textContent = `[${timestamp}] ${message}`;
+            consoleBody.appendChild(logElement);
+            consoleBody.scrollTop = consoleBody.scrollHeight; // Auto-scroll to bottom
+
+            if (type === 'error') console.error(message);
+            else if (type === 'warn') console.warn(message);
+            else console.log(message);
+        }
+
+        function clearConsole() {
+            document.getElementById('consoleBody').innerHTML = '';
+            logDebug("Console cleared by user.", "info");
+        }
+
         document.addEventListener('DOMContentLoaded', initializePlayerPipeline);
 
         async function initializePlayerPipeline() {
             const videoElement = document.getElementById('quantumVideoElement');
             const streamMetaText = document.getElementById('streamMetaText');
             const nodeStatusBadge = document.getElementById('nodeStatusBadge');
+
+            logDebug("DOM fully loaded. Parsing gateway parameters...", "info");
 
             // 1. Resolve Parameters from Gateway (URL)
             const urlParams = new URLSearchParams(window.location.search);
@@ -104,15 +176,20 @@
             if (!batchId || !lectureId) {
                 nodeStatusBadge.textContent = "PARAMS_MISSING";
                 nodeStatusBadge.className = "node-status failure";
-                streamMetaText.textContent = "Error: Required orchestration parameters (batchId, lectureId) are absent.";
+                streamMetaText.textContent = "Error: Required orchestration parameters are absent.";
+                logDebug("Validation Failed: Missing batchId or lectureId parameters in URL.", "error");
                 return;
             }
+
+            logDebug(`Parameters verified -> batchId: ${batchId}, subjectId: ${subjectId || 'hehe'}, lectureId: ${lectureId}`, "success");
 
             // 2. Query Orchestration & Stream Resolution Endpoint
             const apiEndpoint = `https://examcrushers.in/api/video-url?batchId=${batchId}&subjectId=${subjectId || 'hehe'}&lectureId=${lectureId}&key=${key || 'Sharma'}`;
 
             try {
                 streamMetaText.textContent = "Resolving through Distributed Traffic Shaper...";
+                logDebug(`Sending request to API Gateway: ${apiEndpoint}`, "info");
+
                 const response = await fetch(apiEndpoint);
                 const payload = await response.json();
 
@@ -120,16 +197,21 @@
                     throw new Error(payload.error || "Failed to resolve stream via API orchestration layer.");
                 }
 
+                logDebug("API Response received successfully. Master manifest resolved.", "success");
+
                 const rawMasterUri = payload.url;
                 const clearKeysMap = payload.keys || {};
+
+                logDebug(`ClearKeys mapped: ${JSON.stringify(clearKeysMap)}`, "info");
 
                 // Extract CloudFront Token signatures for edge authentication routing
                 const parsedMasterUrl = new URL(rawMasterUri);
                 const edgeSignatureQuery = parsedMasterUrl.search; 
 
                 streamMetaText.textContent = "Scrubbing DRM Manifest & Constructing Sandbox Blob...";
+                logDebug("Fetching remote master.mpd for local neutralization...", "info");
 
-                // 3. Edge Manifest Fetching & ContentProtection Stripping (Bypassing 6007/Widevine lock)
+                // 3. Edge Manifest Fetching & ContentProtection Stripping
                 const manifestFetchResponse = await fetch(rawMasterUri);
                 let manifestBody = await manifestFetchResponse.text();
 
@@ -137,9 +219,13 @@
                 manifestBody = manifestBody.replace(/<ContentProtection[^>]*schemeIdUri="urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed"[^>]*>[\s\S]*?<\/ContentProtection>/gi, '');
                 manifestBody = manifestBody.replace(/<ContentProtection[^>]*schemeIdUri="urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed"[^>]*\/>/gi, '');
 
+                logDebug("Widevine ContentProtection elements stripped from manifest body.", "success");
+
                 // Generate localized sandbox Blob URI for Shaka Player runtime
                 const sanitizedBlob = new Blob([manifestBody], { type: 'application/dash+xml' });
                 const sandboxManifestUri = URL.createObjectURL(sanitizedBlob);
+
+                logDebug(`Sandbox Blob manifest generated: ${sandboxManifestUri.slice(0, 30)}...`, "info");
 
                 streamMetaText.textContent = `Injecting Stream: ${lectureId}`;
                 nodeStatusBadge.textContent = "INITIALIZING SHAKA";
@@ -163,9 +249,10 @@
                             }
                         }
                     });
+                    logDebug("Shaka DRM engine configured with custom ClearKeys.", "success");
                 }
 
-                // 5. Distributed Traffic Edge Interceptor (Injecting AWS CloudFront security signatures per segment)
+                // 5. Distributed Traffic Edge Interceptor
                 player.getNetworkingEngine().registerRequestFilter((type, request) => {
                     if (request.uris[0].startsWith('blob:')) return;
 
@@ -175,25 +262,32 @@
                         } else {
                             request.uris[0] += edgeSignatureQuery;
                         }
+                        // Log a sample segment injection to avoid flooding console
+                        if (Math.random() < 0.1) {
+                            logDebug(`Edge Interceptor appended signature to segment request.`, "info");
+                        }
                     }
                 });
 
                 // Global Telemetry Error Handlers
                 player.addEventListener('error', (event) => {
-                    console.error('Playback Fault Code:', event.detail.code, event.detail);
+                    logDebug(`Playback Fault Code [${event.detail.code}]: ${JSON.stringify(event.detail)}`, "error");
                     nodeStatusBadge.textContent = `ERROR_${event.detail.code}`;
                     nodeStatusBadge.className = "node-status failure";
                     streamMetaText.textContent = `Fault encountered: Code ${event.detail.code}`;
                 });
+
+                logDebug("Initiating Shaka player payload load...", "info");
 
                 // Load Sandbox Stream
                 await player.load(sandboxManifestUri);
                 nodeStatusBadge.textContent = "STREAM_ACTIVE";
                 nodeStatusBadge.className = "node-status active";
                 streamMetaText.textContent = `Streaming Node: ${lectureId} [Secured]`;
+                logDebug("Stream successfully loaded and executing playback pipeline!", "success");
 
             } catch (err) {
-                console.error('Pipeline Initialization Exception:', err);
+                logDebug(`Pipeline Initialization Exception: ${err.message}`, "error");
                 nodeStatusBadge.textContent = "SYSTEM_FAULT";
                 nodeStatusBadge.className = "node-status failure";
                 streamMetaText.textContent = err.message;
