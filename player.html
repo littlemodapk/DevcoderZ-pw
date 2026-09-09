@@ -5,43 +5,92 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>DevCoderz Ultra Secure Player</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:sans-serif;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}html,body{width:100%;height:100%;background:#000;overflow:hidden;touch-action:none}
+*{margin:0;padding:0;box-sizing:border-box;font-family:sans-serif;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}html,body{width:100%;height:100%;background:#000;overflow:hidden;touch-action:none;display:flex;flex-direction:column}
+
 .app-container{position:relative;width:100%;height:100%;background:#000;overflow:hidden}
-.player{position:relative;width:100%;height:100%;background:#000}
+
+.player{position:relative;width:100%;height:100%;background:#000;pointer-events:auto}
+
 video{width:100%;height:100%;object-fit:contain;background:#000}
 .top-brand{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:40;text-align:center;pointer-events:none}.top-brand .jsr{color:#ff9800;font-weight:700;font-size:13px}.top-brand .dev{margin-top:2px;font-size:11px;font-weight:600;color:#00e5ff;text-shadow:0 0 6px #00e5ff}
-.center-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:30;cursor:pointer}.center-play.hide{display:none}.center-play span{width:70px;height:70px;background:rgba(0,0,0,.6);border:2px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;box-shadow:0 0 15px rgba(0,0,0,.5)}
-.controls{position:absolute;bottom:0;width:100%;padding:15px;background:linear-gradient(transparent,rgba(0,0,0,.85));transition:.3s;z-index:35}.controls.hide{transform:translateY(100%);opacity:0}
-.progress{height:6px;background:rgba(255,255,255,.3);border-radius:3px;position:relative;margin-bottom:8px;cursor:pointer}.progress-fill{height:100%;width:0;background:#ff9800;border-radius:3px;pointer-events:none}.thumb{position:absolute;top:50%;width:14px;height:14px;background:#fff;border-radius:50%;transform:translate(-50%,-50%);left:0;pointer-events:none}
-.time{color:#fff;font-size:11px;margin-bottom:8px}
-.row{display:flex;align-items:center;gap:12px;justify-content:space-between;color:#fff}
-.btn{background:none;border:none;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-#play{font-size:22px}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;z-index:100}
+
+.center-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:30;cursor:pointer}.center-play.hide{display:none}.center-play span{width:75px;height:75px;background:rgba(255,255,255,.25);backdrop-filter:blur(5px);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;color:#fff}
+
+.controls{position:absolute;bottom:0;width:100%;padding:10px 15px 15px 15px;background:linear-gradient(transparent,rgba(0,0,0,.9));transition:transform .3s ease, opacity .3s ease;z-index:35;touch-action:none}.controls.hide{transform:translateY(100%);opacity:0;pointer-events:none}
+.progress{height:6px;background:rgba(255,255,255,0.3);border-radius:10px;position:relative;margin-bottom:8px;touch-action:none;cursor:pointer}.progress-fill{height:100%;width:0;background:#2196f3;border-radius:10px;pointer-events:none}.thumb{position:absolute;top:50%;width:14px;height:14px;background:#fff;border-radius:50%;transform:translate(-50%,-50%);left:0;pointer-events:none;box-shadow:0 0 4px rgba(0,0,0,0.5)}
+.time{color:#fff;font-size:11px;text-align:right;margin-bottom:6px;font-variant-numeric:tabular-nums}
+.row{display:flex;align-items:center;gap:8px;justify-content:space-between;color:#fff}
+.btn{width:36px;height:36px;border:1.5px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 0.2s, border-color 0.2s}
+.btn:active{background:rgba(255,255,255,0.3);border-color:#fff}
+#play{font-size:0}#play::before{content:"▶";font-size:13px;margin-left:2px}#play.pause::before{content:"❚❚";font-size:11px;margin-left:0}
+
+.custom-settings-menu {
+    position: absolute;
+    bottom: 75px;
+    right: 15px;
+    background: rgba(17,17,17,0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    width: 240px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 12px;
+    display: none;
+    z-index: 60;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+}
+.custom-settings-menu.active { display: block; }
+.settings-section-title { color: #888; font-size: 11px; font-weight: bold; margin-bottom: 6px; text-transform: uppercase; }
+.settings-options-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.setting-chip { background: #222; color: #fff; border: 1px solid #444; padding: 5px 8px; font-size: 11px; border-radius: 6px; cursor: pointer; text-align: center; flex: 1 1 22%; min-width: 45px; transition: background 0.2s; }
+.setting-chip.active { background: #2196f3; border-color: #2196f3; font-weight: bold; }
+.setting-chip:hover { background: #333; }
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:100}
 .box{width:320px;padding:26px;border-radius:22px;text-align:center;background:linear-gradient(135deg,#1e3c72,#2a5298);color:#fff}
 .tg-btn{display:block;margin-top:14px;padding:14px;border-radius:28px;font-weight:700;width:100%;cursor:pointer;text-align:center;text-decoration:none;color:#fff}
 .join{background:#fff;color:#1e3c72}.continue{background:rgba(0,0,0,.25);border:1px solid #fff}
-#status{position:absolute;top:15px;left:15px;color:#4fc3f7;background:rgba(0,0,0,.6);padding:4px 10px;border-radius:4px;font-size:11px;z-index:50;display:none}
-.menu-container{position:absolute;top:15px;right:15px;z-index:60}
-.dot-btn{background:rgba(0,0,0,.6);border:none;color:#fff;font-size:20px;width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.dropdown-menu{display:none;position:absolute;right:0;top:40px;background:#1c1c1c;border:1px solid #333;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.8);width:160px;overflow:hidden}
+
+#status{position:absolute;bottom:15px;left:15px;color:#4fc3f7;background:rgba(0,0,0,.8);padding:6px 12px;border-radius:6px;font-size:12px;z-index:50;pointer-events:none;transition:opacity 0.3s}
+
+.menu-container{position:absolute;top:15px;right:20px;z-index:60}
+.dot-btn{background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:20px;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.dropdown-menu{display:none;position:absolute;right:0;top:45px;background:rgba(28,28,28,0.95);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.1);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.8);width:180px;overflow:hidden}
 .dropdown-menu.active{display:block}
-.dropdown-item{padding:12px 16px;font-size:13px;color:#fff;cursor:pointer;border-bottom:1px solid #2a2a2a}
-.dropdown-item:hover{background:#333}
-#sidebar{position:fixed;top:0;right:-100%;width:100%;height:100%;background:#111;transition:right .3s ease;z-index:200;display:flex;flex-direction:column}
+.dropdown-item{padding:12px 16px;font-size:13px;color:#fff;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.05);transition:background 0.2s}
+.dropdown-item:hover{background:rgba(255,255,255,0.1)}
+
+#sidebar{position:fixed;top:0;right:-100%;width:100%;height:100%;background:rgba(12,12,12,.98);backdrop-filter:blur(8px);transition:right .3s cubic-bezier(0.4, 0, 0.2, 1);z-index:200;display:flex;flex-direction:column;border-left:1px solid #333}
 #sidebar.active{right:0}
-@media(min-width:600px){#sidebar{width:400px;right:-400px;}}
-.sidebar-header{padding:15px;background:#1a1a1a;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #333;color:#fff;font-weight:bold}
-.close-sidebar{background:none;border:none;color:#aaa;font-size:20px;cursor:pointer}
+@media(min-width:600px){#sidebar{width:420px;right:-420px;}}
+.sidebar-header{padding:15px;background:#1a1a1a;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #333;color:#fff;font-weight:bold;font-size:16px}
+.close-sidebar{background:none;border:none;color:#aaa;font-size:22px;cursor:pointer}
+
 .sidebar-tabs{display:flex;background:#181818;border-bottom:1px solid #333}
-.tab-btn{flex:1;padding:12px;text-align:center;color:#aaa;font-size:13px;font-weight:bold;cursor:pointer;border-bottom:2px solid transparent}
+.tab-btn{flex:1;padding:12px;text-align:center;color:#aaa;font-size:13px;font-weight:bold;cursor:pointer;border-bottom:2px solid transparent;transition:color 0.2s, background 0.2s}
 .tab-btn.active{color:#4fc3f7;border-bottom-color:#4fc3f7;background:#222}
-.tab-content{flex:1;overflow-y:auto;padding:15px;display:none;flex-direction:column;gap:10px}
+
+.tab-content{flex:1;overflow-y:auto;padding:15px;display:none;flex-direction:column;gap:12px}
 .tab-content.active{display:flex}
-.slide-item{background:#181818;border-radius:8px;overflow:hidden;border:1px solid #333;cursor:pointer}
-.slide-item img{width:100%;display:block}
-.attachment-item{background:#181818;padding:12px;border-radius:8px;border:1px solid #333;color:#fff;display:flex;justify-content:space-between;align-items:center;text-decoration:none}
-.no-data-text{color:#888;text-align:center;padding:20px;font-size:13px}
+
+.slide-item{background:#161616;border-radius:10px;overflow:hidden;border:1px solid #333;cursor:pointer;transition:border-color .2s;padding:10px;display:flex;flex-direction:column;align-items:center}
+.slide-item:hover{border-color:#00e5ff}
+.slide-item img{width:100%;max-height:220px;object-fit:contain;background:#000;border-radius:8px;display:block}
+.slide-footer-info{width:100%;display:flex;justify-content:flex-end;align-items:center;margin-top:8px;padding-right:4px}
+.slide-time-badge{background:rgba(0,229,255,0.15);color:#00e5ff;font-size:12px;font-weight:600;padding:4px 10px;border-radius:6px;border:1px solid rgba(0,229,255,0.3)}
+
+.attachment-item{background:#161616;padding:14px;border-radius:10px;border:1px solid #333;color:#fff;display:flex;justify-content:space-between;align-items:center;text-decoration:none;cursor:pointer;transition:border-color 0.2s, background 0.2s}
+.attachment-item:hover{border-color:#4fc3f7;background:#1c1c1c}
+
+.no-data-text{color:#888;text-align:center;padding:30px;font-size:13px}
+
+#downloadModal{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:300;display:none;flex-direction:column}
+#downloadModal.active{display:flex}
+.modal-header{padding:12px 15px;background:#1a1a1a;display:flex;justify-content:space-between;align-items:center;color:#fff;border-bottom:1px solid #333}
+.modal-close{background:none;border:none;color:#fff;font-size:22px;cursor:pointer}
+.modal-body{flex:1;width:100%;height:100%}
+.modal-body iframe{width:100%;height:100%;border:none;background:#000}
 </style>
 </head>
 <body>
@@ -54,14 +103,15 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
  </div>
 </div>
 
-<div class="app-container">
+<div class="app-container" id="appContainer">
     <div class="player" id="player">
      <div id="status">🔄 Initializing...</div>
 
      <div class="menu-container">
         <button class="dot-btn" id="dotMenuBtn">⋮</button>
         <div class="dropdown-menu" id="dropdownMenu">
-            <div class="dropdown-item" id="openSidebarMenuBtn">Lecture Notes/Slides</div>
+            <div class="dropdown-item" id="openSidebarMenuBtn">🖼️ Lecture Slides & Notes</div>
+            <div class="dropdown-item" id="downloadItem">📥 Download Lecture</div>
         </div>
      </div>
 
@@ -76,15 +126,37 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
      
      <div class="controls hide" id="controls">
       <div class="progress" id="progress"><div class="progress-fill" id="bar"></div><div class="thumb" id="thumb"></div></div>
-      <div class="time" id="time">00:00 / 00:00</div>
+      <div class="time" id="time">00:00:00 / 00:00:00</div>
       <div class="row">
-       <div style="display:flex;gap:15px;align-items:center;">
-        <button class="btn" id="play">▶</button>
-        <button class="btn" id="back">⟲ 10s</button>
-        <button class="btn" id="fwd">10s ⟳</button>
-       </div>
-       <button class="btn" id="fs">⛶</button>
+       <div class="btn" id="back">⟲10</div>
+       <div class="btn" id="play"></div>
+       <div class="btn" id="fwd">10⟳</div>
+       <div class="btn" id="downloadBtnCtrl">📥</div>
+       <div class="btn" id="settingsBtn">⚙️</div>
+       <div class="btn" id="fs">⛶</div>
       </div>
+     </div>
+     
+     <div class="custom-settings-menu" id="customSettingsMenu">
+         <div class="settings-section-title">Playback Speed</div>
+         <div class="settings-options-grid" id="speedOptionsGrid">
+             <div class="setting-chip" data-speed="0.25">0.25x</div>
+             <div class="setting-chip" data-speed="0.5">0.5x</div>
+             <div class="setting-chip" data-speed="0.75">0.75x</div>
+             <div class="setting-chip" data-speed="1" style="background:#2196f3;font-weight:bold;">1x</div>
+             <div class="setting-chip" data-speed="1.25">1.25x</div>
+             <div class="setting-chip" data-speed="1.5">1.5x</div>
+             <div class="setting-chip" data-speed="1.75">1.75x</div>
+             <div class="setting-chip" data-speed="2">2x</div>
+             <div class="setting-chip" data-speed="2.25">2.25x</div>
+             <div class="setting-chip" data-speed="2.5">2.5x</div>
+             <div class="setting-chip" data-speed="2.75">2.75x</div>
+             <div class="setting-chip" data-speed="3">3x</div>
+         </div>
+         <div class="settings-section-title">Video Quality</div>
+         <div class="settings-options-grid" id="qualityOptionsGrid">
+             <div class="setting-chip active" data-quality="-1">Auto</div>
+         </div>
      </div>
     </div>
 </div>
@@ -95,14 +167,24 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
         <button class="close-sidebar" id="closeSidebarBtn">✕</button>
     </div>
     <div class="sidebar-tabs">
-        <div class="tab-btn active" data-target="slidesTabContent">Slides</div>
-        <div class="tab-btn" data-target="attachmentsTabContent">Attachments</div>
+        <div class="tab-btn active" data-target="slidesTabContent">Timeline Slides</div>
+        <div class="tab-btn" data-target="attachmentsTabContent">Notes / Files</div>
     </div>
     <div class="tab-content active" id="slidesTabContent">
         <div id="slideList"><div class="no-data-text">Loading slides...</div></div>
     </div>
     <div class="tab-content" id="attachmentsTabContent">
         <div id="attachmentsList"><div class="no-data-text">No attachments available.</div></div>
+    </div>
+</div>
+
+<div id="downloadModal">
+    <div class="modal-header">
+        <span>Download Lecture</span>
+        <button class="modal-close" id="closeDownloadModal">✕</button>
+    </div>
+    <div class="modal-body">
+        <iframe id="downloadIframe" src=""></iframe>
     </div>
 </div>
 
@@ -126,12 +208,25 @@ const statusElem = document.getElementById('status');
 const dotMenuBtn = document.getElementById('dotMenuBtn');
 const dropdownMenuElem = document.getElementById('dropdownMenu');
 const openSidebarMenuBtn = document.getElementById('openSidebarMenuBtn');
+const downloadItem = document.getElementById('downloadItem');
 const sidebarElem = document.getElementById('sidebar');
 const closeSidebarBtn = document.getElementById('closeSidebarBtn');
 const slideListElem = document.getElementById('slideList');
 const attachmentsListElem = document.getElementById('attachmentsList');
 
+const settingsBtnElem = document.getElementById('settingsBtn');
+const downloadBtnCtrl = document.getElementById('downloadBtnCtrl');
+const customSettingsMenu = document.getElementById('customSettingsMenu');
+const speedOptionsGrid = document.getElementById('speedOptionsGrid');
+const qualityOptionsGrid = document.getElementById('qualityOptionsGrid');
+const downloadModal = document.getElementById('downloadModal');
+const closeDownloadModal = document.getElementById('closeDownloadModal');
+const downloadIframe = document.getElementById('downloadIframe');
+
 let isDragging = false, hideTimeoutRef, hlsInstance, wasVideoPlaying = false;
+let globalSlidesArray = [];
+let globalAttachmentsArray = [];
+let activeStreamUrl = "";
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.onclick = (e) => {
@@ -156,17 +251,24 @@ if (continueBtn) {
     };
 }
 
-function updateStatusText(msg) {
+function updateStatusText(msg, type = 'info') {
     if (!statusElem) return;
     statusElem.innerText = msg;
     statusElem.style.display = "block";
-    setTimeout(() => { statusElem.style.display = 'none'; }, 3000);
+    statusElem.style.opacity = "1";
+    if (type === 'success') {
+        setTimeout(() => { 
+            statusElem.style.opacity = '0';
+            setTimeout(() => { statusElem.style.display = 'none'; }, 300);
+        }, 2500);
+    }
 }
 
 if (dotMenuBtn) {
     dotMenuBtn.onclick = (e) => {
         e.stopPropagation();
         dropdownMenuElem.classList.toggle('active');
+        customSettingsMenu.classList.remove('active');
     };
 }
 
@@ -185,47 +287,132 @@ if (closeSidebarBtn) {
     };
 }
 
+function triggerDownloadModal() {
+    if (!activeStreamUrl) {
+        alert('Stream URL not loaded yet!');
+        return;
+    }
+    downloadIframe.src = `https://pwxyro.ai.studio/?url=${encodeURIComponent(activeStreamUrl)}`;
+    downloadModal.classList.add('active');
+}
+
+if (downloadItem) {
+    downloadItem.onclick = (e) => {
+        e.stopPropagation();
+        dropdownMenuElem.classList.remove('active');
+        triggerDownloadModal();
+    };
+}
+
+if (downloadBtnCtrl) {
+    downloadBtnCtrl.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        customSettingsMenu.classList.remove('active');
+        triggerDownloadModal();
+        handleControlVisibility(true);
+    };
+}
+
+if (closeDownloadModal) {
+    closeDownloadModal.onclick = (e) => {
+        e.stopPropagation();
+        downloadIframe.src = "";
+        downloadModal.classList.remove('active');
+    };
+}
+
 window.addEventListener('click', () => { 
-    if (dropdownMenuElem) dropdownMenuElem.classList.remove('active'); 
+    if (dropdownMenuElem) dropdownMenuElem.classList.remove('active');
+    if (customSettingsMenu) customSettingsMenu.classList.remove('active');
 });
 
 const urlParamsExtractor = new URLSearchParams(location.search);
-const rawUrlParam = urlParamsExtractor.get("url") || urlParamsExtractor.get("m3u8Url") || urlParamsExtractor.get("Url");
+const bId = urlParamsExtractor.get("batchId") || urlParamsExtractor.get("batch_id");
+const sId = urlParamsExtractor.get("subjectId") || urlParamsExtractor.get("subject_id");
+const lId = urlParamsExtractor.get("video_id") || urlParamsExtractor.get("videoId") || urlParamsExtractor.get("lectureId") || urlParamsExtractor.get("scheduleId");
+const directStreamUrl = urlParamsExtractor.get("m3u8Url") || urlParamsExtractor.get("Url");
 
 async function initializePlayerEngine() {
     let resolvedStreamUrl = "";
     
-    if (rawUrlParam) {
-        let decodedUrl = decodeURIComponent(rawUrlParam);
-        if (decodedUrl.startsWith("https://examcrushers.in/api/play?url=")) {
-            resolvedStreamUrl = decodedUrl;
-        } else {
-            resolvedStreamUrl = "https://examcrushers.in/api/play?url=" + encodeURIComponent(decodedUrl);
+    if (directStreamUrl) {
+        resolvedStreamUrl = decodeURIComponent(directStreamUrl);
+    } else if (bId && sId && lId) {
+        try {
+            updateStatusText('🔄 Fetching secure configurations...');
+            const endpointRoute = 'https://devcoderz-backend.vercel.app/api/config';
+            
+            const networkResponse = await fetch(endpointRoute, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ batchId: bId, subjectId: sId, lectureId: lId })
+            });
+
+            if (!networkResponse.ok) throw new Error(`Network failure code: ${networkResponse.status}`);
+            const responsePayload = await networkResponse.json();
+            
+            if (responsePayload) {
+                resolvedStreamUrl = responsePayload.m3u8Url || responsePayload.url || responsePayload.video_url;
+                
+                if (responsePayload.slides && responsePayload.slides.length > 0) {
+                    globalSlidesArray = responsePayload.slides;
+                    buildSlideItems();
+                } else {
+                    slideListElem.innerHTML = `<div class="no-data-text">No slides found for this lecture.</div>`;
+                }
+
+                if (responsePayload.notes && responsePayload.notes.length > 0) {
+                    globalAttachmentsArray = responsePayload.notes;
+                    buildAttachmentItems();
+                } else if (responsePayload.dpp_notes && responsePayload.dpp_notes.length > 0) {
+                    globalAttachmentsArray = responsePayload.dpp_notes;
+                    buildAttachmentItems();
+                } else {
+                    attachmentsListElem.innerHTML = `<div class="no-data-text">No attachments found.</div>`;
+                }
+            }
+        } catch (err) {
+            updateStatusText('❌ Error connecting to stream service', 'error');
+            slideListElem.innerHTML = `<div class="no-data-text">Failed to load content.</div>`;
+            return;
         }
     } else {
-        updateStatusText('❌ Missing url parameter!');
-        slideListElem.innerHTML = `<div class="no-data-text">Missing url parameter.</div>`;
+        updateStatusText('❌ Required parameters missing!', 'error');
+        slideListElem.innerHTML = `<div class="no-data-text">Missing parameters.</div>`;
         return;
     }
 
+    if (!resolvedStreamUrl) {
+        updateStatusText('❌ Target stream source not found!', 'error');
+        return;
+    }
+
+    activeStreamUrl = resolvedStreamUrl;
     setupHlsPlayer(resolvedStreamUrl);
 }
 
 function setupHlsPlayer(url) {
-    updateStatusText('🔄 Loading stream...');
+    updateStatusText('🔄 Initializing stream buffer...');
 
     if (videoElem.canPlayType('application/vnd.apple.mpegurl')) {
         videoElem.src = url;
         videoElem.addEventListener('loadedmetadata', () => {
-            updateStatusText('✅ Ready');
+            updateStatusText('✅ Playing natively via HLS', 'success');
         });
     } else if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-        hlsInstance = new Hls({ enableWorker: true, lowLatencyMode: true });
+        hlsInstance = new Hls({ 
+            enableWorker: true, 
+            lowLatencyMode: true,
+            maxBufferLength: 30,
+            maxMaxBufferLength: 60
+        });
         hlsInstance.loadSource(url);
         hlsInstance.attachMedia(videoElem);
 
         hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
-            updateStatusText('✅ Ready');
+            updateStatusText('✅ Stream ready!', 'success');
+            populateQualityLevels();
         });
 
         hlsInstance.on(Hls.Events.ERROR, (ev, data) => {
@@ -233,24 +420,101 @@ function setupHlsPlayer(url) {
                 switch (data.type) {
                     case Hls.ErrorTypes.NETWORK_ERROR: hlsInstance.startLoad(); break;
                     case Hls.ErrorTypes.MEDIA_ERROR: hlsInstance.recoverMediaError(); break;
-                    default: hlsInstance.destroy(); updateStatusText('❌ Stream error'); break;
+                    default: hlsInstance.destroy(); updateStatusText('❌ Fatal stream error', 'error'); break;
                 }
             }
         });
     } else {
-        updateStatusText('❌ Unsupported browser');
+        updateStatusText('❌ Unsupported browser configuration', 'error');
     }
 }
 
+function populateQualityLevels() {
+    if (!hlsInstance || !hlsInstance.levels) return;
+    qualityOptionsGrid.innerHTML = `<div class="setting-chip active" data-quality="-1">Auto</div>`;
+    hlsInstance.levels.forEach((lvl, idx) => {
+        let chip = document.createElement("div");
+        chip.className = "setting-chip";
+        chip.dataset.quality = idx;
+        chip.innerText = lvl.height ? lvl.height + "p" : `Quality ${idx + 1}`;
+        chip.onclick = (e) => {
+            e.stopPropagation();
+            hlsInstance.currentLevel = idx;
+            document.querySelectorAll('#qualityOptionsGrid .setting-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            customSettingsMenu.classList.remove('active');
+        };
+        qualityOptionsGrid.appendChild(chip);
+    });
+}
+
+document.querySelectorAll('#speedOptionsGrid .setting-chip').forEach(chip => {
+    chip.onclick = (e) => {
+        e.stopPropagation();
+        let spd = parseFloat(chip.dataset.speed);
+        videoElem.playbackRate = spd;
+        document.querySelectorAll('#speedOptionsGrid .setting-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        customSettingsMenu.classList.remove('active');
+    };
+});
+
+document.addEventListener('click', (e) => {
+    if (e.target && e.target.dataset.quality === "-1") {
+        e.stopPropagation();
+        if (hlsInstance) hlsInstance.currentLevel = -1;
+        document.querySelectorAll('#qualityOptionsGrid .setting-chip').forEach(c => c.classList.remove('active'));
+        e.target.classList.add('active');
+        customSettingsMenu.classList.remove('active');
+    }
+});
+
+function buildSlideItems() {
+    if (!slideListElem) return;
+    slideListElem.innerHTML = "";
+    globalSlidesArray.forEach((slide) => {
+        const card = document.createElement('div');
+        card.className = 'slide-item';
+        const timeStr = formatTimestamp(slide.timestamp);
+        card.innerHTML = `
+            <img src="${slide.image}" alt="Slide" onerror="this.src='https://via.placeholder.com/400x220?text=Preview+Not+Available'">
+            <div class="slide-footer-info">
+                <div class="slide-time-badge">🕒 ${timeStr}</div>
+            </div>
+        `;
+        card.onclick = (e) => {
+            e.stopPropagation();
+            videoElem.currentTime = slide.timestamp;
+            triggerSafePlayback();
+            sidebarElem.classList.remove('active');
+        };
+        slideListElem.appendChild(card);
+    });
+}
+
+function buildAttachmentItems() {
+    if (!attachmentsListElem) return;
+    attachmentsListElem.innerHTML = "";
+    globalAttachmentsArray.forEach((item, index) => {
+        const linkElem = document.createElement('a');
+        linkElem.className = 'attachment-item';
+        linkElem.href = item.url || item.link || '#';
+        linkElem.target = '_blank';
+        linkElem.innerHTML = `<span>📄 ${item.name || item.title || 'Lecture Notes ' + (index + 1)}</span> <span>📥 Open</span>`;
+        attachmentsListElem.appendChild(linkElem);
+    });
+}
+
 window.addEventListener('load', () => {
-    setTimeout(initializePlayerEngine, 300);
+    setTimeout(initializePlayerEngine, 400);
 });
 
 function formatTimestamp(sec) {
-    if (!sec || isNaN(sec)) return "00:00";
-    let m = Math.floor(sec / 60);
+    if (!sec || isNaN(sec) || sec === Infinity) return "00:00:00";
+    let h = Math.floor(sec / 3600);
+    let m = Math.floor((sec % 3600) / 60);
     let s = Math.floor(sec % 60);
-    return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+    return [h, m, s].map(num => String(num).padStart(2, "0")).join(":");
 }
 
 function refreshProgressBarUI(pct, curr, dur) {
@@ -310,14 +574,31 @@ if (fwdButton) {
     };
 }
 
+if (settingsBtnElem) {
+    settingsBtnElem.onclick = e => {
+        e.preventDefault();
+        e.stopPropagation();
+        customSettingsMenu.classList.toggle('active');
+        dropdownMenuElem.classList.remove('active');
+        handleControlVisibility(true);
+    };
+}
+
 if (fsButton) {
     fsButton.onclick = async e => {
         e.preventDefault();
         e.stopPropagation();
         try {
+            const appContainer = document.getElementById('appContainer');
             if (!document.fullscreenElement) {
-                await document.documentElement.requestFullscreen();
+                await appContainer.requestFullscreen();
+                if (screen.orientation && screen.orientation.lock) {
+                    await screen.orientation.lock('landscape').catch(() => {});
+                }
             } else {
+                if (screen.orientation && screen.orientation.unlock) {
+                    screen.orientation.unlock();
+                }
                 await document.exitFullscreen();
             }
         } catch (err) {}
@@ -380,13 +661,13 @@ videoElem.onloadedmetadata = () => {
 };
 
 videoElem.onplay = () => {
-    if (playButton) playButton.innerText = "❚❚";
+    if (playButton) playButton.classList.add("pause");
     if (centerPlayElem) centerPlayElem.classList.add("hide");
     handleControlVisibility();
 };
 
 videoElem.onpause = () => {
-    if (playButton) playButton.innerText = "▶";
+    if (playButton) playButton.classList.remove("pause");
     handleControlVisibility(true);
 };
 
@@ -394,11 +675,12 @@ playerElem.onclick = e => {
     if (tgPopupElem && tgPopupElem.style.display !== "none") return;
     if (e.target === videoElem || e.target === playerElem) {
         sidebarElem.classList.remove('active');
+        customSettingsMenu.classList.remove('active');
+        dropdownMenuElem.classList.remove('active');
         if (controlsElem.classList.contains("hide")) {
             handleControlVisibility();
         } else {
             controlsElem.classList.add("hide");
-            clearTimeout(hideTimeoutRef);
         }
     }
 };
