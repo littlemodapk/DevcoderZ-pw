@@ -7,8 +7,7 @@ export default {
     const searchParams = new URLSearchParams(rawSearch);
     const explicitUrl = searchParams.get('url');
 
-    // Sirf tabhi proxy chalayein jab request HLS stream ki ho ya 'url' parameter ho
-    // Aapke /api/video-url jaise normal APIs seedha pass-through honge
+    // 1. Agar request HLS stream ya proxy URL ki hai
     if (path.startsWith("/api/hls/") || explicitUrl) {
       let actualTargetUrl = "";
       
@@ -47,7 +46,13 @@ export default {
       }
     }
 
-    // Baaki sabhi requests (jaise /api/video-url aur static files) apne normal route par jayengi
+    // 2. Agar request /api/video-url ki hai (Yahan apna video-url ka logic ya fetch daalein)
+    if (path === "/api/video-url") {
+      // Agar aapka video-url code kisi aur backend par request bhejta hai, toh wo yahan likha jayega.
+      // Ya agar aapke paas iska purana code hai, toh wo y yahan paste kiya ja sakta hai.
+    }
+
+    // 3. Baaki normal static files ke liye
     return env.ASSETS.fetch(request);
   }
 };
