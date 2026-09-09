@@ -334,9 +334,9 @@ window.addEventListener('click', () => {
     if (customSettingsMenu) customSettingsMenu.classList.remove('active');
 });
 
+// Dynamic URL Extractor: Supports ?apiUrl=, ?api=, ?url= or automatically falls back to current page URL or default endpoint
 const urlParamsExtractor = new URLSearchParams(location.search);
-const directApiUrl = urlParamsExtractor.get("apiUrl") || urlParamsExtractor.get("api") || urlParamsExtractor.get("url") || 
-                     `https://examcrushers.in/api/video-url?batchId=698ad3519549b300a5e1cc6a&subjectId=physics-by-rajwant-singh-sir-964222&lectureId=6a7ecfc310002885ba91700c&key=Sharma`;
+const directApiUrl = urlParamsExtractor.get("apiUrl") || urlParamsExtractor.get("api") || urlParamsExtractor.get("url") || location.href;
 
 async function initializePlayerEngine() {
     let hlsUrl = "";
@@ -351,27 +351,31 @@ async function initializePlayerEngine() {
 
         if (networkResponse.ok) {
             const responsePayload = await networkResponse.json();
-            if (responsePayload && responsePayload.success && responsePayload.data) {
-                let rawHls = responsePayload.data.hlsUrl || responsePayload.data.fullHls || responsePayload.data.streamHls;
-                let signature = responsePayload.data.signedUrl || "";
+            
+            // Handle structure matching your API response
+            const responseData = responsePayload.data || responsePayload;
+            
+            if (responsePayload && (responsePayload.success || responseData)) {
+                let rawHls = responseData.hlsUrl || responseData.fullHls || responseData.streamHls;
+                let signature = responseData.signedUrl || "";
                 
                 if (rawHls) {
                     hlsUrl = rawHls.startsWith('http') ? rawHls : (rawHls + (rawHls.includes('?') ? '' : signature));
                 }
 
                 // Populate sidebar slides/notes if available in response
-                if (responsePayload.data.slides && Array.isArray(responsePayload.data.slides)) {
-                    globalSlidesArray = responsePayload.data.slides;
+                if (responseData.slides && Array.isArray(responseData.slides)) {
+                    globalSlidesArray = responseData.slides;
                     renderSlidesList();
                 }
-                if (responsePayload.data.attachments && Array.isArray(responsePayload.data.attachments)) {
-                    globalAttachmentsArray = responsePayload.data.attachments;
+                if (responseData.attachments && Array.isArray(responseData.attachments)) {
+                    globalAttachmentsArray = responseData.attachments;
                     renderAttachmentsList();
                 }
             }
         }
     } catch (err) {
-        console.warn('API Fetch failed, check network or API parameters.');
+        console.warn('API Fetch failed directly, checking fallback.');
         updateStatusText('❌ Failed to fetch dynamic API response', 'error');
         return;
     }
