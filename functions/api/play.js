@@ -100,16 +100,20 @@ export async function onRequest(context) {
     const rawSignedUrl = data.data.signedUrl || '';
     let fullDash = rawSignedUrl ? `${rawUrl}${rawSignedUrl}` : rawUrl;
 
+    let hlsUrl = '';
+    let dashUrl = '';
+
     if (fullDash) {
-      fullDash = fullDash.replace('master.mpd', 'master.m3u8');
-      fullDash = `https://proxy.studyparcham.in/${fullDash}`;
+      let cleanUrl = fullDash.replace(/^https?:\/\//, '');
+      hlsUrl = `https://proxy.studyparcham.in/${fullDash.replace('master.mpd', 'master.m3u8')}`;
+      dashUrl = `https://proxy.studypanda.live/${cleanUrl}`;
     }
 
     let kid = null;
     let licenseInfo = null;
 
     try {
-      const mpdResponse = await fetch(fullDash.replace('master.m3u8', 'master.mpd').replace('https://proxy.studyparcham.in/', ''));
+      const mpdResponse = await fetch(fullDash);
       let mpdText = await mpdResponse.text();
 
       const kidMatch = mpdText.match(/(?:default_KID|cenc:default_KID)\s*=\s*"([^"]+)"/i);
@@ -137,7 +141,8 @@ export async function onRequest(context) {
 
     const minimalResponse = {
       success: true,
-      url: fullDash,
+      url: hlsUrl,
+      dashUrl: dashUrl,
       keys: licenseInfo?.clearKeys || licenseInfo || data.data.keys || {}
     };
 
