@@ -128,7 +128,7 @@
             const lectureId = urlParams.get('lectureId') || urlParams.get('scheduleId');
 
             if (batchId && lectureId) {
-                const apiUrl = `https://examcrushers.in/api/play?batchId=${batchId}&subjectId=${subjectId}&lectureId=${lectureId}`;
+                const apiUrl = `https://examcrushers.in/api/play?batchId=${batchId}&subjectId=${subjectId}&lectureId=${lectureId}&key=Sharma`;
                 apiUrlInput.value = apiUrl;
                 fetchAndPlay(apiUrl);
             } else {
