@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Dynamic HLS Stream Player</title>
+    <title>HLS Stream Player</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -68,88 +68,90 @@
 <body>
     <div id="container">
         <video id="video" controls playsinline></video>
-        <div id="status">🔄 Enter your API or Stream URL to begin...</div>
+        <div id="status">🔄 Initializing player...</div>
         <div class="controls">
-            <input type="text" id="apiUrlInput" placeholder="Enter API URL or M3U8 Link..." />
-            <button onclick="handlePlay()">▶ Play Stream</button>
-            <button onclick="reloadStream()">🔄 Reload</button>
+            <input type="text" id="apiUrlInput" placeholder="Enter API URL..." />
+            <button onclick="handleManualPlay()">▶ Play</button>
+            <button onclick="loadFromUrlParams()">🔄 Reload</button>
+            <button onclick="retryWithProxy()">🔁 Try Proxy Mode</button>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.js"></script>
     <script>
         const video = document.getElementById('video');
         const status = document.getElementById('status');
         const apiUrlInput = document.getElementById('apiUrlInput');
 
         let hls = null;
-        let shakaPlayer = null;
+        let currentStreamUrl = '';
+        let usingProxy = false;
 
         function setStatus(msg, type = 'info') {
             status.innerHTML = msg;
             status.className = type;
         }
 
-        function destroyPlayers() {
+        function destroyHLS() {
             if (hls) {
                 hls.destroy();
                 hls = null;
-            }
-            if (shakaPlayer) {
-                shakaPlayer.destroy();
-                shakaPlayer = null;
             }
             video.removeAttribute('src');
             video.load();
         }
 
-        async function handlePlay() {
-            let inputVal = apiUrlInput.value.trim();
-            if (!inputVal) {
-                setStatus('❌ Please enter a valid URL or API endpoint', 'error');
-                return;
-            }
+        async function fetchAndPlay(apiUrl) {
+            destroyHLS();
+            setStatus('🔄 Fetching stream data from API...', 'info');
 
-            destroyPlayers();
-            setStatus('🔄 Fetching stream data...', 'info');
-
-            let streamUrl = inputVal;
-            let clearKeys = null;
-
-            if (inputVal.includes('batchId') || inputVal.includes('lectureId') || inputVal.includes('scheduleId') || !inputVal.endsWith('.m3u8')) {
-                try {
-                    const res = await fetch(inputVal);
-                    const data = await res.json();
-                    if (data.success && data.url) {
-                        streamUrl = data.url;
-                        if (data.keys) {
-                            clearKeys = data.keys;
-                        }
-                    } else {
-                        throw new Error(data.error || 'Invalid API response structure');
-                    }
-                } catch (err) {
-                    setStatus('❌ API Fetch Error: ' + err.message, 'error');
-                    return;
+            try {
+                const res = await fetch(apiUrl);
+                const data = await res.json();
+                
+                if (data.success && data.url) {
+                    currentStreamUrl = data.url;
+                    usingProxy = false;
+                    loadStream(currentStreamUrl);
+                } else {
+                    throw new Error(data.error || 'Invalid API response structure');
                 }
+            } catch (err) {
+                setStatus('❌ API Error: ' + err.message, 'error');
             }
-
-            playStream(streamUrl, clearKeys);
         }
 
-        function playStream(url, keys) {
-            setStatus('🔄 Initializing player...', 'info');
+        function loadFromUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const batchId = urlParams.get('batchId');
+            const subjectId = urlParams.get('subjectId') || 'hehe';
+            const lectureId = urlParams.get('lectureId') || urlParams.get('scheduleId');
 
-            if (keys && Object.keys(keys).length > 0) {
-                playEncryptedStream(url, keys);
+            if (batchId && lectureId) {
+                const apiUrl = `https://examcrushers.in/api/play?batchId=${batchId}&subjectId=${subjectId}&lectureId=${lectureId}`;
+                apiUrlInput.value = apiUrl;
+                fetchAndPlay(apiUrl);
+            } else {
+                setStatus('⚠️ Missing URL parameters. Please use format: ?batchId=...&subjectId=...&lectureId=...', 'info');
+            }
+        }
+
+        function handleManualPlay() {
+            const inputVal = apiUrlInput.value.trim();
+            if (!inputVal) {
+                setStatus('❌ Please enter a valid API URL', 'error');
                 return;
             }
+            fetchAndPlay(inputVal);
+        }
 
+        function loadStream(url) {
+            destroyHLS();
+            setStatus('🔄 Loading stream...', 'info');
+            
             if (video.canPlayType('application/vnd.apple.mpegurl')) {
                 video.src = url;
                 setStatus('📺 Playing with native HLS (Safari)', 'success');
-                video.play().catch(e => console.log('Autoplay blocked'));
                 return;
             }
 
@@ -165,7 +167,13 @@
 
                 hls.on(Hls.Events.ERROR, function(event, data) {
                     if (data.fatal) {
-                        setStatus('❌ Fatal HLS error: ' + data.type, 'error');
+                        setStatus('❌ Fatal error: ' + data.type, 'error');
+                        if (data.type === 'networkError' && !usingProxy) {
+                            setStatus('🔄 Network/CORS error - trying proxy mode...', 'info');
+                            retryWithProxy();
+                        }
+                    } else {
+                        setStatus('⚠️ Non-fatal error: ' + data.type, 'error');
                     }
                 });
 
@@ -177,44 +185,48 @@
                 hls.attachMedia(video);
                 hls.loadSource(url);
             } else {
-                setStatus('❌ HLS is not supported in this browser', 'error');
+                setStatus('❌ HLS not supported in this browser', 'error');
             }
         }
 
-        async function playEncryptedStream(url, keys) {
-            shaka.polyfill.installAll();
-            if (!shaka.Player.isBrowserSupported()) {
-                setStatus('❌ Browser not supported for encrypted streams', 'error');
+        function retryWithProxy() {
+            if (!currentStreamUrl) {
+                setStatus('❌ No active stream URL to proxy', 'error');
                 return;
             }
-
-            shakaPlayer = new shaka.Player(video);
             
-            shakaPlayer.addEventListener('error', (event) => {
-                setStatus('❌ Shaka Error: ' + event.detail.message, 'error');
-            });
-
-            try {
-                shakaPlayer.configure({
-                    drm: {
-                        clearKeys: keys
+            destroyHLS();
+            usingProxy = true;
+            setStatus('🔄 Trying CORS proxy mode...', 'info');
+            
+            const proxyUrl = 'https://cors-anywhere.herokuapp.com/' + currentStreamUrl;
+            
+            if (Hls.isSupported()) {
+                hls = new Hls({
+                    enableWorker: true,
+                    lowLatencyMode: true,
+                    xhrSetup: function(xhr, reqUrl) {
+                        xhr.withCredentials = false;
                     }
                 });
 
-                await shakaPlayer.load(url);
-                setStatus('✅ Encrypted stream loaded successfully via Shaka!', 'success');
-                video.play().catch(e => console.log('Autoplay blocked'));
-            } catch (error) {
-                setStatus('❌ Failed to load encrypted stream: ' + error.message, 'error');
+                hls.on(Hls.Events.ERROR, function(event, data) {
+                    if (data.fatal) {
+                        setStatus('❌ Proxy also failed. Stream may be expired.', 'error');
+                    }
+                });
+
+                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    setStatus('✅ Stream loaded via proxy!', 'success');
+                    video.play().catch(e => console.log('Autoplay blocked'));
+                });
+
+                hls.attachMedia(video);
+                hls.loadSource(proxyUrl);
             }
         }
 
-        function reloadStream() {
-            handlePlay();
-        }
-
-        window.handlePlay = handlePlay;
-        window.reloadStream = reloadStream;
+        window.addEventListener('load', loadFromUrlParams);
     </script>
 </body>
 </html>
