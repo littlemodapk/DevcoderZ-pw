@@ -70,12 +70,13 @@
             border: 1px solid #333;
             border-radius: 6px;
             padding: 10px;
-            height: 150px;
+            height: 180px;
             overflow-y: auto;
             font-family: monospace;
-            font-size: 12px;
+            font-size: 11px;
             color: #a8ff60;
             text-align: left;
+            word-break: break-all;
         }
         .log-error { color: #ff6b6b; }
         .log-info { color: #4fc3f7; }
@@ -216,9 +217,26 @@
 
                 player.configure(config);
 
+                // Extract query parameters from manifest url to attach to all sub-segments
+                let searchParamsString = '';
+                try {
+                    const parsedUrl = new URL(manifestUrl);
+                    searchParamsString = parsedUrl.search; // Contains Signature, Key-Pair-Id, Policy
+                } catch (e) {}
+
                 player.getNetworkingEngine().registerRequestFilter((type, request) => {
                     request.headers['Origin'] = window.location.origin;
                     request.headers['Referer'] = 'https://studyparcham.in/';
+
+                    // Ensure CloudFront query parameters are appended to every segment request
+                    if (searchParamsString) {
+                        if (!request.uri.includes('?')) {
+                            request.uri += searchParamsString;
+                        } else if (!request.uri.includes('Signature=')) {
+                            request.uri += '&' + searchParamsString.substring(1);
+                        }
+                    }
+
                     logToConsole(`Network Request [Type ${type}]: ${request.uri}`, 'info');
                 });
 
