@@ -217,8 +217,7 @@
 
                 player.configure(config);
 
-                // Yeh robust request filter har relative/absolute segment request ko 
-                // base manifest ke saare parameters (Signature, Key-Pair-Id, Policy) ke sath sign kar dega.
+                // Fixed Request Filter: Forces base manifest query params onto every segment request
                 player.getNetworkingEngine().registerRequestFilter((type, request) => {
                     request.headers['Origin'] = window.location.origin;
                     request.headers['Referer'] = 'https://studyparcham.in/';
@@ -226,20 +225,17 @@
                     if (request.uri) {
                         try {
                             const baseUriObj = new URL(manifestUrl);
-                            const baseParams = baseUriObj.search; // ?Signature=...&Key-Pair-Id=...&Policy=...
+                            // Resolve path relative to base origin + pathname (ignoring base query initially)
+                            const absoluteUri = new URL(request.uri, baseUriObj.origin + baseUriObj.pathname);
 
-                            if (baseParams) {
-                                const absoluteUri = new URL(request.uri, manifestUrl);
-                                const baseParamsObj = new URLSearchParams(baseParams);
+                            // Explicitly inject all parameters from the main manifest URL
+                            baseUriObj.searchParams.forEach((val, keyName) => {
+                                if (!absoluteUri.searchParams.has(keyName)) {
+                                    absoluteUri.searchParams.set(keyName, val);
+                                }
+                            });
 
-                                baseParamsObj.forEach((val, keyName) => {
-                                    if (!absoluteUri.searchParams.has(keyName)) {
-                                        absoluteUri.searchParams.set(keyName, val);
-                                    }
-                                });
-
-                                request.uri = absoluteUri.toString();
-                            }
+                            request.uri = absoluteUri.toString();
                         } catch (err) {
                             logToConsole('Param Append Error: ' + err.message, 'error');
                         }
