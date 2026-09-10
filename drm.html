@@ -217,31 +217,32 @@
 
                 player.configure(config);
 
-                // Yeh function manifest URL ke query parameters ko extract karke 
-                // har segment aur sub-request ke sath cleanly append kar dega.
+                // Yeh robust request filter har relative/absolute segment request ko 
+                // base manifest ke saare parameters (Signature, Key-Pair-Id, Policy) ke sath sign kar dega.
                 player.getNetworkingEngine().registerRequestFilter((type, request) => {
                     request.headers['Origin'] = window.location.origin;
                     request.headers['Referer'] = 'https://studyparcham.in/';
 
-                    try {
-                        const baseUriObj = new URL(manifestUrl);
-                        const mainParams = baseUriObj.search; // Contains Signature, Key-Pair-Id, Policy
+                    if (request.uri) {
+                        try {
+                            const baseUriObj = new URL(manifestUrl);
+                            const baseParams = baseUriObj.search; // ?Signature=...&Key-Pair-Id=...&Policy=...
 
-                        if (mainParams) {
-                            const [pathPart, queryPart] = request.uri.split('?');
-                            let paramsMap = new URLSearchParams(queryPart || '');
-                            
-                            const baseParams = new URLSearchParams(baseUriObj.search);
-                            baseParams.forEach((val, keyName) => {
-                                if (!paramsMap.has(keyName)) {
-                                    paramsMap.set(keyName, val);
-                                }
-                            });
+                            if (baseParams) {
+                                const absoluteUri = new URL(request.uri, manifestUrl);
+                                const baseParamsObj = new URLSearchParams(baseParams);
 
-                            request.uri = pathPart + '?' + paramsMap.toString();
+                                baseParamsObj.forEach((val, keyName) => {
+                                    if (!absoluteUri.searchParams.has(keyName)) {
+                                        absoluteUri.searchParams.set(keyName, val);
+                                    }
+                                });
+
+                                request.uri = absoluteUri.toString();
+                            }
+                        } catch (err) {
+                            logToConsole('Param Append Error: ' + err.message, 'error');
                         }
-                    } catch (err) {
-                        logToConsole('Param Append Error: ' + err.message, 'error');
                     }
 
                     logToConsole(`Network Request [Type ${type}]: ${request.uri}`, 'info');
