@@ -217,27 +217,34 @@
 
                 player.configure(config);
 
-                // Fixed Request Filter: Forces base manifest query params onto every segment request
+                // Foolproof Network Request Filter
+                const baseUriObj = new URL(manifestUrl);
+                const baseSearchParams = baseUriObj.search; // Contains Signature, Policy, Key-Pair-Id
+
                 player.getNetworkingEngine().registerRequestFilter((type, request) => {
                     request.headers['Origin'] = window.location.origin;
                     request.headers['Referer'] = 'https://studyparcham.in/';
 
-                    if (request.uri) {
-                        try {
-                            const baseUriObj = new URL(manifestUrl);
-                            // Resolve path relative to base origin + pathname (ignoring base query initially)
-                            const absoluteUri = new URL(request.uri, baseUriObj.origin + baseUriObj.pathname);
+                    if (request.uri && typeof request.uri === 'string') {
+                        // Agar request URL me studypanda ya cloudfront domain hai aur signature missing hai
+                        if ((request.uri.includes('studypanda.live') || request.uri.includes('cloudfront.net')) && baseSearchParams) {
+                            try {
+                                const absoluteUri = new URL(request.uri, manifestUrl);
+                                const baseParamsObj = new URLSearchParams(baseSearchParams);
 
-                            // Explicitly inject all parameters from the main manifest URL
-                            baseUriObj.searchParams.forEach((val, keyName) => {
-                                if (!absoluteUri.searchParams.has(keyName)) {
-                                    absoluteUri.searchParams.set(keyName, val);
+                                baseParamsObj.forEach((val, keyName) => {
+                                    if (!absoluteUri.searchParams.has(keyName)) {
+                                        absoluteUri.searchParams.set(keyName, val);
+                                    }
+                                });
+
+                                request.uri = absoluteUri.toString();
+                            } catch (e) {
+                                // Fallback string concatenation agar URL parsing fail ho
+                                if (!request.uri.includes('Signature=')) {
+                                    request.uri += (request.uri.includes('?') ? '&' : '?') + baseSearchParams.substring(1);
                                 }
-                            });
-
-                            request.uri = absoluteUri.toString();
-                        } catch (err) {
-                            logToConsole('Param Append Error: ' + err.message, 'error');
+                            }
                         }
                     }
 
