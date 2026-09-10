@@ -228,12 +228,14 @@
                     request.headers['Origin'] = window.location.origin;
                     request.headers['Referer'] = 'https://studyparcham.in/';
 
-                    // Ensure CloudFront query parameters are appended to every segment request
+                    // Ensure CloudFront query parameters are appended to every segment/manifest request if missing
                     if (searchParamsString) {
-                        if (!request.uri.includes('?')) {
-                            request.uri += searchParamsString;
-                        } else if (!request.uri.includes('Signature=')) {
-                            request.uri += '&' + searchParamsString.substring(1);
+                        if (!request.uri.includes('Signature=')) {
+                            if (!request.uri.includes('?')) {
+                                request.uri += searchParamsString;
+                            } else {
+                                request.uri += '&' + searchParamsString.substring(1);
+                            }
                         }
                     }
 
