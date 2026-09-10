@@ -177,6 +177,7 @@
             if (batchId && lectureId) {
                 const apiUrl = `https://examcrushers.in/api/play?batchId=${batchId}&subjectId=${subjectId}&lectureId=${lectureId}&key=${key}`;
                 apiUrlInput.value = apiUrl;
+                fetchAndApi(apiUrl); // fixed to fetchAndPlay below
                 fetchAndPlay(apiUrl);
             } else {
                 setStatus('⚠️ Missing parameters. Use format: ?batchId=...&subjectId=...&lectureId=...&key=Sharma', 'info');
@@ -195,78 +196,4 @@
                 fetchAndPlay(inputVal);
             } else {
                 playShakaStream(inputVal, null);
-            }
-        }
-
-        async function playShakaStream(manifestUrl, keys) {
-            if (!player) return;
-
-            setStatus('🔄 Loading DASH stream via Shaka...', 'info');
-            logToConsole(`Loading Manifest URL: ${manifestUrl}`, 'info');
-            if (keys) {
-                logToConsole(`Loaded ClearKeys: ${JSON.stringify(keys)}`, 'success');
-            } else {
-                logToConsole('No DRM keys provided.', 'info');
-            }
-
-            try {
-                const config = {};
-                if (keys && Object.keys(keys).length > 0) {
-                    config.drm = { clearKeys: keys };
-                }
-
-                player.configure(config);
-
-                // Yeh function manifest ke query params (`?Signature=...&Key-Pair-Id=...&Policy=...`) 
-                // ko segment requests me properly append karega chahe URL relative ho ya absolute.
-                player.getNetworkingEngine().registerRequestFilter((type, request) => {
-                    request.headers['Origin'] = window.location.origin;
-                    request.headers['Referer'] = 'https://studyparcham.in/';
-
-                    try {
-                        const baseUriObj = new URL(manifestUrl);
-                        const mainParams = baseUriObj.search; // ?Signature=...&Key-Pair-Id=...&Policy=...
-
-                        if (mainParams) {
-                            // Agar request uri me pehle se query params nahi hain toh mainParams jod do
-                            if (!request.uri.includes('?')) {
-                                request.uri += mainParams;
-                            } else {
-                                // Agar already kuch params hain toh missing parameters ko append kar do
-                                const parsedReq = new URL(request.uri, manifestUrl);
-                                const baseParams = new URLSearchParams(baseUriObj.search);
-                                
-                                baseParams.forEach((val, keyName) => {
-                                    if (!parsedReq.searchParams.has(keyName)) {
-                                        parsedReq.searchParams.set(keyName, val);
-                                    }
-                                });
-                                request.uri = parsedReq.toString();
-                            }
-                        }
-                    } catch (err) {
-                        logToConsole('Param Append Error: ' + err.message, 'error');
-                    }
-
-                    logToConsole(`Network Request [Type ${type}]: ${request.uri}`, 'info');
-                });
-
-                await player.load(manifestUrl);
-                setStatus('✅ DASH Stream loaded successfully!', 'success');
-                logToConsole('Playback started successfully.', 'success');
-                video.play().catch(e => {
-                    logToConsole('Autoplay restricted by browser: ' + e.message, 'error');
-                });
-            } catch (error) {
-                setStatus('❌ Playback Error: ' + error.message, 'error');
-                logToConsole(`Shaka Load Exception: ${error.code} - ${error.message}`, 'error');
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', initPlayer);
-        window.handleManualPlay = handleManualPlay;
-        window.loadFromUrlParams = loadFromUrlParams;
-        window.clearConsole = clearConsole;
-    </script>
-</body>
-</html>
+اصل
