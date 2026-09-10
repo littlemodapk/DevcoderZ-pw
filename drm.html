@@ -177,7 +177,6 @@
             if (batchId && lectureId) {
                 const apiUrl = `https://examcrushers.in/api/play?batchId=${batchId}&subjectId=${subjectId}&lectureId=${lectureId}&key=${key}`;
                 apiUrlInput.value = apiUrl;
-                fetchAndApi(apiUrl); // fixed to fetchAndPlay below
                 fetchAndPlay(apiUrl);
             } else {
                 setStatus('⚠️ Missing parameters. Use format: ?batchId=...&subjectId=...&lectureId=...&key=Sharma', 'info');
@@ -196,4 +195,74 @@
                 fetchAndPlay(inputVal);
             } else {
                 playShakaStream(inputVal, null);
-اصل
+            }
+        }
+
+        async function playShakaStream(manifestUrl, keys) {
+            if (!player) return;
+
+            setStatus('🔄 Loading DASH stream via Shaka...', 'info');
+            logToConsole(`Loading Manifest URL: ${manifestUrl}`, 'info');
+            if (keys) {
+                logToConsole(`Loaded ClearKeys: ${JSON.stringify(keys)}`, 'success');
+            } else {
+                logToConsole('No DRM keys provided.', 'info');
+            }
+
+            try {
+                const config = {};
+                if (keys && Object.keys(keys).length > 0) {
+                    config.drm = { clearKeys: keys };
+                }
+
+                player.configure(config);
+
+                // Yeh function manifest URL ke query parameters ko extract karke 
+                // har segment aur sub-request ke sath cleanly append kar dega.
+                player.getNetworkingEngine().registerRequestFilter((type, request) => {
+                    request.headers['Origin'] = window.location.origin;
+                    request.headers['Referer'] = 'https://studyparcham.in/';
+
+                    try {
+                        const baseUriObj = new URL(manifestUrl);
+                        const mainParams = baseUriObj.search; // Contains Signature, Key-Pair-Id, Policy
+
+                        if (mainParams) {
+                            const [pathPart, queryPart] = request.uri.split('?');
+                            let paramsMap = new URLSearchParams(queryPart || '');
+                            
+                            const baseParams = new URLSearchParams(baseUriObj.search);
+                            baseParams.forEach((val, keyName) => {
+                                if (!paramsMap.has(keyName)) {
+                                    paramsMap.set(keyName, val);
+                                }
+                            });
+
+                            request.uri = pathPart + '?' + paramsMap.toString();
+                        }
+                    } catch (err) {
+                        logToConsole('Param Append Error: ' + err.message, 'error');
+                    }
+
+                    logToConsole(`Network Request [Type ${type}]: ${request.uri}`, 'info');
+                });
+
+                await player.load(manifestUrl);
+                setStatus('✅ DASH Stream loaded successfully!', 'success');
+                logToConsole('Playback started successfully.', 'success');
+                video.play().catch(e => {
+                    logToConsole('Autoplay restricted by browser: ' + e.message, 'error');
+                });
+            } catch (error) {
+                setStatus('❌ Playback Error: ' + error.message, 'error');
+                logToConsole(`Shaka Load Exception: ${error.code} - ${error.message}`, 'error');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initPlayer);
+        window.handleManualPlay = handleManualPlay;
+        window.loadFromUrlParams = loadFromUrlParams;
+        window.clearConsole = clearConsole;
+    </script>
+</body>
+</html>
