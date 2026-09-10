@@ -217,26 +217,35 @@
 
                 player.configure(config);
 
-                // Extract query parameters from manifest url to attach to all sub-segments
-                let searchParamsString = '';
-                try {
-                    const parsedUrl = new URL(manifestUrl);
-                    searchParamsString = parsedUrl.search; // Contains Signature, Key-Pair-Id, Policy
-                } catch (e) {}
-
+                // Yeh function manifest ke query params (`?Signature=...&Key-Pair-Id=...&Policy=...`) 
+                // ko segment requests me properly append karega chahe URL relative ho ya absolute.
                 player.getNetworkingEngine().registerRequestFilter((type, request) => {
                     request.headers['Origin'] = window.location.origin;
                     request.headers['Referer'] = 'https://studyparcham.in/';
 
-                    // Ensure CloudFront query parameters are appended to every segment/manifest request if missing
-                    if (searchParamsString) {
-                        if (!request.uri.includes('Signature=')) {
+                    try {
+                        const baseUriObj = new URL(manifestUrl);
+                        const mainParams = baseUriObj.search; // ?Signature=...&Key-Pair-Id=...&Policy=...
+
+                        if (mainParams) {
+                            // Agar request uri me pehle se query params nahi hain toh mainParams jod do
                             if (!request.uri.includes('?')) {
-                                request.uri += searchParamsString;
+                                request.uri += mainParams;
                             } else {
-                                request.uri += '&' + searchParamsString.substring(1);
+                                // Agar already kuch params hain toh missing parameters ko append kar do
+                                const parsedReq = new URL(request.uri, manifestUrl);
+                                const baseParams = new URLSearchParams(baseUriObj.search);
+                                
+                                baseParams.forEach((val, keyName) => {
+                                    if (!parsedReq.searchParams.has(keyName)) {
+                                        parsedReq.searchParams.set(keyName, val);
+                                    }
+                                });
+                                request.uri = parsedReq.toString();
                             }
                         }
+                    } catch (err) {
+                        logToConsole('Param Append Error: ' + err.message, 'error');
                     }
 
                     logToConsole(`Network Request [Type ${type}]: ${request.uri}`, 'info');
