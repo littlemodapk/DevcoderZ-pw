@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Dynamic Shaka DRM Stream Player</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: #0a0a0a; 
+            display: flex; 
+            flex-direction: column;
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            font-family: Arial, sans-serif;
+            color: #fff;
+            padding: 20px;
+        }
+        #container {
+            width: 100%;
+            max-width: 900px;
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+        }
+        video { 
+            width: 100%; 
+            border-radius: 8px;
+            background: #111;
+            aspect-ratio: 16/9;
+        }
+        #status {
+            color: #4fc3f7;
+            margin-top: 12px;
+            text-align: center;
+            font-size: 14px;
+            min-height: 24px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        button, input {
+            background: #2a2a2a;
+            color: #fff;
+            border: 1px solid #444;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+        input {
+            flex: 1;
+            min-width: 250px;
+            cursor: text;
+        }
+        input:focus { border-color: #4fc3f7; outline: none; }
+        button:hover { background: #3a3a3a; border-color: #4fc3f7; }
+        .error { color: #ff6b6b; }
+        .success { color: #69db7c; }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <video id="video" controls playsinline></video>
+        <div id="status">🔄 Initializing Shaka Player...</div>
+        <div class="controls">
+            <input type="text" id="apiUrlInput" placeholder="API Endpoint or Custom URL..." />
+            <button onclick="handleManualPlay()">▶ Play</button>
+            <button onclick="loadFromUrlParams()">🔄 Reload</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.js"></script>
+    <script>
+        const video = document.getElementById('video');
+        const status = document.getElementById('status');
+        const apiUrlInput = document.getElementById('apiUrlInput');
+
+        let player = null;
+
+        function setStatus(msg, type = 'info') {
+            status.innerHTML = msg;
+            status.className = type;
+        }
+
+        async function initPlayer() {
+            shaka.polyfill.installAll();
+            if (!shaka.Player.isBrowserSupported()) {
+                setStatus('❌ Browser not supported for Shaka Player', 'error');
+                return;
+            }
+
+            player = new shaka.Player(video);
+
+            player.addEventListener('error', (event) => {
+                setStatus('❌ Shaka Error: ' + (event.detail ? event.detail.message : 'Unknown error'), 'error');
+            });
+
+            loadFromUrlParams();
+        }
+
+        async function fetchAndPlay(apiUrl) {
+            setStatus('🔄 Fetching stream details from API...', 'info');
+
+            try {
+                const res = await fetch(apiUrl);
+                const data = await res.json();
+                
+                const streamUrl = data.dashUrl || data.url;
+                const clearKeys = data.keys;
+
+                if (data.success && streamUrl) {
+                    await playShakaStream(streamUrl, clearKeys);
+                } else {
+                    throw new Error(data.error || 'Invalid API response structure');
+                }
+            } catch (err) {
+                setStatus('❌ Error: ' + err.message, 'error');
+            }
+        }
+
+        function loadFromUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const batchId = urlParams.get('batchId');
+            const subjectId = urlParams.get('subjectId') || 'hehe';
+            const lectureId = urlParams.get('lectureId') || urlParams.get('scheduleId');
+            const key = urlParams.get('key') || 'Sharma';
+
+            if (batchId && lectureId) {
+                const apiUrl = `https://examcrushers.in/api/play?batchId=${batchId}&subjectId=${subjectId}&lectureId=${lectureId}&key=${key}`;
+                apiUrlInput.value = apiUrl;
+                fetchAndPlay(apiUrl);
+            } else {
+                setStatus('⚠️ Missing parameters. Use format: ?batchId=...&subjectId=...&lectureId=...&key=Sharma', 'info');
+            }
+        }
+
+        function handleManualPlay() {
+            const inputVal = apiUrlInput.value.trim();
+            if (!inputVal) {
+                setStatus('❌ Please enter a valid URL or API endpoint', 'error');
+                return;
+            }
+
+            if (inputVal.includes('batchId') || inputVal.includes('lectureId')) {
+                fetchAndPlay(inputVal);
+            } else {
+                playShakaStream(inputVal, null);
+            }
+        }
+
+        async function playShakaStream(manifestUrl, keys) {
+            if (!player) return;
+
+            setStatus('🔄 Loading DASH stream via Shaka...', 'info');
+
+            try {
+                const config = {};
+                if (keys && Object.keys(keys).length > 0) {
+                    config.drm = { clearKeys: keys };
+                }
+
+                player.configure(config);
+
+                player.getNetworkingEngine().registerRequestFilter((type, request) => {
+                    request.headers['Origin'] = window.location.origin;
+                    request.headers['Referer'] = 'https://studyparcham.in/';
+                });
+
+                await player.load(manifestUrl);
+                setStatus('✅ DASH Stream loaded successfully!', 'success');
+                video.play().catch(e => console.log('Autoplay restricted:', e));
+            } catch (error) {
+                setStatus('❌ Playback Error: ' + error.message, 'error');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initPlayer);
+        window.handleManualPlay = handleManualPlay;
+        window.loadFromUrlParams = loadFromUrlParams;
+    </script>
+</body>
+</html>
