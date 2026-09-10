@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Dynamic Shaka DRM Stream Player</title>
+    <title>Dynamic Shaka DRM Stream Player with Debug</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -63,6 +63,23 @@
         button:hover { background: #3a3a3a; border-color: #4fc3f7; }
         .error { color: #ff6b6b; }
         .success { color: #69db7c; }
+        
+        #console-box {
+            margin-top: 15px;
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 10px;
+            height: 150px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            color: #a8ff60;
+            text-align: left;
+        }
+        .log-error { color: #ff6b6b; }
+        .log-info { color: #4fc3f7; }
+        .log-success { color: #69db7c; }
     </style>
 </head>
 <body>
@@ -73,7 +90,9 @@
             <input type="text" id="apiUrlInput" placeholder="API Endpoint or Custom URL..." />
             <button onclick="handleManualPlay()">▶ Play</button>
             <button onclick="loadFromUrlParams()">🔄 Reload</button>
+            <button onclick="clearConsole()">🧹 Clear Console</button>
         </div>
+        <div id="console-box"></div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.js"></script>
@@ -81,12 +100,27 @@
         const video = document.getElementById('video');
         const status = document.getElementById('status');
         const apiUrlInput = document.getElementById('apiUrlInput');
+        const consoleBox = document.getElementById('console-box');
 
         let player = null;
+
+        function logToConsole(msg, type = 'info') {
+            const time = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.className = `log-${type}`;
+            div.textContent = `[${time}] ${msg}`;
+            consoleBox.appendChild(div);
+            consoleBox.scrollTop = consoleBox.scrollHeight;
+        }
+
+        function clearConsole() {
+            consoleBox.innerHTML = '';
+        }
 
         function setStatus(msg, type = 'info') {
             status.innerHTML = msg;
             status.className = type;
+            logToConsole(msg, type === 'error' ? 'error' : (type === 'success' ? 'success' : 'info'));
         }
 
         async function initPlayer() {
@@ -99,7 +133,10 @@
             player = new shaka.Player(video);
 
             player.addEventListener('error', (event) => {
-                setStatus('❌ Shaka Error: ' + (event.detail ? event.detail.message : 'Unknown error'), 'error');
+                const errCode = event.detail ? event.detail.code : 'Unknown';
+                const errMsg = event.detail ? event.detail.message : JSON.stringify(event.detail);
+                setStatus(`❌ Shaka Error [${errCode}]: ${errMsg}`, 'error');
+                logToConsole(`Shaka Error Detail: ${JSON.stringify(event.detail)}`, 'error');
             });
 
             loadFromUrlParams();
@@ -107,11 +144,14 @@
 
         async function fetchAndPlay(apiUrl) {
             setStatus('🔄 Fetching stream details from API...', 'info');
+            logToConsole(`Fetching API: ${apiUrl}`, 'info');
 
             try {
                 const res = await fetch(apiUrl);
                 const data = await res.json();
                 
+                logToConsole(`API Response received: ${JSON.stringify(data)}`, 'success');
+
                 const streamUrl = data.dashUrl || data.url;
                 const clearKeys = data.keys;
 
@@ -122,6 +162,7 @@
                 }
             } catch (err) {
                 setStatus('❌ Error: ' + err.message, 'error');
+                logToConsole('Fetch/API Error: ' + err.message, 'error');
             }
         }
 
@@ -138,6 +179,7 @@
                 fetchAndPlay(apiUrl);
             } else {
                 setStatus('⚠️ Missing parameters. Use format: ?batchId=...&subjectId=...&lectureId=...&key=Sharma', 'info');
+                logToConsole('Missing URL search parameters.', 'error');
             }
         }
 
@@ -148,7 +190,7 @@
                 return;
             }
 
-            if (inputVal.includes('batchId') || inputVal.includes('lectureId')) {
+            if (inputVal.includes('batchId') || inputVal.includes('lectureId') || inputVal.includes('examcrushers.in')) {
                 fetchAndPlay(inputVal);
             } else {
                 playShakaStream(inputVal, null);
@@ -159,6 +201,12 @@
             if (!player) return;
 
             setStatus('🔄 Loading DASH stream via Shaka...', 'info');
+            logToConsole(`Loading Manifest URL: ${manifestUrl}`, 'info');
+            if (keys) {
+                logToConsole(`Loaded ClearKeys: ${JSON.stringify(keys)}`, 'success');
+            } else {
+                logToConsole('No DRM keys provided.', 'info');
+            }
 
             try {
                 const config = {};
@@ -171,19 +219,25 @@
                 player.getNetworkingEngine().registerRequestFilter((type, request) => {
                     request.headers['Origin'] = window.location.origin;
                     request.headers['Referer'] = 'https://studyparcham.in/';
+                    logToConsole(`Network Request [Type ${type}]: ${request.uri}`, 'info');
                 });
 
                 await player.load(manifestUrl);
                 setStatus('✅ DASH Stream loaded successfully!', 'success');
-                video.play().catch(e => console.log('Autoplay restricted:', e));
+                logToConsole('Playback started successfully.', 'success');
+                video.play().catch(e => {
+                    logToConsole('Autoplay restricted by browser: ' + e.message, 'error');
+                });
             } catch (error) {
                 setStatus('❌ Playback Error: ' + error.message, 'error');
+                logToConsole(`Shaka Load Exception: ${error.code} - ${error.message}`, 'error');
             }
         }
 
         document.addEventListener('DOMContentLoaded', initPlayer);
         window.handleManualPlay = handleManualPlay;
         window.loadFromUrlParams = loadFromUrlParams;
+        window.clearConsole = clearConsole;
     </script>
 </body>
 </html>
