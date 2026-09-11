@@ -19,6 +19,34 @@ export async function onRequest(context) {
     });
   }
 
+  // Transparent Proxy Handler: If ?url= is passed, fetch and stream the target manifest/segment directly
+  const targetProxyUrl = url.searchParams.get('url');
+  if (targetProxyUrl) {
+    try {
+      const upstreamResponse = await fetch(targetProxyUrl, {
+        headers: {
+          'Accept': '*/*',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          'Referer': 'https://studyparcham.in/',
+          'Origin': 'https://studyparcham.in'
+        }
+      });
+      
+      const newHeaders = new Headers(upstreamResponse.headers);
+      Object.keys(corsHeaders).forEach(h => newHeaders.set(h, corsHeaders[h]));
+
+      return new Response(upstreamResponse.body, {
+        status: upstreamResponse.status,
+        headers: newHeaders
+      });
+    } catch (err) {
+      return new Response(JSON.stringify({ success: false, error: err.message }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+  }
+
   let batchId = null;
   let subjectId = null;
   let lectureId = null;
@@ -104,9 +132,9 @@ export async function onRequest(context) {
     let dashUrl = '';
 
     if (fullDash) {
-      let cleanUrl = fullDash.replace(/^https?:\/\//, '');
-      hlsUrl = `https://proxy.studyparcham.in/${fullDash.replace('master.mpd', 'master.m3u8')}`;
-      dashUrl = `https://proxy.studypanda.live/${cleanUrl}`;
+      hlsUrl = data.data.hlsUrl || '';
+      const workerBase = `${url.protocol}//${url.host}${url.pathname}`;
+      dashUrl = `${workerBase}?url=${encodeURIComponent(fullDash)}`;
     }
 
     let kid = null;
