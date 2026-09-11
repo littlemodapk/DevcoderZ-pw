@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Dynamic Shaka DRM Stream Player with Response Filter</title>
+    <title>Dynamic Shaka DRM Stream Player with Proxy</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -201,8 +201,8 @@
         async function playShakaStream(manifestUrl, keys) {
             if (!player) return;
 
-            setStatus('🔄 Loading DASH stream via Shaka...', 'info');
-            logToConsole(`Loading Manifest URL: ${manifestUrl}`, 'info');
+            setStatus('🔄 Loading DASH stream via Proxy...', 'info');
+            logToConsole(`Original Manifest URL: ${manifestUrl}`, 'info');
             if (keys) {
                 logToConsole(`Loaded ClearKeys: ${JSON.stringify(keys)}`, 'success');
             } else {
@@ -217,40 +217,17 @@
 
                 player.configure(config);
 
-                // Extract query params from the main manifest URL
-                const baseUriObj = new URL(manifestUrl);
-                const queryParams = baseUriObj.search; // ?Signature=...&Policy=...&Key-Pair-Id=...
-
-                // Response Filter: Intercepts raw manifest XML and injects security tokens into <BaseURL>
-                player.getNetworkingEngine().registerResponseFilter((type, response) => {
-                    if (type === shaka.net.NetworkingEngine.RequestType.MANIFEST && queryParams) {
-                        try {
-                            let text = new TextDecoder().decode(response.data);
-                            const cleanQuery = queryParams.startsWith('?') ? queryParams.substring(1) : queryParams;
-
-                            // Inject tokens directly inside the manifest's <BaseURL> tag
-                            text = text.replace(/<BaseURL>(.*?)<\/BaseURL>/gs, (match, urlContent) => {
-                                const separator = urlContent.includes('?') ? '&' : '?';
-                                return `<BaseURL>${urlContent.trim()}${separator}${cleanQuery}</BaseURL>`;
-                            });
-
-                            response.data = new TextEncoder().encode(text).buffer;
-                            logToConsole('Manifest successfully intercepted and signed tokens injected into BaseURL.', 'success');
-                        } catch (err) {
-                            logToConsole('Response Filter Error: ' + err.message, 'error');
-                        }
-                    }
-                });
-
-                // Request Filter for headers
+                // Proxy Request Filter: Wraps every request URL inside your DeltaStudy proxy format
                 player.getNetworkingEngine().registerRequestFilter((type, request) => {
-                    request.headers['Origin'] = window.location.origin;
-                    request.headers['Referer'] = 'https://studyparcham.in/';
-                    logToConsole(`Network Request [Type ${type}]: ${request.uri}`, 'info');
+                    if (request.uri && !request.uri.includes('apiserver.deltastudy.fun')) {
+                        const encodedUrl = encodeURIComponent(request.uri);
+                        request.uri = `https://apiserver.deltastudy.fun/api/pi/play?url=${encodedUrl}`;
+                    }
+                    logToConsole(`Proxied Request [Type ${type}]: ${request.uri}`, 'info');
                 });
 
                 await player.load(manifestUrl);
-                setStatus('✅ DASH Stream loaded successfully!', 'success');
+                setStatus('✅ DASH Stream loaded successfully via Proxy!', 'success');
                 logToConsole('Playback started successfully.', 'success');
                 video.play().catch(e => {
                     logToConsole('Autoplay restricted by browser: ' + e.message, 'error');
