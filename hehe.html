@@ -1,232 +1,600 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>HLS Stream Player</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevCoderZ Secure Player</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.js"></script>
+
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            background: #0a0a0a; 
-            display: flex; 
-            flex-direction: column;
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
-            font-family: Arial, sans-serif;
-            color: #fff;
-            padding: 20px;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
-        #container {
-            width: 100%;
-            max-width: 900px;
-            background: #1a1a1a;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.8);
-        }
-        video { 
-            width: 100%; 
-            border-radius: 8px;
-            background: #111;
-            aspect-ratio: 16/9;
-        }
-        #status {
-            color: #4fc3f7;
-            margin-top: 12px;
-            text-align: center;
-            font-size: 14px;
-            min-height: 24px;
-        }
-        .controls {
+
+        body {
+            background: #090d16;
+            color: #f8fafc;
+            font-family: system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
             display: flex;
-            gap: 10px;
-            margin-top: 15px;
-            flex-wrap: wrap;
+            flex-direction: column;
+            align-items: center;
             justify-content: center;
+            padding: 20px;
         }
-        button, input {
-            background: #2a2a2a;
-            color: #fff;
-            border: 1px solid #444;
-            padding: 10px 16px;
+
+        .player-wrapper {
+            width: 100%;
+            max-width: 960px;
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,.7);
+        }
+
+        .header {
+            background: #1f2937;
+            padding: 12px 20px;
+            font: 12px monospace;
+            color: #38bdf8;
+            border-bottom: 1px solid #374151;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        video {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            display: block;
+            background: #000;
+        }
+
+        .telemetry {
+            padding: 15px 20px;
+            background: #111827;
+            border-top: 1px solid #1f2937;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .meta {
+            color: #9ca3af;
+            font: 13px monospace;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .status {
+            padding: 5px 10px;
             border-radius: 6px;
+            font: 600 12px monospace;
+            white-space: nowrap;
+        }
+
+        .initializing {
+            background: #78350f;
+            color: #fde68a;
+        }
+
+        .active {
+            background: #064e3b;
+            color: #6ee7b7;
+        }
+
+        .failure {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+
+        .console {
+            width: 100%;
+            max-width: 960px;
+            margin-top: 15px;
+            background: #030712;
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            overflow: hidden;
+            font: 12px monospace;
+        }
+
+        .console-header {
+            background: #111827;
+            padding: 8px 15px;
+            color: #9ca3af;
+            border-bottom: 1px solid #1f2937;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .console-header button {
+            background: transparent;
+            border: none;
+            color: #9ca3af;
             cursor: pointer;
-            transition: all 0.2s;
-            font-size: 14px;
+            font-family: monospace;
         }
-        input {
-            flex: 1;
-            min-width: 250px;
-            cursor: text;
+
+        .console-body {
+            padding: 12px 15px;
+            height: 140px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
-        input:focus { border-color: #4fc3f7; outline: none; }
-        button:hover { background: #3a3a3a; border-color: #4fc3f7; }
-        .error { color: #ff6b6b; }
-        .success { color: #69db7c; }
+
+        .log-line {
+            line-height: 1.4;
+            word-break: break-all;
+        }
+
+        .info {
+            color: #38bdf8;
+        }
+
+        .success {
+            color: #34d399;
+        }
+
+        .warn {
+            color: #fbbf24;
+        }
+
+        .error {
+            color: #f87171;
+        }
     </style>
 </head>
+
 <body>
-    <div id="container">
-        <video id="video" controls playsinline></video>
-        <div id="status">🔄 Initializing player...</div>
-        <div class="controls">
-            <input type="text" id="apiUrlInput" placeholder="Enter API URL..." />
-            <button onclick="handleManualPlay()">▶ Play</button>
-            <button onclick="loadFromUrlParams()">🔄 Reload</button>
-            <button onclick="retryWithProxy()">🔁 Try Proxy Mode</button>
-        </div>
+
+<div class="player-wrapper">
+
+    <div class="header">
+        <span>ENGINE: SHAKA STREAM PIPELINE</span>
+        <span>MODE: STATIC MPD</span>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <script>
-        const video = document.getElementById('video');
-        const status = document.getElementById('status');
-        const apiUrlInput = document.getElementById('apiUrlInput');
+    <video
+        id="video"
+        controls
+        autoplay
+        playsinline>
+    </video>
 
-        let hls = null;
-        let currentStreamUrl = '';
-        let usingProxy = false;
+    <div class="telemetry">
+        <span id="meta" class="meta">
+            Initializing player...
+        </span>
 
-        function setStatus(msg, type = 'info') {
-            status.innerHTML = msg;
-            status.className = type;
+        <span id="status" class="status initializing">
+            INITIALIZING
+        </span>
+    </div>
+
+</div>
+
+
+<div class="console">
+
+    <div class="console-header">
+        <span>LIVE TELEMETRY</span>
+
+        <button onclick="
+            document.getElementById('consoleBody').innerHTML = '';
+        ">
+            Clear [X]
+        </button>
+    </div>
+
+    <div id="consoleBody" class="console-body">
+
+        <div class="log-line info">
+            [SYSTEM] Player ready.
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/*
+============================================================
+EMBEDDED STREAM
+============================================================
+*/
+
+const STREAM_URL =
+"https://d1d34p8vz63oiq.cloudfront.net/ab0bd9e0-6f92-4e64-8bd8-598b5466ba14/master.mpd?Signature=NFB7TA3sp17zCTkdlhWOsCRLw1C0fenvzT0uBqJBu0C6SGrwUKFFjDpRn1zjCkgpsf12sc7p7QNeTaXqEQD~LxYkvmTiE2aF56GPMVi5bf3P6exhxrgZwklspYR9A3YPYdnkQxdRQIDSrN9-sRmGgHJmzdP8ahoD960Uo1Kj8PYJQRhM4kmPRGOcD7MVzZgYjK3XV-7tdDjwXMuEucMTisUGSCzEOBAXgoLVMk20yXuQTiC2h0zcDv9HP2ErL71ZnpaiRuCq8SgS2a27zE8~rf7eT2gyT0cHYc78B~LY3i4X7j8nMlHTnUVPj3VQb0Mr-ZNA1R7H3q0dqABkia8vZQ__&Key-Pair-Id=APKAXVKMENFCRKTG5XE2&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9kMWQzNHA4dno2M29pcS5jbG91ZGZyb250Lm5ldC9hYjBiZDllMC02ZjkyLTRlNjQtOGJkOC01OThiNTQ2NmJhMTQvKiIsIkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTc4OTEzMDkzOH0sIkRhdGVHcmVhdGVyVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjo5NzU3Mjc5NzZ9fX1dfQ__";
+
+
+/*
+============================================================
+EMBEDDED CLEARKEY
+============================================================
+
+KID:
+03f80062cf40355260e39b3a6dded2b5
+
+KEY:
+c58eb1419a363838bad4e7f7cba75a9d
+*/
+
+const CLEAR_KEYS = {
+    "03f80062cf40355260e39b3a6dded2b5":
+    "c58eb1419a363838bad4e7f7cba75a9d"
+};
+
+
+/*
+============================================================
+LOGGING
+============================================================
+*/
+
+function log(message, type = "info") {
+
+    const body =
+        document.getElementById("consoleBody");
+
+    const line =
+        document.createElement("div");
+
+    const time =
+        new Date().toLocaleTimeString();
+
+    line.className =
+        `log-line ${type}`;
+
+    line.textContent =
+        `[${time}] ${message}`;
+
+    body.appendChild(line);
+
+    body.scrollTop =
+        body.scrollHeight;
+}
+
+
+/*
+============================================================
+STATUS
+============================================================
+*/
+
+function setStatus(text, type) {
+
+    const status =
+        document.getElementById("status");
+
+    status.textContent = text;
+
+    status.className =
+        `status ${type}`;
+}
+
+
+/*
+============================================================
+PLAYER
+============================================================
+*/
+
+async function initializePlayer() {
+
+    const video =
+        document.getElementById("video");
+
+    const meta =
+        document.getElementById("meta");
+
+
+    try {
+
+        log(
+            "Installing Shaka polyfills...",
+            "info"
+        );
+
+        shaka.polyfill.installAll();
+
+
+        if (!shaka.Player.isBrowserSupported()) {
+
+            throw new Error(
+                "This browser is not supported by Shaka Player."
+            );
         }
 
-        function destroyHLS() {
-            if (hls) {
-                hls.destroy();
-                hls = null;
+
+        /*
+        ========================================================
+        CREATE PLAYER
+        ========================================================
+        */
+
+        const player =
+            new shaka.Player(video);
+
+
+        /*
+        ========================================================
+        CLEARKEY
+        ========================================================
+        */
+
+        player.configure({
+
+            drm: {
+
+                clearKeys: CLEAR_KEYS
+
             }
-            video.removeAttribute('src');
-            video.load();
-        }
 
-        async function fetchAndPlay(apiUrl) {
-            destroyHLS();
-            setStatus('🔄 Fetching stream data from API...', 'info');
+        });
 
-            try {
-                const res = await fetch(apiUrl);
-                const data = await res.json();
-                
-                if (data.success && data.url) {
-                    currentStreamUrl = data.url;
-                    usingProxy = false;
-                    loadStream(currentStreamUrl);
-                } else {
-                    throw new Error(data.error || 'Invalid API response structure');
+
+        log(
+            "ClearKey DRM configured.",
+            "success"
+        );
+
+
+        /*
+        ========================================================
+        GET MPD PARAMETERS
+        ========================================================
+        */
+
+        const mpdURL =
+            new URL(STREAM_URL);
+
+        const mpdParameters =
+            new URLSearchParams(
+                mpdURL.search
+            );
+
+
+        log(
+            "Master MPD parameters detected.",
+            "success"
+        );
+
+
+        log(
+            "Parameters: " +
+            [...mpdParameters.keys()].join(", "),
+            "info"
+        );
+
+
+        /*
+        ========================================================
+        SEGMENT REQUEST FILTER
+        ========================================================
+        */
+
+        const networkingEngine =
+            player.getNetworkingEngine();
+
+
+        networkingEngine.registerRequestFilter(
+            (type, request) => {
+
+                /*
+                Leave the master MPD untouched.
+                */
+
+                if (
+                    type ===
+                    shaka.net.NetworkingEngine.RequestType.MANIFEST
+                ) {
+                    return;
                 }
-            } catch (err) {
-                setStatus('❌ API Error: ' + err.message, 'error');
-            }
-        }
 
-        function loadFromUrlParams() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const batchId = urlParams.get('batchId');
-            const subjectId = urlParams.get('subjectId') || 'hehe';
-            const lectureId = urlParams.get('lectureId') || urlParams.get('scheduleId');
 
-            if (batchId && lectureId) {
-                const apiUrl = `https://examcrushers.in/api/play?batchId=${batchId}&subjectId=${subjectId}&lectureId=${lectureId}&key=Sharma`;
-                apiUrlInput.value = apiUrl;
-                fetchAndPlay(apiUrl);
-            } else {
-                setStatus('⚠️ Missing URL parameters. Please use format: ?batchId=...&subjectId=...&lectureId=...', 'info');
-            }
-        }
+                /*
+                Apply the same query parameters
+                to media requests.
+                */
 
-        function handleManualPlay() {
-            const inputVal = apiUrlInput.value.trim();
-            if (!inputVal) {
-                setStatus('❌ Please enter a valid API URL', 'error');
-                return;
-            }
-            fetchAndPlay(inputVal);
-        }
+                request.uris =
+                    request.uris.map(uri => {
 
-        function loadStream(url) {
-            destroyHLS();
-            setStatus('🔄 Loading stream...', 'info');
-            
-            if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                video.src = url;
-                setStatus('📺 Playing with native HLS (Safari)', 'success');
-                return;
-            }
+                        try {
 
-            if (Hls.isSupported()) {
-                hls = new Hls({
-                    enableWorker: true,
-                    lowLatencyMode: true,
-                    xhrSetup: function(xhr, reqUrl) {
-                        xhr.withCredentials = false;
-                        xhr.setRequestHeader('Origin', window.location.origin);
-                    }
-                });
+                            const url =
+                                new URL(uri);
 
-                hls.on(Hls.Events.ERROR, function(event, data) {
-                    if (data.fatal) {
-                        setStatus('❌ Fatal error: ' + data.type, 'error');
-                        if (data.type === 'networkError' && !usingProxy) {
-                            setStatus('🔄 Network/CORS error - trying proxy mode...', 'info');
-                            retryWithProxy();
+
+                            for (
+                                const [
+                                    name,
+                                    value
+                                ]
+                                of mpdParameters.entries()
+                            ) {
+
+                                url.searchParams.set(
+                                    name,
+                                    value
+                                );
+
+                            }
+
+
+                            return url.toString();
+
+                        } catch (error) {
+
+                            log(
+                                "Could not modify segment URL: " +
+                                error.message,
+                                "warn"
+                            );
+
+                            return uri;
                         }
-                    } else {
-                        setStatus('⚠️ Non-fatal error: ' + data.type, 'error');
-                    }
-                });
 
-                hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                    setStatus('✅ Stream loaded successfully!', 'success');
-                    video.play().catch(e => console.log('Autoplay blocked'));
-                });
+                    });
 
-                hls.attachMedia(video);
-                hls.loadSource(url);
-            } else {
-                setStatus('❌ HLS not supported in this browser', 'error');
             }
+        );
+
+
+        log(
+            "MPD authentication parameters attached to media requests.",
+            "success"
+        );
+
+
+        /*
+        ========================================================
+        ERROR HANDLER
+        ========================================================
+        */
+
+        player.addEventListener(
+            "error",
+            event => {
+
+                const error =
+                    event.detail;
+
+                log(
+                    `Shaka error ${error.code}: ${
+                        JSON.stringify(error)
+                    }`,
+                    "error"
+                );
+
+                setStatus(
+                    `ERROR_${error.code}`,
+                    "failure"
+                );
+
+            }
+        );
+
+
+        /*
+        ========================================================
+        LOAD STREAM
+        ========================================================
+        */
+
+        meta.textContent =
+            "Loading CloudFront MPD...";
+
+        setStatus(
+            "LOADING",
+            "initializing"
+        );
+
+
+        log(
+            "Loading master.mpd...",
+            "info"
+        );
+
+
+        await player.load(
+            STREAM_URL
+        );
+
+
+        /*
+        ========================================================
+        SUCCESS
+        ========================================================
+        */
+
+        meta.textContent =
+            "CloudFront DASH stream active";
+
+
+        setStatus(
+            "STREAM_ACTIVE",
+            "active"
+        );
+
+
+        log(
+            "Manifest loaded successfully.",
+            "success"
+        );
+
+
+        /*
+        ========================================================
+        AUTOPLAY
+        ========================================================
+        */
+
+        try {
+
+            await video.play();
+
+            log(
+                "Playback started.",
+                "success"
+            );
+
+        } catch (error) {
+
+            log(
+                "Autoplay blocked. Press Play.",
+                "warn"
+            );
+
         }
 
-        function retryWithProxy() {
-            if (!currentStreamUrl) {
-                setStatus('❌ No active stream URL to proxy', 'error');
-                return;
-            }
-            
-            destroyHLS();
-            usingProxy = true;
-            setStatus('🔄 Trying CORS proxy mode...', 'info');
-            
-            const proxyUrl = 'https://cors-anywhere.herokuapp.com/' + currentStreamUrl;
-            
-            if (Hls.isSupported()) {
-                hls = new Hls({
-                    enableWorker: true,
-                    lowLatencyMode: true,
-                    xhrSetup: function(xhr, reqUrl) {
-                        xhr.withCredentials = false;
-                    }
-                });
 
-                hls.on(Hls.Events.ERROR, function(event, data) {
-                    if (data.fatal) {
-                        setStatus('❌ Proxy also failed. Stream may be expired.', 'error');
-                    }
-                });
+    } catch (error) {
 
-                hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                    setStatus('✅ Stream loaded via proxy!', 'success');
-                    video.play().catch(e => console.log('Autoplay blocked'));
-                });
+        console.error(error);
 
-                hls.attachMedia(video);
-                hls.loadSource(proxyUrl);
-            }
-        }
 
-        window.addEventListener('load', loadFromUrlParams);
-    </script>
+        setStatus(
+            "SYSTEM_FAULT",
+            "failure"
+        );
+
+
+        document.getElementById("meta").textContent =
+            error.message;
+
+
+        log(
+            `Fatal error: ${error.message}`,
+            "error"
+        );
+
+    }
+}
+
+
+/*
+============================================================
+START
+============================================================
+*/
+
+document.addEventListener(
+    "DOMContentLoaded",
+    initializePlayer
+);
+
+</script>
+
 </body>
 </html>
