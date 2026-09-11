@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Secure Video Player - DevCoderz</title>
-
     
-    <!-- Shaka Player compiled library -->
+    <!-- Shaka Player compiled library & HLS plugin support -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.js"></script>
     
     <!-- FontAwesome for minimal icons -->
@@ -391,7 +390,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Configuration & State
             const API_ENDPOINT = "https://examcrushers.in/api/play?batchId=698ad3519549b300a5e1cc6a&subjectId=hehe&lectureId=6a7ecfc310002885ba91700c&key=Sharma";
             const STORAGE_PREFIX = "devcoderz_pos_";
             
@@ -403,7 +401,6 @@
             const retryBtn = document.getElementById('retryBtn');
             const controlsOverlay = document.getElementById('controlsOverlay');
             
-            // Buttons & UI Controls
             const playPauseBtn = document.getElementById('playPauseBtn');
             const playPauseIcon = document.getElementById('playPauseIcon');
             const muteBtn = document.getElementById('muteBtn');
@@ -416,19 +413,17 @@
             const fullscreenBtn = document.getElementById('fullscreenBtn');
             const fullscreenIcon = document.getElementById('fullscreenIcon');
             
-            // Menus
             const speedBtn = document.getElementById('speedBtn');
             const speedMenu = document.getElementById('speedMenu');
             const qualityBtn = document.getElementById('qualityBtn');
             const qualityMenu = document.getElementById('qualityMenu');
             
-            // Indicators
             const tapLeftIndicator = document.getElementById('tapLeftIndicator');
             const tapRightIndicator = document.getElementById('tapRightIndicator');
 
             let shakaPlayer = null;
             let controlsTimeout = null;
-            let currentLectureKey = "6a7ecfc310002885ba91700c"; // Unique identifier for local storage key tracking
+            let currentLectureKey = "6a7ecfc310002885ba91700c";
 
             // Initialize Shaka Polyfill
             shaka.polyfill.installAll();
@@ -442,7 +437,6 @@
                 showLoader();
 
                 try {
-                    // Fetch playback authorization payload from backend API securely
                     const response = await fetch(API_ENDPOINT, {
                         method: 'GET',
                         headers: { 'Accept': 'application/json' }
@@ -453,25 +447,22 @@
                     }
 
                     const data = await response.json();
+                    console.log("API Payload Received:", data);
 
-                    if (!data.success || (!data.dashUrl && !data.url)) {
-                        throw new Error("Invalid playback configuration received from backend authorization.");
+                    const streamUrl = data.dashUrl || data.url;
+                    if (!streamUrl) {
+                        throw new Error("Stream URL missing from API response.");
                     }
 
-                    // Initialize Shaka Player instance
                     if (!shakaPlayer) {
                         shakaPlayer = new shaka.Player(video);
                         
-                        // Listen for player errors
                         shakaPlayer.addEventListener('error', (event) => {
-                            console.error('Shaka streaming error code:', event.detail);
+                            console.error('Shaka streaming error detail:', event.detail);
                         });
                     }
 
-                    // Choose stream URL (Prefer DASH if provided, fallback to standard stream URL)
-                    const streamUrl = data.dashUrl || data.url;
-
-                    // Load media into player
+                    // Load stream into Shaka Player
                     await shakaPlayer.load(streamUrl);
                     
                     // Restore last known playback position
@@ -486,7 +477,7 @@
                 } catch (err) {
                     console.error("Player initialization failure:", err);
                     hideLoader();
-                    showError("Failed to authorize or load playback stream. Please try again.");
+                    showError(`Stream Error: ${err.message || "Failed to load stream."}`);
                 }
             }
 
@@ -528,7 +519,6 @@
                     currentTimeEl.textContent = formatTime(video.currentTime);
                     durationEl.textContent = formatTime(video.duration);
 
-                    // Persist position locally every few seconds
                     localStorage.setItem(STORAGE_PREFIX + currentLectureKey, video.currentTime);
                 }
             });
@@ -546,7 +536,7 @@
 
             function formatTime(seconds) {
                 const mins = Math.floor(seconds / 60);
-                secs = Math.floor(seconds % 60);
+                const secs = Math.floor(seconds % 60);
                 return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
             }
 
@@ -604,7 +594,6 @@
                 const tracks = shakaPlayer.getVariantTracks();
                 if (tracks.length > 1) {
                     qualityBtn.style.display = 'flex';
-                    // Populate dynamic resolutions
                     const uniqueHeights = [...new Set(tracks.map(t => t.height))].filter(Boolean).sort((a,b) => b - a);
                     
                     let html = '<button data-quality="auto" class="active">Auto</button>';
@@ -631,7 +620,6 @@
                 }
             }
 
-            // Close popups on outside click
             document.addEventListener('click', () => {
                 speedMenu.classList.remove('active');
                 qualityMenu.classList.remove('active');
@@ -640,24 +628,20 @@
             // --- Mobile Double Tap Gestures ---
             let lastTapTime = 0;
             videoContainer.addEventListener('click', (e) => {
-                // Ignore clicks originating directly from control bar elements
                 if (e.target.closest('.controls-overlay')) return;
 
                 const now = new Date().getTime();
                 const timeDiff = now - lastTapTime;
                 
                 if (timeDiff < 300 && timeDiff > 0) {
-                    // Double tap detected!
                     const rect = videoContainer.getBoundingClientRect();
                     const clickX = e.clientX - rect.left;
                     const containerWidth = rect.width;
 
                     if (clickX < containerWidth / 2) {
-                        // Left double tap -> Rewind 10s
                         video.currentTime = Math.max(0, video.currentTime - 10);
                         showTapFeedback(tapLeftIndicator, "-10s");
                     } else {
-                        // Right double tap -> Forward 10s
                         video.currentTime = Math.min(video.duration, video.currentTime + 10);
                         showTapFeedback(tapRightIndicator, "+10s");
                     }
@@ -670,7 +654,7 @@
                 setTimeout(() => el.classList.remove('show'), 600);
             }
 
-            // Auto-hide Controls on Inactivity (Mobile/Desktop friendly)
+            // Auto-hide Controls on Inactivity
             function resetControlsTimeout() {
                 videoContainer.classList.remove('hide-controls');
                 clearTimeout(controlsTimeout);
@@ -688,17 +672,14 @@
             video.addEventListener('play', resetControlsTimeout);
             video.addEventListener('pause', () => videoContainer.classList.remove('hide-controls'));
 
-            // Retry Button
             retryBtn.addEventListener('click', initPlayer);
 
-            // Clean up resources if lecture switches/component unmounts
             window.addEventListener('beforeunload', () => {
                 if (shakaPlayer) {
                     shakaPlayer.destroy();
                 }
             });
 
-            // Kick off initial load
             initPlayer();
         });
     </script>
