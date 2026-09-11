@@ -14,20 +14,37 @@ export async function onRequest(context) {
 
   const BOT_TOKEN = "8976900107:AAECF_BpDOmPI4VCwwpj2eALxo4GV1pJ2Qg";
 
-  // 1. Telegram Webhook Handler
+  // 1. Telegram Webhook Handler (Supports Deep Linking: /start lectureId_batchId_quality)
   if (url.pathname === '/api/bot-webhook') {
     if (request.method === 'POST') {
       try {
         const update = await request.json();
         if (update.message && update.message.text) {
           const chatId = update.message.chat.id;
-          const text = update.message.text;
+          const text = update.message.text.trim();
 
-          let replyText = `👋 Hello! Tune bheja: "${text}"`;
-          if (text === '/start') {
-            replyText = "🚀 Welcome to Devcoderz Bot! Send your lecture details or visit examcrushers.in";
+          let replyText = "";
+
+          if (text.startsWith('/start')) {
+            const parts = text.split(' ');
+            if (parts.length > 1 && parts[1].includes('_')) {
+              const payloadParams = parts[1].split('_');
+              const lectureId = payloadParams[0];
+              const batchId = payloadParams[1];
+              const quality = payloadParams[2] || '720';
+
+              const watchUrl = `https://examcrushers.in/?batchId=${batchId}&lectureId=${lectureId}&key=Sharma`;
+              
+              replyText = `✅ *Lecture Ready!*\n\n` +
+                          `📌 *Lecture ID:* \`${lectureId}\`\n` +
+                          `📦 *Batch ID:* \`${batchId}\`\n` +
+                          `📺 *Quality:* \`${quality}p\`\n\n` +
+                          `🔗 [Click Here to Watch on ExamCrushers](${watchUrl})`;
+            } else {
+              replyText = "🚀 *Welcome to Devcoderz Bot!*\nUse portal links to fetch lectures directly.";
+            }
           } else {
-            replyText = `🔗 Received your query: ${text}. Check examcrushers.in for playback.`;
+            replyText = "⚠️ Please use the direct links generated from your portal.";
           }
 
           await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
@@ -35,7 +52,8 @@ export async function onRequest(context) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               chat_id: chatId,
-              text: replyText
+              text: replyText,
+              parse_mode: 'Markdown'
             })
           });
         }
@@ -49,7 +67,7 @@ export async function onRequest(context) {
     });
   }
 
-  // 2. Transparent Proxy Handler for Stream Segments
+  // 2. Transparent Proxy Handler for Stream Segments & Manifests
   const targetProxyUrl = url.searchParams.get('url');
   if (targetProxyUrl) {
     try {
@@ -77,7 +95,7 @@ export async function onRequest(context) {
     }
   }
 
-  // 3. Main API Handler for examcrushers.in
+  // 3. Main API Handler for examcrushers.in Player
   let batchId = null;
   let subjectId = null;
   let lectureId = null;
@@ -118,7 +136,7 @@ export async function onRequest(context) {
   }
 
   try {
-    const targetUrl = `https://www.learnxpw.site/api/video-url?batch_id=${batchId}&subject_id=${subjectId}&video_id=${lectureId}`;
+    const targetUrl = `https://www.learnxpw.site/api/video-url?batch_id=${batchId}&subject_id=${subjectId || 'hehe'}&video_id=${lectureId}`;
 
     const apiResponse = await fetch(targetUrl, {
       headers: {
