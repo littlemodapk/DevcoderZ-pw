@@ -133,8 +133,7 @@ export async function onRequest(context) {
 
     if (fullDash) {
       hlsUrl = data.data.hlsUrl || '';
-      const workerBase = `${url.protocol}//${url.host}${url.pathname}`;
-      dashUrl = `${workerBase}?url=${encodeURIComponent(fullDash)}`;
+      dashUrl = `https://apiserver.deltastudy.fun/api/pi/play?url=${encodeURIComponent(fullDash)}`;
     }
 
     let kid = null;
