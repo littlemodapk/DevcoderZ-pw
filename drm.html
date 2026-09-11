@@ -1,247 +1,705 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>Dynamic Shaka DRM Stream Player with Proxy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Secure Video Player - DevCoderz</title>
+    
+    <!-- Shaka Player compiled library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.js"></script>
+    
+    <!-- FontAwesome for minimal icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            background: #0a0a0a; 
-            display: flex; 
-            flex-direction: column;
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
-            font-family: Arial, sans-serif;
-            color: #fff;
-            padding: 20px;
+        :root {
+            --primary-color: #3b82f6;
+            --overlay-bg: rgba(15, 23, 42, 0.75);
+            --player-bg: #090d16;
+            --text-color: #f8fafc;
         }
-        #container {
-            width: 100%;
-            max-width: 900px;
-            background: #1a1a1a;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
         }
-        video { 
-            width: 100%; 
-            border-radius: 8px;
-            background: #111;
-            aspect-ratio: 16/9;
-        }
-        #status {
-            color: #4fc3f7;
-            margin-top: 12px;
-            text-align: center;
-            font-size: 14px;
-            min-height: 24px;
-        }
-        .controls {
+
+        body {
+            background-color: #030712;
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             display: flex;
-            gap: 10px;
-            margin-top: 15px;
-            flex-wrap: wrap;
             justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
-        button, input {
-            background: #2a2a2a;
-            color: #fff;
-            border: 1px solid #444;
-            padding: 10px 16px;
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 1000px;
+            aspect-ratio: 16/9;
+            background-color: var(--player-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+        }
+
+        .video-container:-webkit-full-screen {
+            max-width: none;
+            width: 100%;
+            height: 100%;
+            border-radius: 0;
+        }
+
+        .video-container:fullscreen {
+            max-width: none;
+            width: 100%;
+            height: 100%;
+            border-radius: 0;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+            cursor: pointer;
+        }
+
+        /* Loading Spinner */
+        .player-loader {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: none;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        @keyframes spin {
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* Error Overlay */
+        .player-error {
+            position: absolute;
+            inset: 0;
+            background: rgba(3, 7, 18, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+            z-index: 20;
+            display: none;
+        }
+
+        .player-error i {
+            font-size: 40px;
+            color: #ef4444;
+            margin-bottom: 12px;
+        }
+
+        .player-error p {
+            font-size: 15px;
+            color: #94a3b8;
+            margin-bottom: 16px;
+            max-width: 400px;
+        }
+
+        .retry-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            font-size: 14px;
+            font-weight: 500;
             border-radius: 6px;
             cursor: pointer;
-            transition: all 0.2s;
-            font-size: 14px;
+            transition: background 0.2s;
         }
-        input {
-            flex: 1;
-            min-width: 250px;
-            cursor: text;
+
+        .retry-btn:hover {
+            background-color: #2563eb;
         }
-        input:focus { border-color: #4fc3f7; outline: none; }
-        button:hover { background: #3a3a3a; border-color: #4fc3f7; }
-        .error { color: #ff6b6b; }
-        .success { color: #69db7c; }
-        
-        #console-box {
-            margin-top: 15px;
-            background: #111;
-            border: 1px solid #333;
-            border-radius: 6px;
-            padding: 10px;
-            height: 180px;
-            overflow-y: auto;
-            font-family: monospace;
-            font-size: 11px;
-            color: #a8ff60;
+
+        /* Double Tap Animation Effects */
+        .tap-feedback {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 10px 16px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 15;
+        }
+        .tap-left { left: 10%; }
+        .tap-right { right: 10%; }
+        .tap-feedback.show { opacity: 1; }
+
+        /* Custom Controls Overlay */
+        .controls-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(3, 7, 18, 0.85) 0%, rgba(3, 7, 18, 0.4) 60%, transparent 100%);
+            padding: 20px 16px 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+        }
+
+        .video-container.hide-controls .controls-overlay {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Seek Bar */
+        .progress-container {
+            position: relative;
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .progress-bar {
+            position: absolute;
+            height: 100%;
+            background: var(--primary-color);
+            border-radius: 3px;
+            width: 0%;
+            pointer-events: none;
+        }
+
+        .progress-container input[type="range"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            margin: 0;
+        }
+
+        /* Bottom Row Controls */
+        .controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .controls-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        button.control-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 16px;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        button.control-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--primary-color);
+        }
+
+        .time-display {
+            font-size: 12px;
+            font-variant-numeric: tabular-nums;
+            color: #cbd5e1;
+            margin-left: 4px;
+        }
+
+        .volume-container {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .volume-slider {
+            width: 60px;
+            height: 4px;
+            accent-color: var(--primary-color);
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            appearance: none;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 10px;
+            height: 10px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        /* Settings Menus (Speed & Quality) */
+        .menu-wrapper {
+            position: relative;
+        }
+
+        .popup-menu {
+            position: absolute;
+            bottom: 40px;
+            right: 0;
+            background: #1e293b;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            display: none;
+            flex-direction: column;
+            min-width: 120px;
+            z-index: 30;
+        }
+
+        .popup-menu.active {
+            display: flex;
+        }
+
+        .popup-menu button {
+            background: none;
+            border: none;
+            color: #cbd5e1;
+            padding: 8px 14px;
             text-align: left;
-            word-break: break-all;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
         }
-        .log-error { color: #ff6b6b; }
-        .log-info { color: #4fc3f7; }
-        .log-success { color: #69db7c; }
+
+        .popup-menu button:hover, .popup-menu button.active {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--primary-color);
+        }
+
+        @media (max-width: 640px) {
+            .volume-slider { display: none; }
+            .video-container { border-radius: 0; }
+        }
     </style>
 </head>
 <body>
-    <div id="container">
-        <video id="video" controls playsinline></video>
-        <div id="status">🔄 Initializing Shaka Player...</div>
-        <div class="controls">
-            <input type="text" id="apiUrlInput" placeholder="API Endpoint or Custom URL..." />
-            <button onclick="handleManualPlay()">▶ Play</button>
-            <button onclick="loadFromUrlParams()">🔄 Reload</button>
-            <button onclick="clearConsole()">🧹 Clear Console</button>
+
+    <div class="video-container" id="videoContainer">
+        <!-- Native Video Element -->
+        <video id="videoElement" playsinline></video>
+
+        <!-- UI Feedback Overlays -->
+        <div class="player-loader" id="playerLoader"></div>
+        
+        <div class="tap-feedback tap-left" id="tapLeftIndicator"><i class="fa-solid fa-backward"></i> -10s</div>
+        <div class="tap-feedback tap-right" id="tapRightIndicator"><i class="fa-solid fa-forward"></i> +10s</div>
+
+        <div class="player-error" id="playerError">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <p id="errorMessage">Unable to load the secure playback stream.</p>
+            <button class="retry-btn" id="retryBtn">Try Again</button>
         </div>
-        <div id="console-box"></div>
+
+        <!-- Custom Controls -->
+        <div class="controls-overlay" id="controlsOverlay">
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar" id="progressBar"></div>
+                <input type="range" id="seekBar" value="0" min="0" max="100" step="0.1">
+            </div>
+
+            <div class="controls-row">
+                <div class="controls-group">
+                    <button class="control-btn" id="playPauseBtn" title="Play/Pause">
+                        <i class="fa-solid fa-play" id="playPauseIcon"></i>
+                    </button>
+                    
+                    <div class="volume-container">
+                        <button class="control-btn" id="muteBtn" title="Mute/Unmute">
+                            <i class="fa-solid fa-volume-high" id="volumeIcon"></i>
+                        </button>
+                        <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.05" value="1">
+                    </div>
+
+                    <div class="time-display">
+                        <span id="currentTime">00:00</span> / <span id="duration">00:00</span>
+                    </div>
+                </div>
+
+                <div class="controls-group">
+                    <!-- Playback Speed Menu -->
+                    <div class="menu-wrapper">
+                        <button class="control-btn" id="speedBtn" title="Playback Speed"><i class="fa-solid fa-gauge-high"></i></button>
+                        <div class="popup-menu" id="speedMenu">
+                            <button data-speed="0.5">0.5x</button>
+                            <button data-speed="0.75">0.75x</button>
+                            <button data-speed="1" class="active">Normal</button>
+                            <button data-speed="1.25">1.25x</button>
+                            <button data-speed="1.5">1.5x</button>
+                            <button data-speed="2">2.0x</button>
+                        </div>
+                    </div>
+
+                    <!-- Quality Selection Menu -->
+                    <div class="menu-wrapper">
+                        <button class="control-btn" id="qualityBtn" title="Quality" style="display:none;"><i class="fa-solid fa-gear"></i></button>
+                        <div class="popup-menu" id="qualityMenu">
+                            <button data-quality="auto" class="active">Auto</button>
+                        </div>
+                    </div>
+
+                    <button class="control-btn" id="fullscreenBtn" title="Fullscreen">
+                        <i class="fa-solid fa-expand" id="fullscreenIcon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.js"></script>
     <script>
-        const video = document.getElementById('video');
-        const status = document.getElementById('status');
-        const apiUrlInput = document.getElementById('apiUrlInput');
-        const consoleBox = document.getElementById('console-box');
+        document.addEventListener('DOMContentLoaded', () => {
+            // Configuration & State
+            const API_ENDPOINT = "https://examcrushers.in/api/play?batchId=698ad3519549b300a5e1cc6a&subjectId=hehe&lectureId=6a7ecfc310002885ba91700c&key=Sharma";
+            const STORAGE_PREFIX = "devcoderz_pos_";
+            
+            const videoContainer = document.getElementById('videoContainer');
+            const video = document.getElementById('videoElement');
+            const loader = document.getElementById('playerLoader');
+            const errorOverlay = document.getElementById('playerError');
+            const errorMessage = document.getElementById('errorMessage');
+            const retryBtn = document.getElementById('retryBtn');
+            const controlsOverlay = document.getElementById('controlsOverlay');
+            
+            // Buttons & UI Controls
+            const playPauseBtn = document.getElementById('playPauseBtn');
+            const playPauseIcon = document.getElementById('playPauseIcon');
+            const muteBtn = document.getElementById('muteBtn');
+            const volumeIcon = document.getElementById('volumeIcon');
+            const volumeSlider = document.getElementById('volumeSlider');
+            const seekBar = document.getElementById('seekBar');
+            const progressBar = document.getElementById('progressBar');
+            const currentTimeEl = document.getElementById('currentTime');
+            const durationEl = document.getElementById('duration');
+            const fullscreenBtn = document.getElementById('fullscreenBtn');
+            const fullscreenIcon = document.getElementById('fullscreenIcon');
+            
+            // Menus
+            const speedBtn = document.getElementById('speedBtn');
+            const speedMenu = document.getElementById('speedMenu');
+            const qualityBtn = document.getElementById('qualityBtn');
+            const qualityMenu = document.getElementById('qualityMenu');
+            
+            // Indicators
+            const tapLeftIndicator = document.getElementById('tapLeftIndicator');
+            const tapRightIndicator = document.getElementById('tapRightIndicator');
 
-        let player = null;
+            let shakaPlayer = null;
+            let controlsTimeout = null;
+            let currentLectureKey = "6a7ecfc310002885ba91700c"; // Unique identifier for local storage key tracking
 
-        function logToConsole(msg, type = 'info') {
-            const time = new Date().toLocaleTimeString();
-            const div = document.createElement('div');
-            div.className = `log-${type}`;
-            div.textContent = `[${time}] ${msg}`;
-            consoleBox.appendChild(div);
-            consoleBox.scrollTop = consoleBox.scrollHeight;
-        }
-
-        function clearConsole() {
-            consoleBox.innerHTML = '';
-        }
-
-        function setStatus(msg, type = 'info') {
-            status.innerHTML = msg;
-            status.className = type;
-            logToConsole(msg, type === 'error' ? 'error' : (type === 'success' ? 'success' : 'info'));
-        }
-
-        async function initPlayer() {
+            // Initialize Shaka Polyfill
             shaka.polyfill.installAll();
             if (!shaka.Player.isBrowserSupported()) {
-                setStatus('❌ Browser not supported for Shaka Player', 'error');
+                showError("Browser is not supported for advanced secure streaming.");
                 return;
             }
 
-            player = new shaka.Player(video);
+            async function initPlayer() {
+                hideError();
+                showLoader();
 
-            player.addEventListener('error', (event) => {
-                const errCode = event.detail ? event.detail.code : 'Unknown';
-                const errMsg = event.detail ? event.detail.message : JSON.stringify(event.detail);
-                setStatus(`❌ Shaka Error [${errCode}]: ${errMsg}`, 'error');
-                logToConsole(`Shaka Error Detail: ${JSON.stringify(event.detail)}`, 'error');
+                try {
+                    // Fetch playback authorization payload from backend API securely
+                    const response = await fetch(API_ENDPOINT, {
+                        method: 'GET',
+                        headers: { 'Accept': 'application/json' }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Server responded with status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+
+                    if (!data.success || (!data.dashUrl && !data.url)) {
+                        throw new Error("Invalid playback configuration received from backend authorization.");
+                    }
+
+                    // Initialize Shaka Player instance
+                    if (!shakaPlayer) {
+                        shakaPlayer = new shaka.Player(video);
+                        
+                        // Listen for player errors
+                        shakaPlayer.addEventListener('error', (event) => {
+                            console.error('Shaka streaming error code:', event.detail);
+                        });
+                    }
+
+                    // Choose stream URL (Prefer DASH if provided, fallback to standard stream URL)
+                    const streamUrl = data.dashUrl || data.url;
+
+                    // Load media into player
+                    await shakaPlayer.load(streamUrl);
+                    
+                    // Restore last known playback position
+                    const savedTime = localStorage.getItem(STORAGE_PREFIX + currentLectureKey);
+                    if (savedTime && !isNaN(savedTime) && savedTime < video.duration - 5) {
+                        video.currentTime = parseFloat(savedTime);
+                    }
+
+                    hideLoader();
+                    setupQualityOptions();
+
+                } catch (err) {
+                    console.error("Player initialization failure:", err);
+                    hideLoader();
+                    showError("Failed to authorize or load playback stream. Please try again.");
+                }
+            }
+
+            function showLoader() { loader.style.display = 'block'; }
+            function hideLoader() { loader.style.display = 'none'; }
+            function showError(msg) {
+                errorMessage.textContent = msg;
+                errorOverlay.style.display = 'flex';
+            }
+            function hideError() { errorOverlay.style.display = 'none'; }
+
+            // --- Controls & Event Handling ---
+            
+            function togglePlay() {
+                if (video.paused) {
+                    video.play();
+                } else {
+                    video.pause();
+                }
+            }
+
+            video.addEventListener('play', () => {
+                playPauseIcon.className = "fa-solid fa-pause";
             });
 
-            loadFromUrlParams();
-        }
+            video.addEventListener('pause', () => {
+                playPauseIcon.className = "fa-solid fa-play";
+            });
 
-        async function fetchAndPlay(apiUrl) {
-            setStatus('🔄 Fetching stream details from API...', 'info');
-            logToConsole(`Fetching API: ${apiUrl}`, 'info');
+            playPauseBtn.addEventListener('click', togglePlay);
+            video.addEventListener('click', togglePlay);
 
-            try {
-                const res = await fetch(apiUrl);
-                const data = await res.json();
-                
-                logToConsole(`API Response received: ${JSON.stringify(data)}`, 'success');
+            // Time & Seek Bar Updates
+            video.addEventListener('timeupdate', () => {
+                if (!isNaN(video.duration)) {
+                    const progress = (video.currentTime / video.duration) * 100;
+                    seekBar.value = progress;
+                    progressBar.style.width = `${progress}%`;
+                    currentTimeEl.textContent = formatTime(video.currentTime);
+                    durationEl.textContent = formatTime(video.duration);
 
-                const streamUrl = data.dashUrl || data.url;
-                const clearKeys = data.keys;
+                    // Persist position locally every few seconds
+                    localStorage.setItem(STORAGE_PREFIX + currentLectureKey, video.currentTime);
+                }
+            });
 
-                if (data.success && streamUrl) {
-                    await playShakaStream(streamUrl, clearKeys);
+            video.addEventListener('loadedmetadata', () => {
+                durationEl.textContent = formatTime(video.duration);
+            });
+
+            seekBar.addEventListener('input', (e) => {
+                if (!isNaN(video.duration)) {
+                    const time = (e.target.value / 100) * video.duration;
+                    video.currentTime = time;
+                }
+            });
+
+            function formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                secs = Math.floor(seconds % 60);
+                return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+            }
+
+            // Volume Management
+            muteBtn.addEventListener('click', () => {
+                video.muted = !video.muted;
+                volumeIcon.className = video.muted ? "fa-solid fa-volume-xmark" : "fa-solid fa-volume-high";
+            });
+
+            volumeSlider.addEventListener('input', (e) => {
+                video.volume = e.target.value;
+                video.muted = (video.volume === 0);
+                volumeIcon.className = video.volume === 0 ? "fa-solid fa-volume-xmark" : "fa-solid fa-volume-high";
+            });
+
+            // Fullscreen Toggle
+            fullscreenBtn.addEventListener('click', () => {
+                if (!document.fullscreenElement) {
+                    videoContainer.requestFullscreen().catch(err => {
+                        console.error("Error attempting to enable fullscreen:", err);
+                    });
                 } else {
-                    throw new Error(data.error || 'Invalid API response structure');
+                    document.exitFullscreen();
                 }
-            } catch (err) {
-                setStatus('❌ Error: ' + err.message, 'error');
-                logToConsole('Fetch/API Error: ' + err.message, 'error');
-            }
-        }
+            });
 
-        function loadFromUrlParams() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const batchId = urlParams.get('batchId');
-            const subjectId = urlParams.get('subjectId') || 'hehe';
-            const lectureId = urlParams.get('lectureId') || urlParams.get('scheduleId');
-            const key = urlParams.get('key') || 'Sharma';
+            document.addEventListener('fullscreenchange', () => {
+                fullscreenIcon.className = document.fullscreenElement ? "fa-solid fa-compress" : "fa-solid fa-expand";
+            });
 
-            if (batchId && lectureId) {
-                const apiUrl = `https://examcrushers.in/api/play?batchId=${batchId}&subjectId=${subjectId}&lectureId=${lectureId}&key=${key}`;
-                apiUrlInput.value = apiUrl;
-                fetchAndPlay(apiUrl);
-            } else {
-                setStatus('⚠️ Missing parameters. Use format: ?batchId=...&subjectId=...&lectureId=...&key=Sharma', 'info');
-                logToConsole('Missing URL search parameters.', 'error');
-            }
-        }
+            // --- Menus Management ---
+            speedBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                speedMenu.classList.toggle('active');
+                qualityMenu.classList.remove('active');
+            });
 
-        function handleManualPlay() {
-            const inputVal = apiUrlInput.value.trim();
-            if (!inputVal) {
-                setStatus('❌ Please enter a valid URL or API endpoint', 'error');
-                return;
-            }
+            speedMenu.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    speedMenu.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    video.playbackRate = parseFloat(btn.getAttribute('data-speed'));
+                    speedMenu.classList.remove('active');
+                });
+            });
 
-            if (inputVal.includes('batchId') || inputVal.includes('lectureId') || inputVal.includes('examcrushers.in')) {
-                fetchAndPlay(inputVal);
-            } else {
-                playShakaStream(inputVal, null);
-            }
-        }
+            qualityBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                qualityMenu.classList.toggle('active');
+                speedMenu.classList.remove('active');
+            });
 
-        async function playShakaStream(manifestUrl, keys) {
-            if (!player) return;
+            function setupQualityOptions() {
+                if (!shakaPlayer) return;
+                const tracks = shakaPlayer.getVariantTracks();
+                if (tracks.length > 1) {
+                    qualityBtn.style.display = 'flex';
+                    // Populate dynamic resolutions
+                    const uniqueHeights = [...new Set(tracks.map(t => t.height))].filter(Boolean).sort((a,b) => b - a);
+                    
+                    let html = '<button data-quality="auto" class="active">Auto</button>';
+                    uniqueHeights.forEach(h => {
+                        html += `<button data-quality="${h}">${h}p</button>`;
+                    });
+                    qualityMenu.innerHTML = html;
 
-            setStatus('🔄 Loading DASH stream via Proxy...', 'info');
-            logToConsole(`Original Manifest URL: ${manifestUrl}`, 'info');
-            if (keys) {
-                logToConsole(`Loaded ClearKeys: ${JSON.stringify(keys)}`, 'success');
-            } else {
-                logToConsole('No DRM keys provided.', 'info');
-            }
-
-            try {
-                const config = {};
-                if (keys && Object.keys(keys).length > 0) {
-                    config.drm = { clearKeys: keys };
+                    qualityMenu.querySelectorAll('button').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            qualityMenu.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                            btn.classList.add('active');
+                            const val = btn.getAttribute('data-quality');
+                            if (val === 'auto') {
+                                shakaPlayer.configure({ abr: { enabled: true } });
+                            } else {
+                                shakaPlayer.configure({ abr: { enabled: false } });
+                                const targetTrack = tracks.find(t => t.height == val);
+                                if (targetTrack) shakaPlayer.selectVariantTrack(targetTrack, true);
+                            }
+                            qualityMenu.classList.remove('active');
+                        });
+                    });
                 }
+            }
 
-                player.configure(config);
+            // Close popups on outside click
+            document.addEventListener('click', () => {
+                speedMenu.classList.remove('active');
+                qualityMenu.classList.remove('active');
+            });
 
-                // Proxy Request Filter: Wraps every request URL inside your DeltaStudy proxy format
-                player.getNetworkingEngine().registerRequestFilter((type, request) => {
-                    if (request.uri && !request.uri.includes('apiserver.deltastudy.fun')) {
-                        const encodedUrl = encodeURIComponent(request.uri);
-                        request.uri = `https://apiserver.deltastudy.fun/api/pi/play?url=${encodedUrl}`;
+            // --- Mobile Double Tap Gestures ---
+            let lastTapTime = 0;
+            videoContainer.addEventListener('click', (e) => {
+                // Ignore clicks originating directly from control bar elements
+                if (e.target.closest('.controls-overlay')) return;
+
+                const now = new Date().getTime();
+                const timeDiff = now - lastTapTime;
+                
+                if (timeDiff < 300 && timeDiff > 0) {
+                    // Double tap detected!
+                    const rect = videoContainer.getBoundingClientRect();
+                    const clickX = e.clientX - rect.left;
+                    const containerWidth = rect.width;
+
+                    if (clickX < containerWidth / 2) {
+                        // Left double tap -> Rewind 10s
+                        video.currentTime = Math.max(0, video.currentTime - 10);
+                        showTapFeedback(tapLeftIndicator, "-10s");
+                    } else {
+                        // Right double tap -> Forward 10s
+                        video.currentTime = Math.min(video.duration, video.currentTime + 10);
+                        showTapFeedback(tapRightIndicator, "+10s");
                     }
-                    logToConsole(`Proxied Request [Type ${type}]: ${request.uri}`, 'info');
-                });
+                }
+                lastTapTime = now;
+            });
 
-                await player.load(manifestUrl);
-                setStatus('✅ DASH Stream loaded successfully via Proxy!', 'success');
-                logToConsole('Playback started successfully.', 'success');
-                video.play().catch(e => {
-                    logToConsole('Autoplay restricted by browser: ' + e.message, 'error');
-                });
-            } catch (error) {
-                setStatus('❌ Playback Error: ' + error.message, 'error');
-                logToConsole(`Shaka Load Exception: ${error.code} - ${error.message}`, 'error');
+            function showTapFeedback(el, text) {
+                el.classList.add('show');
+                setTimeout(() => el.classList.remove('show'), 600);
             }
-        }
 
-        document.addEventListener('DOMContentLoaded', initPlayer);
-        window.handleManualPlay = handleManualPlay;
-        window.loadFromUrlParams = loadFromUrlParams;
-        window.clearConsole = clearConsole;
+            // Auto-hide Controls on Inactivity (Mobile/Desktop friendly)
+            function resetControlsTimeout() {
+                videoContainer.classList.remove('hide-controls');
+                clearTimeout(controlsTimeout);
+                if (!video.paused) {
+                    controlsTimeout = setTimeout(() => {
+                        videoContainer.classList.add('hide-controls');
+                        speedMenu.classList.remove('active');
+                        qualityMenu.classList.remove('active');
+                    }, 3000);
+                }
+            }
+
+            videoContainer.addEventListener('mousemove', resetControlsTimeout);
+            videoContainer.addEventListener('touchstart', resetControlsTimeout);
+            video.addEventListener('play', resetControlsTimeout);
+            video.addEventListener('pause', () => videoContainer.classList.remove('hide-controls'));
+
+            // Retry Button
+            retryBtn.addEventListener('click', initPlayer);
+
+            // Clean up resources if lecture switches/component unmounts
+            window.addEventListener('beforeunload', () => {
+                if (shakaPlayer) {
+                    shakaPlayer.destroy();
+                }
+            });
+
+            // Kick off initial load
+            initPlayer();
+        });
     </script>
 </body>
 </html>
