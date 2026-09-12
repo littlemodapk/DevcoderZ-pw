@@ -87,7 +87,7 @@ export async function onRequest(context) {
   }
 
   try {
-    const targetUrl = `https://www.learnxpw.site/api/video-url?batch_id=${batchId}&subject_id=${subjectId}&video_id=${lectureId}`;
+    const targetUrl = `https://pw.deltaverse.site/api/internal/get-stream-url?batch_id=${batchId}&subject_id=heehe&video_id=${lectureId}`;
 
     const apiResponse = await fetch(targetUrl, {
       headers: {
