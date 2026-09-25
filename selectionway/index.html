@@ -7,7 +7,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:sans-serif;-webkit-tap-highlight-color:transparent}
 body{background:#fdfbf7;color:#333;min-height:100vh;display:flex;flex-direction:column}
-header{background:#fff;padding:16px 20px;box-shadow:0 2px 8px rgba(139,69,19,.08);position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f0e6d2}
+header{background:#fff;padding:16px 20px;box-shadow:0 2px 8px rgba(139,69,19,.08);position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f1e4d6}
 .brand{font-size:20px;font-weight:800;color:#8B4513;letter-spacing:0.5px}
 .brand span{color:#D2B48C}
 .devcoderz-brand{font-size:12px;font-weight:700;color:#8B4513;background:#f5ebe0;padding:4px 10px;border-radius:20px;border:1px solid #e3d2bc;box-shadow:0 1px 3px rgba(139,69,19,.06)}
@@ -18,7 +18,7 @@ header{background:#fff;padding:16px 20px;box-shadow:0 2px 8px rgba(139,69,19,.08
 .main-tab-btn{background:none;border:none;padding:6px 14px;font-size:12px;font-weight:700;color:#7a6b63;cursor:pointer;border-radius:8px;transition:0.2s}
 .main-tab-btn.active{background:#8B4513;color:#fff}
 .search-container{margin-bottom:20px}
-.search-input{width:100%;padding:12px 16px;font-size:14px;border:1px solid #e3d2bc;border-radius:12px;background:#fff;color:#333;outline:none;box-shadow:0 2px 6px rgba(139,69,19,.03);transition:all 0.2s ease}
+.search-input{width:100%;padding:12px 16px;font-size:14px;border:1px solid #e3d2bc;border-radius:12px;background:#fff;color:#333;outline:none;box-shadow:0 2px 6px rgba(139,69,19,.03);transition:all .2s ease}
 .search-input:focus{border-color:#8B4513;box-shadow:0 4px 12px rgba(139,69,19,.08)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}
 .card{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 15px rgba(139,69,19,.06);border:1px solid #f3e9dc;display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s}
@@ -35,7 +35,7 @@ header{background:#fff;padding:16px 20px;box-shadow:0 2px 8px rgba(139,69,19,.08
 .btn-view{background:#8B4513;color:#fff;border:none;padding:8px 14px;font-size:12px;font-weight:700;border-radius:8px;cursor:pointer;transition:background .2s}
 .btn-view:hover{background:#6b3410}
 .loader{text-align:center;padding:50px;font-size:14px;color:#8B4513}
-.popup-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;visibility:hidden;transition:0.3s ease}
+.popup-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;visibility:hidden;transition:all .3s ease}
 .popup-overlay.active{opacity:1;visibility:visible}
 .popup-box{background:#fff;padding:24px;border-radius:16px;width:90%;max-width:340px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.2);transform:scale(0.8);transition:0.3s ease}
 .popup-overlay.active .popup-box{transform:scale(1)}
@@ -45,13 +45,13 @@ header{background:#fff;padding:16px 20px;box-shadow:0 2px 8px rgba(139,69,19,.08
 .popup-btn:hover{background:#006699}
 .popup-close{background:none;border:none;color:#a89f91;font-size:13px;font-weight:600;cursor:pointer;padding:6px}
 .popup-close:hover{color:#333}
-.enroll-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;visibility:hidden;transition:0.3s ease}
+.enroll-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;visibility:hidden;transition:all .3s ease}
 .enroll-overlay.active{opacity:1;visibility:visible}
 .enroll-box{background:#fff;padding:24px;border-radius:16px;width:90%;max-width:340px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.2);transform:scale(0.8);transition:0.3s ease}
 .enroll-overlay.active .enroll-box{transform:scale(1)}
 .enroll-title{font-size:18px;font-weight:800;color:#2c1810;margin-bottom:8px}
 .enroll-desc{font-size:13px;color:#7a6b63;margin-bottom:20px;line-height:1.5}
-.enroll-btn{display:block;width:100%;background:#8B4513;color:#fff;border:none;padding:12px;font-size:14px;font-weight:700;border-radius:10px;margin-bottom:10px;cursor:pointer;transition:background 0.2s}
+.enroll-btn{display:block;width:100%;background:#8B4513;color:#fff;border:none;padding:12px;font-size:14px;font-weight:700;border-radius:10px;margin-bottom:10px;cursor:pointer;transition:background .2s}
 .enroll-btn:hover{background:#6b3410}
 .enroll-close{background:none;border:none;color:#a89f91;font-size:13px;font-weight:600;cursor:pointer;padding:6px}
 .enroll-close:hover{color:#333}
@@ -64,7 +64,7 @@ footer .dev{font-size:12px;font-weight:600;color:#8B4513;background:#f5ebe0;disp
 
 <header>
  <div class="brand">Selection <span>Way</span></div>
- <div class="devcoderz-brand">DevCoderZ</div>
+ <div class="devcoderz-brand">STUDYxPANDA</div>
 </header>
 
 <div class="container">
@@ -88,7 +88,7 @@ footer .dev{font-size:12px;font-weight:600;color:#8B4513;background:#f5ebe0;disp
  <div class="popup-box">
   <div class="popup-title">Join Telegram Channel</div>
   <div class="popup-desc">Join our official Telegram channel for daily updates, important notes, and latest batches!</div>
-  <a href="https://t.me/+8tZSJ5FyTXVjM2M1" target="_blank" class="popup-btn" onclick="closeTgPopup()">Join Telegram Now</a>
+  <a href="https://t.me/STUDYxPANDA" target="_blank" class="popup-btn" onclick="closeTgPopup()">Join Telegram Now</a>
   <button class="popup-close" onclick="closeTgPopup()">Later</button>
  </div>
 </div>
@@ -104,7 +104,7 @@ footer .dev{font-size:12px;font-weight:600;color:#8B4513;background:#f5ebe0;disp
 
 <footer>
  <div class="jsr">🚩 Jai Shree Ram 🚩</div>
- <div><span class="dev">Developed by - Devansh Sharma (The DevCoderZ)</span></div>
+ <div><span class="dev">Developed by - Devansh Sharma (STUDYxPANDA)</span></div>
 </footer>
 
 <script>
